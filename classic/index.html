@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>상연 ♥ 예은 결혼합니다</title>
+<meta property="og:title" content="상연 ♥ 예은 결혼합니다" />
+<meta property="og:description" content="2026년 10월 17일 토요일 오전 11시, 더화이트베일 W홀" />
+<meta property="og:image" content="https://naturalflavo.github.io/wedding/photos/main.jpg" />
+<meta property="og:url" content="https://naturalflavo.github.io/wedding/classic/" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Allura&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --theme: #ff8585;
+    --theme-bg: #ffe7e7;
+    --alt: #c28080;
+    --ink: #3d3535;
+    --ink-soft: #9a8888;
+    --line: #f3dede;
+    --card: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Gowun Batang", serif;
+    background: var(--theme-bg);
+    color: var(--ink);
+    line-height: 1.9;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  /* 꽃잎 캔버스 */
+  #petals { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+
+  .card-view { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; padding: 14px 12px calc(48px + env(safe-area-inset-bottom)); }
+  .card {
+    background: var(--card); border-radius: 20px; padding: 44px 26px;
+    margin-bottom: 14px; text-align: center;
+    box-shadow: 0 6px 20px rgba(194, 128, 128, .14);
+  }
+  h2.english {
+    font-family: "Allura", cursive; font-weight: 400;
+    color: var(--theme); font-size: 40px; line-height: 1.2; margin-bottom: 18px;
+  }
+  .fade { opacity: 0; transform: translateY(24px); transition: opacity .9s ease, transform .9s ease; }
+  .fade.show { opacity: 1; transform: none; }
+
+  /* ---------- 커버 ---------- */
+  .cover .wedding-date {
+    display: flex; justify-content: center; align-items: center; gap: 14px;
+    font-size: 24px; margin-top: 6px;
+  }
+  .cover .wedding-date .divider { width: 1px; height: 14px; background: var(--ink); opacity: .55; }
+  .cover .day-of-week { font-size: 15px; color: var(--ink-soft); margin: 2px 0 20px; letter-spacing: 1px; }
+  .cover .image-wrapper { border-radius: 14px; overflow: hidden; margin-bottom: 22px; }
+  .cover .image-wrapper img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+  .cover .subtitle { font-family: "Allura", cursive; font-size: 24px; color: var(--alt); line-height: 1.4; }
+  .cover .names {
+    display: flex; justify-content: center; align-items: center; gap: 14px;
+    font-size: 22px; margin: 8px 0 16px;
+  }
+  .cover .names .divider { width: 1px; height: 14px; background: var(--ink); opacity: .55; }
+  .cover .info { font-size: 14px; color: var(--ink-soft); }
+
+  /* ---------- 인사말 ---------- */
+  .invitation .content { font-size: 15px; }
+  .invitation .break { height: 22px; }
+  .invitation .name { font-size: 15px; margin: 4px 0; }
+  .invitation .relation { color: var(--ink-soft); font-size: 13.5px; margin: 0 6px; }
+  .contact-btn {
+    margin-top: 26px; display: inline-block; border: none; cursor: pointer;
+    background: var(--theme); color: #fff; font-family: inherit; font-size: 14px;
+    padding: 11px 34px; border-radius: 24px;
+  }
+  .contacts { display: none; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px; }
+  .contacts.open { display: grid; }
+  .contact-card { background: #fff6f6; border: 1px solid var(--line); border-radius: 14px; padding: 16px 10px; }
+  .contact-card .who { font-size: 12px; color: var(--ink-soft); }
+  .contact-card .name { font-size: 15px; margin: 2px 0 10px; }
+  .contact-card .btns { display: flex; justify-content: center; gap: 10px; }
+  .contact-card .btns a {
+    width: 38px; height: 38px; border-radius: 50%; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #fff; border: 1px solid var(--line); font-size: 15px;
+  }
+
+  /* ---------- 달력 ---------- */
+  .cal-title { font-size: 16px; margin-bottom: 2px; }
+  .cal-sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
+  table.cal { width: 100%; border-collapse: collapse; }
+  .cal th { font-size: 11px; font-weight: 400; color: var(--ink-soft); padding: 6px 0; }
+  .cal th.sun, .cal td.sun { color: var(--theme); }
+  .cal td { font-size: 13.5px; padding: 8px 0; text-align: center; width: 14.28%; }
+  .cal td.dday span {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--theme); color: #fff;
+  }
+  .countdown { display: flex; justify-content: center; gap: 12px; margin-top: 22px; }
+  .cd-item { min-width: 56px; padding: 10px 6px; border-radius: 12px; background: #fff6f6; border: 1px solid var(--line); }
+  .cd-item b { display: block; font-size: 19px; font-weight: 700; }
+  .cd-item small { font-size: 10px; color: var(--ink-soft); letter-spacing: 1px; }
+  .dday-msg { margin-top: 18px; font-size: 13.5px; color: var(--ink-soft); }
+  .dday-msg b { color: var(--theme); font-weight: 700; }
+
+  /* ---------- 갤러리 ---------- */
+  .gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .gallery img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block; }
+  .gallery .tall { aspect-ratio: 3 / 4; }
+  .gallery .strip { grid-column: span 2; display: grid; grid-template-columns: 1fr; gap: 6px; }
+  .strip img { aspect-ratio: 4 / 1; border-radius: 8px; }
+  .strip .f1 { object-position: 50% 79%; }
+  .strip .f2 { object-position: 50% 80%; }
+  .strip .f3 { object-position: 50% 85%; }
+
+  /* ---------- 오시는 길 ---------- */
+  .venue-name { font-size: 16.5px; margin-bottom: 2px; }
+  .venue-addr { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 20px; }
+  .map-embed {
+    width: 100%; aspect-ratio: 4 / 3; border: 0; border-radius: 12px;
+    background: #fff6f6; margin-bottom: 14px; display: block;
+  }
+  .map-btns { display: flex; gap: 8px; }
+  .map-btns a {
+    flex: 1; padding: 11px 0; border-radius: 10px; text-decoration: none;
+    font-size: 13px; color: var(--ink); background: #fff6f6; border: 1px solid var(--line);
+  }
+  .transport { margin-top: 26px; text-align: left; font-size: 13.5px; }
+  .transport dt { color: var(--theme); font-size: 12.5px; letter-spacing: 1px; margin-top: 14px; }
+  .transport dd { color: var(--ink-soft); margin-top: 2px; }
+
+  /* ---------- 마음 전하실 곳 ---------- */
+  .acc-note { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 24px; }
+  details.acc { background: #fff6f6; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+  details.acc summary {
+    padding: 14px 20px; cursor: pointer; list-style: none;
+    font-size: 14.5px; display: flex; justify-content: space-between; align-items: center;
+  }
+  details.acc summary::after { content: "▾"; color: var(--ink-soft); font-size: 12px; transition: transform .3s; }
+  details.acc[open] summary::after { transform: rotate(180deg); }
+  .acc-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 13px 20px; border-top: 1px solid var(--line); font-size: 13.5px;
+    text-align: left; gap: 10px; background: #fff;
+  }
+  .acc-row .info small { display: block; color: var(--ink-soft); font-size: 12px; }
+  .copy-btn {
+    flex-shrink: 0; border: none; background: var(--theme); color: #fff;
+    font-family: inherit; font-size: 12px; padding: 7px 14px; border-radius: 20px; cursor: pointer;
+  }
+
+  /* ---------- 푸터 ---------- */
+  .share-card { padding: 30px 26px; }
+  .share-btn {
+    display: inline-block; border: 1px solid var(--line); cursor: pointer;
+    background: #fff6f6; color: var(--ink); font-family: inherit; font-size: 13px;
+    padding: 12px 28px; border-radius: 24px;
+  }
+  .footer-names { margin-top: 16px; font-size: 12px; color: var(--ink-soft); }
+
+  /* 토스트 */
+  #toast {
+    position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(61, 53, 53, .92); color: #fff; font-size: 13px;
+    padding: 11px 22px; border-radius: 24px; opacity: 0; pointer-events: none;
+    transition: opacity .3s, transform .3s; white-space: nowrap; z-index: 99;
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<canvas id="petals"></canvas>
+<div class="card-view">
+
+  <!-- 커버 -->
+  <section class="card cover fade">
+    <div class="wedding-date" id="coverDate"></div>
+    <div class="day-of-week" id="coverDow"></div>
+    <div class="image-wrapper">
+      <img src="../photos/main.jpg" alt="우상연과 강예은" />
+    </div>
+    <div class="subtitle">Save the date for the wedding of</div>
+    <div class="names">
+      <span id="groomName"></span>
+      <div class="divider"></div>
+      <span id="brideName"></span>
+    </div>
+    <p class="info" id="coverInfo"></p>
+    <p class="info" id="coverPlace"></p>
+  </section>
+
+  <!-- 인사말 -->
+  <section class="card invitation fade">
+    <h2 class="english">Invitation</h2>
+    <div class="content">시월의 맑은 토요일 아침,</div>
+    <div class="content">소중한 분들을 모시고</div>
+    <div class="content">저희 두 사람, 하나의 약속을 하려 합니다.</div>
+    <div class="break"></div>
+    <div class="content">기쁜 날은 함께 웃어 두 배로,</div>
+    <div class="content">힘든 날은 나누어 절반으로.</div>
+    <div class="content">그렇게 사는 부부가 되겠습니다.</div>
+    <div class="break"></div>
+    <div class="content">오셔서 저희의 시작을 지켜봐 주세요.</div>
+    <div class="break"></div>
+    <div id="parents"></div>
+    <button class="contact-btn" id="contactToggle">연락하기</button>
+    <div class="contacts" id="contacts"></div>
+  </section>
+
+  <!-- 달력 -->
+  <section class="card fade">
+    <h2 class="english">Wedding Day</h2>
+    <p class="cal-title" id="calTitle"></p>
+    <p class="cal-sub" id="calSub"></p>
+    <table class="cal">
+      <thead>
+        <tr><th class="sun">일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr>
+      </thead>
+      <tbody id="calBody"></tbody>
+    </table>
+    <div class="countdown" id="countdown"></div>
+    <p class="dday-msg" id="ddayMsg"></p>
+  </section>
+
+  <!-- 갤러리 -->
+  <section class="card fade">
+    <h2 class="english">Gallery</h2>
+    <div class="gallery">
+      <div class="strip">
+        <img class="f1" src="../photos/gallery/g03.jpg" alt="달려가는 순간 1" loading="lazy" />
+        <img class="f2" src="../photos/gallery/g04.jpg" alt="달려가는 순간 2" loading="lazy" />
+        <img class="f3" src="../photos/gallery/g05.jpg" alt="달려가는 순간 3" loading="lazy" />
+      </div>
+      <img class="tall" src="../photos/gallery/g01.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g02.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g06.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g07.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g08.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g09.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g10.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g11.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g12.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g13.jpg" alt="" loading="lazy" />
+    </div>
+  </section>
+
+  <!-- 오시는 길 -->
+  <section class="card fade">
+    <h2 class="english">Location</h2>
+    <p class="venue-name" id="venueName"></p>
+    <p class="venue-addr" id="venueAddr"></p>
+    <iframe class="map-embed" title="더화이트베일 지도"
+      src="https://maps.google.com/maps?q=%EB%8D%94%ED%99%94%EC%9D%B4%ED%8A%B8%EB%B2%A0%EC%9D%BC&hl=ko&z=16&output=embed"
+      loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <div class="map-btns">
+      <a id="mapKakao" target="_blank" rel="noopener">카카오맵</a>
+      <a id="mapNaver" target="_blank" rel="noopener">네이버지도</a>
+      <a id="mapTmap" target="_blank" rel="noopener">티맵</a>
+    </div>
+    <dl class="transport">
+      <dt>지하철</dt>
+      <dd>3호선 남부터미널역 4-1번 출구 바로 앞</dd>
+      <dt>버스</dt>
+      <dd>지선 4319 · 간선 461, 641 · 공항 5300-1, 8501<br />남부터미널 하차</dd>
+      <dt>자가용 · 주차</dt>
+      <dd>경부고속도로 서초 I.C에서 500m<br />맞은편 전용 주차타워 이용 (서초중앙로2길 10)</dd>
+    </dl>
+  </section>
+
+  <!-- 마음 전하실 곳 -->
+  <section class="card fade">
+    <h2 class="english">Thanks to</h2>
+    <p class="acc-note">
+      참석이 어려우신 분들을 위해<br />계좌번호를 기재하였습니다.<br />
+      너그러운 마음으로 양해 부탁드립니다.
+    </p>
+    <div id="accounts"></div>
+  </section>
+
+  <!-- 공유 -->
+  <section class="card share-card fade">
+    <button class="share-btn" id="shareBtn">🔗 청첩장 링크 복사하기</button>
+    <p class="footer-names" id="footerNames"></p>
+  </section>
+
+</div>
+<div id="toast"></div>
+
+<script>
+/* ===================================================================
+   ★ 여기만 수정하면 됩니다 ★
+=================================================================== */
+const CONFIG = {
+  groom: { name: "우상연", father: "우경진", mother: "주현옥", order: "장남", phone: "010-3050-2397" },
+  bride: { name: "강예은", father: "강성철", mother: "김태순", order: "차녀", phone: "010-2769-5738" },
+
+  // 예식 일시 (년, 월, 일, 시, 분)
+  date: new Date(2026, 9, 17, 11, 0),   // ※ 월은 0부터: 9 = 10월
+
+  venue: {
+    name: "더화이트베일 4층 W홀",
+    addr: "서울특별시 서초구 서초중앙로 14",
+    mapQuery: "더화이트베일",           // 지도 앱 검색어
+  },
+
+  accounts: {
+    groom: [
+      { bank: "우리은행", num: "1002-550-793919", holder: "우상연" },
+      // 혼주 계좌는 확정되면 여기에 추가
+    ],
+    bride: [
+      { bank: "새마을금고", num: "9003-2573-83150", holder: "강예은" },
+    ],
+  },
+};
+/* =================================================================== */
+
+/* 꽃잎 낙하 효과 */
+(() => {
+  const canvas = document.getElementById("petals");
+  const ctx = canvas.getContext("2d");
+
+  const sprite = document.createElement("canvas");
+  sprite.width = 48; sprite.height = 40;
+  const sc = sprite.getContext("2d");
+  const grad = sc.createLinearGradient(0, 0, 48, 40);
+  grad.addColorStop(0, "rgba(255, 186, 200, .95)");
+  grad.addColorStop(1, "rgba(255, 140, 168, .9)");
+  sc.fillStyle = grad;
+  sc.beginPath();
+  sc.moveTo(24, 2);
+  sc.bezierCurveTo(40, 4, 46, 18, 42, 30);
+  sc.bezierCurveTo(36, 40, 14, 40, 8, 30);
+  sc.bezierCurveTo(2, 18, 10, 4, 24, 2);
+  sc.fill();
+
+  class Petal {
+    constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height * 2 - canvas.height;
+      this.init();
+    }
+    init() {
+      this.w = 22 + Math.random() * 14;
+      this.h = 18 + Math.random() * 9;
+      this.opacity = this.w / 70;
+      this.flip = Math.random() * Math.PI;
+      this.xs = 0.5 + Math.random() * 0.7;
+      this.ys = 0.35 + Math.random() * 0.4;
+      this.fs = 0.005 + Math.random() * 0.02;
+    }
+    tick() {
+      this.x += this.xs;
+      this.y += this.ys;
+      this.flip += this.fs;
+      if (this.y > canvas.height || this.x > canvas.width) {
+        this.init();
+        const r = Math.random() * (canvas.width + canvas.height);
+        if (r > canvas.width) { this.x = 0; this.y = r - canvas.width; }
+        else { this.x = r; this.y = -20; }
+      }
+      ctx.globalAlpha = this.opacity;
+      ctx.drawImage(sprite, this.x, this.y,
+        this.w * (0.6 + Math.abs(Math.cos(this.flip)) / 3),
+        this.h * (0.8 + Math.abs(Math.sin(this.flip)) / 5));
+    }
+  }
+
+  let petals = [];
+  const resize = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    petals = Array.from({ length: 14 }, () => new Petal());
+  };
+  resize();
+  let rt;
+  window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(resize, 200); });
+  (function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    petals.forEach(p => p.tick());
+    requestAnimationFrame(loop);
+  })();
+})();
+
+const $ = (id) => document.getElementById(id);
+const d = CONFIG.date;
+const week = ["일", "월", "화", "수", "목", "금", "토"];
+const DOW_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const pad = (n) => String(n).padStart(2, "0");
+
+/* 커버 */
+$("coverDate").innerHTML = `${d.getFullYear()}<div class="divider"></div>${pad(d.getMonth() + 1)}<div class="divider"></div>${pad(d.getDate())}`;
+$("coverDow").textContent = DOW_EN[d.getDay()];
+$("groomName").textContent = CONFIG.groom.name;
+$("brideName").textContent = CONFIG.bride.name;
+const hour12 = d.getHours() > 12 ? d.getHours() - 12 : d.getHours();
+const ampm = d.getHours() >= 12 ? "오후" : "오전";
+$("coverInfo").textContent = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${week[d.getDay()]}요일 ${ampm} ${hour12}시${d.getMinutes() ? " " + d.getMinutes() + "분" : ""}`;
+$("coverPlace").textContent = CONFIG.venue.name;
+$("footerNames").textContent = `${CONFIG.groom.name} ♥ ${CONFIG.bride.name}의 결혼식에 초대합니다`;
+
+/* 혼주 */
+$("parents").innerHTML = `
+  <div class="name">${CONFIG.groom.father} · ${CONFIG.groom.mother}<span class="relation">의 ${CONFIG.groom.order}</span><b>${CONFIG.groom.name.slice(1)}</b></div>
+  <div class="name">${CONFIG.bride.father} · ${CONFIG.bride.mother}<span class="relation">의 ${CONFIG.bride.order}</span><b>${CONFIG.bride.name.slice(1)}</b></div>`;
+
+/* 연락하기 토글 */
+$("contactToggle").addEventListener("click", () => {
+  $("contacts").classList.toggle("open");
+});
+$("contacts").innerHTML = [["신랑", CONFIG.groom], ["신부", CONFIG.bride]]
+  .map(([who, p]) => `
+  <div class="contact-card">
+    <p class="who">${who}</p>
+    <p class="name">${p.name}</p>
+    <div class="btns">
+      <a href="tel:${p.phone}" aria-label="${who}에게 전화">📞</a>
+      <a href="sms:${p.phone}" aria-label="${who}에게 문자">✉️</a>
+    </div>
+  </div>`).join("");
+
+/* 달력 */
+$("calTitle").textContent = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${week[d.getDay()]}요일`;
+$("calSub").textContent = `${ampm} ${hour12}시 ${d.getMinutes() ? d.getMinutes() + "분" : ""}`;
+
+const first = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+let html = "<tr>", cell = 0;
+for (let i = 0; i < first; i++) { html += "<td></td>"; cell++; }
+for (let day = 1; day <= last; day++) {
+  const cls = [cell % 7 === 0 ? "sun" : "", day === d.getDate() ? "dday" : ""].join(" ").trim();
+  html += `<td class="${cls}">${day === d.getDate() ? `<span>${day}</span>` : day}</td>`;
+  cell++;
+  if (cell % 7 === 0 && day !== last) html += "</tr><tr>";
+}
+html += "</tr>";
+$("calBody").innerHTML = html;
+
+/* 카운트다운 (숫자 텍스트만 갱신) */
+$("countdown").innerHTML = ["DAYS", "HOUR", "MIN", "SEC"]
+  .map((l) => `<div class="cd-item"><b>0</b><small>${l}</small></div>`).join("");
+const cdNums = $("countdown").querySelectorAll("b");
+function tick() {
+  const diff = d - new Date();
+  const t = Math.abs(diff);
+  const days = Math.floor(t / 864e5);
+  const vals = [days, Math.floor(t / 36e5) % 24, Math.floor(t / 6e4) % 60, Math.floor(t / 1e3) % 60];
+  vals.forEach((v, i) => {
+    const s = String(v);
+    if (cdNums[i].textContent !== s) cdNums[i].textContent = s;
+  });
+  const msg = `${CONFIG.groom.name.slice(1)} ♥ ${CONFIG.bride.name.slice(1)}의 결혼식이 <b>${days}일</b> ${diff < 0 ? "지났습니다" : "남았습니다"}.`;
+  if ($("ddayMsg").dataset.msg !== msg) {
+    $("ddayMsg").dataset.msg = msg;
+    $("ddayMsg").innerHTML = msg;
+  }
+}
+tick(); setInterval(tick, 1000);
+
+/* 오시는 길 */
+$("venueName").textContent = CONFIG.venue.name;
+$("venueAddr").textContent = CONFIG.venue.addr;
+const q = encodeURIComponent(CONFIG.venue.mapQuery);
+$("mapKakao").href = `https://map.kakao.com/link/search/${q}`;
+$("mapNaver").href = `https://map.naver.com/v5/search/${q}`;
+$("mapTmap").href = `https://tmap.life/route?goalname=${q}`;
+
+/* 계좌 */
+$("accounts").innerHTML = [["신랑측", CONFIG.accounts.groom], ["신부측", CONFIG.accounts.bride]]
+  .map(([title, list], i) => `
+  <details class="acc"${i === 0 ? " open" : ""}>
+    <summary>${title} 계좌번호</summary>
+    ${list.map(a => `
+      <div class="acc-row">
+        <div class="info">${a.bank} ${a.num}<small>${a.holder}</small></div>
+        <button class="copy-btn" data-copy="${a.bank} ${a.num} ${a.holder}">복사</button>
+      </div>`).join("")}
+  </details>`).join("");
+
+/* 복사 & 토스트 */
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 2000);
+}
+async function copyText(text, msg) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); ta.remove();
+  }
+  toast(msg);
+}
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".copy-btn");
+  if (btn) copyText(btn.dataset.copy, "계좌번호가 복사되었습니다");
+});
+$("shareBtn").addEventListener("click", () => copyText(location.href, "청첩장 링크가 복사되었습니다"));
+
+/* 스크롤 페이드인 */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("show"); io.unobserve(en.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll(".fade").forEach((el) => io.observe(el));
+</script>
+</body>
+</html>
