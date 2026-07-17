@@ -196,14 +196,14 @@
     width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block;
   }
   .gallery .tall { aspect-ratio: 3 / 4; }
-  /* 달려가는 3연속 컷 — 세로 패널로 잘라 필름 스트립처럼 */
+  /* 달려가는 3연속 컷 — 가로로 긴 띠를 세로로 쌓기 */
   .gallery .strip {
-    grid-column: span 2; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    grid-column: span 2; display: grid; grid-template-columns: 1fr; gap: 6px;
   }
-  .strip img { aspect-ratio: 2 / 3; border-radius: 8px; }
-  .strip .f1 { object-position: 88% 50%; }
-  .strip .f2 { object-position: 60% 50%; }
-  .strip .f3 { object-position: 25% 50%; }
+  .strip img { aspect-ratio: 4 / 1; border-radius: 6px; }
+  .strip .f1 { object-position: 50% 79%; }
+  .strip .f2 { object-position: 50% 80%; }
+  .strip .f3 { object-position: 50% 85%; }
 
   /* ---------- 오시는 길 ---------- */
   .venue-name { font-size: 17px; margin-bottom: 4px; }
