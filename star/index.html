@@ -6,7 +6,7 @@
 <title>상연 ♥ 예은 결혼합니다</title>
 <meta property="og:title" content="상연 ♥ 예은 결혼합니다" />
 <meta property="og:description" content="2026년 10월 17일 토요일 오전 11시, 더화이트베일 W홀" />
-<meta property="og:image" content="https://naturalflavo.github.io/wedding/photos/main.jpg" />
+<meta property="og:image" content="https://naturalflavo.github.io/wedding/photos/main-night.jpg" />
 <meta property="og:url" content="https://naturalflavo.github.io/wedding/star/" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -56,13 +56,12 @@
   .cover { position: relative; padding: 0; }
   .cover-photo {
     display: block; width: 100%; height: 100svh; object-fit: cover;
-    filter: saturate(.85) brightness(.9);
   }
   .cover-veil {
     position: absolute; inset: 0;
     background: linear-gradient(180deg,
-      rgba(12,21,34,.62) 0%, rgba(12,21,34,.18) 22%, rgba(12,21,34,0) 42%,
-      rgba(12,21,34,.25) 62%, rgba(12,21,34,.78) 84%, var(--bg) 100%);
+      rgba(12,21,34,0) 0%, rgba(12,21,34,0) 84%,
+      rgba(12,21,34,.7) 95%, var(--bg) 100%);
   }
   .cover-top {
     position: absolute; top: calc(36px + env(safe-area-inset-top)); left: 0; right: 0;
@@ -122,8 +121,15 @@
   .gallery img {
     width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block;
   }
-  .gallery .wide { grid-column: span 2; aspect-ratio: 16 / 9; }
   .gallery .tall { aspect-ratio: 3 / 4; }
+  /* 달려가는 3연속 컷 — 세로 패널로 잘라 필름 스트립처럼 */
+  .gallery .strip {
+    grid-column: span 2; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  }
+  .strip img { aspect-ratio: 2 / 3; border-radius: 8px; }
+  .strip .f1 { object-position: 88% 50%; }
+  .strip .f2 { object-position: 60% 50%; }
+  .strip .f3 { object-position: 25% 50%; }
 
   /* ---------- 오시는 길 ---------- */
   .venue-name { font-size: 17px; margin-bottom: 4px; }
@@ -206,7 +212,7 @@
 
   <!-- 커버 -->
   <section class="cover">
-    <img class="cover-photo" src="../photos/main.jpg" alt="우상연과 강예은" />
+    <img class="cover-photo" src="../photos/main-night.jpg" alt="우상연과 강예은" />
     <div class="cover-veil"></div>
     <div class="cover-top">
       <p class="date-num" id="coverDate"></p>
@@ -255,17 +261,19 @@
     <p class="label">Gallery</p>
     <h2>우리의 순간들</h2>
     <div class="gallery">
-      <img class="wide" src="../photos/gallery/g03.jpg" alt="" loading="lazy" />
+      <div class="strip">
+        <img class="f1" src="../photos/gallery/g03.jpg" alt="달려가는 순간 1" loading="lazy" />
+        <img class="f2" src="../photos/gallery/g04.jpg" alt="달려가는 순간 2" loading="lazy" />
+        <img class="f3" src="../photos/gallery/g05.jpg" alt="달려가는 순간 3" loading="lazy" />
+      </div>
       <img class="tall" src="../photos/gallery/g01.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g02.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g06.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g07.jpg" alt="" loading="lazy" />
-      <img class="wide" src="../photos/gallery/g04.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g08.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g09.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g10.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g11.jpg" alt="" loading="lazy" />
-      <img class="wide" src="../photos/gallery/g05.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g12.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g13.jpg" alt="" loading="lazy" />
     </div>

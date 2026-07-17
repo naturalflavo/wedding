@@ -60,6 +60,59 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 90' preserveAspectRatio='none'><path d='M0,50 C200,15 400,85 600,50 C800,15 1000,85 1200,50 L1200,90 L0,90 Z' fill='%23cfe3ee'/></svg>");
   }
   @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-1200px); } }
+  /* 거북선 */
+  .ship {
+    position: absolute; left: 5%; bottom: 30px; width: 150px;
+    animation: bob 6.5s ease-in-out infinite;
+    transform-origin: 50% 90%;
+  }
+  .ship svg { display: block; width: 100%; height: auto; }
+  @keyframes bob {
+    0%, 100% { transform: rotate(-1.6deg) translateY(0); }
+    50% { transform: rotate(1.8deg) translateY(-4px); }
+  }
+  .flash {
+    position: absolute; right: -10px; top: 32%; width: 18px; height: 18px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,214,140,.95) 0%, rgba(255,170,90,.55) 45%, transparent 70%);
+    opacity: 0; animation: flash 7s linear infinite;
+  }
+  @keyframes flash {
+    0%, 55.5% { opacity: 0; transform: scale(.4); }
+    56.5% { opacity: 1; transform: scale(1.6); }
+    58.5% { opacity: 0; transform: scale(.9); }
+    100% { opacity: 0; }
+  }
+  .ball-x { position: absolute; left: calc(5% + 142px); bottom: 96px; animation: ballx 7s linear infinite; opacity: 0; }
+  @keyframes ballx {
+    0%, 55.9% { transform: translateX(0); opacity: 0; }
+    56% { opacity: 1; }
+    74.5% { opacity: 1; }
+    75% { transform: translateX(150px); opacity: 0; }
+    100% { transform: translateX(150px); opacity: 0; }
+  }
+  .ball-y {
+    width: 5px; height: 5px; border-radius: 50%; background: #ffd9a0;
+    box-shadow: 0 0 8px rgba(255, 200, 120, .9);
+    animation: bally 7s linear infinite;
+  }
+  @keyframes bally {
+    0% { transform: translateY(0); animation-timing-function: linear; }
+    56% { transform: translateY(0); animation-timing-function: ease-out; }
+    65.5% { transform: translateY(-52px); animation-timing-function: ease-in; }
+    75% { transform: translateY(30px); }
+    100% { transform: translateY(30px); }
+  }
+  .splash {
+    position: absolute; left: calc(5% + 282px); bottom: 60px; width: 22px; height: 8px;
+    border: 2px solid rgba(190, 225, 240, .8); border-radius: 50%;
+    opacity: 0; animation: splash 7s linear infinite;
+  }
+  @keyframes splash {
+    0%, 74% { opacity: 0; transform: scale(.3); }
+    76.5% { opacity: .85; transform: scale(.7); }
+    85% { opacity: 0; transform: scale(1.7); }
+    100% { opacity: 0; }
+  }
   .wrap { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; overflow-x: hidden; }
 
   /* ---------- 공통 ---------- */
@@ -142,8 +195,15 @@
   .gallery img {
     width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block;
   }
-  .gallery .wide { grid-column: span 2; aspect-ratio: 16 / 9; }
   .gallery .tall { aspect-ratio: 3 / 4; }
+  /* 달려가는 3연속 컷 — 세로 패널로 잘라 필름 스트립처럼 */
+  .gallery .strip {
+    grid-column: span 2; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  }
+  .strip img { aspect-ratio: 2 / 3; border-radius: 8px; }
+  .strip .f1 { object-position: 88% 50%; }
+  .strip .f2 { object-position: 60% 50%; }
+  .strip .f3 { object-position: 25% 50%; }
 
   /* ---------- 오시는 길 ---------- */
   .venue-name { font-size: 17px; margin-bottom: 4px; }
@@ -224,8 +284,37 @@
 <div id="scenery">
   <div class="moon"></div>
   <div id="dimstars"></div>
-  <div class="waves w1"></div>
   <div class="waves w2"></div>
+  <div class="ship">
+    <svg viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="96" y1="40" x2="96" y2="8" stroke="#2c4656" stroke-width="2.5" />
+      <path d="M96,10 L118,15 L96,22 Z" fill="#3d5c6e" />
+      <path d="M28,64 Q104,18 184,62 L178,70 L34,70 Z" fill="#22404f" />
+      <g stroke="#2c4a5a" stroke-width="3" stroke-linecap="round">
+        <line x1="52" y1="52" x2="46" y2="42" />
+        <line x1="76" y1="42" x2="72" y2="31" />
+        <line x1="104" y1="37" x2="104" y2="25" />
+        <line x1="132" y1="41" x2="137" y2="30" />
+        <line x1="158" y1="50" x2="165" y2="41" />
+      </g>
+      <path d="M184,60 q4,-18 16,-22 q10,-3 16,4 q-7,2 -8,7 q8,-1 12,4 q-6,8 -16,8 l-4,6 Z" fill="#2c4a5a" />
+      <circle cx="205" cy="44" r="1.6" fill="#a9cfe0" />
+      <path d="M18,66 L196,66 Q193,92 172,102 L54,102 Q28,90 18,66 Z" fill="#1a333f" />
+      <g fill="#0d1a21">
+        <circle cx="70" cy="82" r="4" /><circle cx="105" cy="82" r="4" /><circle cx="140" cy="82" r="4" />
+      </g>
+      <g stroke="#22404f" stroke-width="3" stroke-linecap="round">
+        <line x1="60" y1="100" x2="50" y2="118" />
+        <line x1="95" y1="102" x2="87" y2="120" />
+        <line x1="130" y1="102" x2="124" y2="120" />
+        <line x1="163" y1="100" x2="160" y2="118" />
+      </g>
+    </svg>
+    <div class="flash"></div>
+  </div>
+  <div class="ball-x"><div class="ball-y"></div></div>
+  <div class="splash"></div>
+  <div class="waves w1"></div>
 </div>
 <div class="wrap">
 
@@ -281,17 +370,19 @@
     <p class="label">Gallery</p>
     <h2>우리의 순간들</h2>
     <div class="gallery">
-      <img class="wide" src="../photos/gallery/g03.jpg" alt="" loading="lazy" />
+      <div class="strip">
+        <img class="f1" src="../photos/gallery/g03.jpg" alt="달려가는 순간 1" loading="lazy" />
+        <img class="f2" src="../photos/gallery/g04.jpg" alt="달려가는 순간 2" loading="lazy" />
+        <img class="f3" src="../photos/gallery/g05.jpg" alt="달려가는 순간 3" loading="lazy" />
+      </div>
       <img class="tall" src="../photos/gallery/g01.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g02.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g06.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g07.jpg" alt="" loading="lazy" />
-      <img class="wide" src="../photos/gallery/g04.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g08.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g09.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g10.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g11.jpg" alt="" loading="lazy" />
-      <img class="wide" src="../photos/gallery/g05.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g12.jpg" alt="" loading="lazy" />
       <img class="tall" src="../photos/gallery/g13.jpg" alt="" loading="lazy" />
     </div>
