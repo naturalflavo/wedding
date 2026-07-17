@@ -6,7 +6,6 @@
 <title>상연 ♥ 예은 결혼합니다</title>
 <meta property="og:title" content="상연 ♥ 예은 결혼합니다" />
 <meta property="og:description" content="2026년 10월 17일 토요일 오전 11시, 더화이트베일 W홀" />
-<meta property="og:image" content="https://naturalflavo.github.io/wedding/photos/main.jpg" />
 <meta property="og:url" content="https://naturalflavo.github.io/wedding/classic/" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -230,9 +229,6 @@
   <section class="card cover fade">
     <div class="wedding-date" id="coverDate"></div>
     <div class="day-of-week" id="coverDow"></div>
-    <div class="image-wrapper">
-      <img src="../photos/main.jpg" alt="우상연과 강예은" />
-    </div>
     <div class="subtitle">Save the date for the wedding of</div>
     <div class="names">
       <span id="groomName"></span>
@@ -277,21 +273,21 @@
   </section>
 
   <!-- 갤러리 -->
-  <section class="card fade">
+  <section class="card fade" hidden>
     <h2 class="english">Gallery</h2>
     <div class="carousel-wrap">
       <div class="carousel" id="carousel">
-        <div class="c-item"><img src="../photos/gallery/run.jpg" alt="달려가는 순간" /></div>
-        <div class="c-item"><img src="../photos/gallery/g01.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g02.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g06.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g07.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g08.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g09.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g10.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g11.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g12.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g13.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/run.jpg" alt="달려가는 순간" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g01.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g02.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g06.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g07.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g08.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g09.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g10.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g11.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g12.jpg" alt="" loading="lazy" /></div>
+        <div class="c-item"><img data-src="../photos/gallery/g13.jpg" alt="" loading="lazy" /></div>
       </div>
       <button class="c-arrow left" id="cPrev" aria-label="이전 사진">‹</button>
       <button class="c-arrow right" id="cNext" aria-label="다음 사진">›</button>
@@ -592,6 +588,7 @@ $("shareBtn").addEventListener("click", () => copyText(location.href, "청첩장
 /* 갤러리 캐러셀 */
 (() => {
   const car = document.getElementById("carousel");
+  if (!car || car.closest("[hidden]")) return;
   const items = [...car.children];
   const dots = document.getElementById("cDots");
   dots.innerHTML = items.map((_, i) => `<button aria-label="${i + 1}번째 사진"></button>`).join("");
