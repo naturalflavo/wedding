@@ -66,7 +66,7 @@
 
   /* ---------- 인사말 ---------- */
   .greeting p { font-size: 15px; color: var(--ink); }
-  .greeting .poem { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 28px; }
+  .greeting .poem { font-size: 14.5px; color: #5d6e7e; margin-bottom: 28px; }
   .parents { margin-top: 36px; font-size: 14.5px; }
   .parents .row { margin: 6px 0; }
   .parents .rel { color: var(--ink-soft); font-size: 13px; margin: 0 8px; }
@@ -102,17 +102,11 @@
 
   /* ---------- 갤러리 ---------- */
   .gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .gallery .ph {
-    aspect-ratio: 1; border-radius: 10px; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    color: #93a8b8; font-size: 12px; letter-spacing: 2px;
+  .gallery img {
+    width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block;
   }
-  .gallery .ph:nth-child(1) { background: linear-gradient(135deg,#dcebf7,#c9dded); grid-column: span 2; aspect-ratio: 16/10; }
-  .gallery .ph:nth-child(2) { background: linear-gradient(135deg,#d8e9f4,#c3d9e9); }
-  .gallery .ph:nth-child(3) { background: linear-gradient(135deg,#d9ecdf,#c5ddcd); }
-  .gallery .ph:nth-child(4) { background: linear-gradient(135deg,#d3e5f1,#bed4e6); }
-  .gallery .ph:nth-child(5) { background: linear-gradient(135deg,#d4e8da,#c0d8c9); }
-  .gallery img { width: 100%; height: 100%; object-fit: cover; }
+  .gallery .wide { grid-column: span 2; aspect-ratio: 16 / 9; }
+  .gallery .tall { aspect-ratio: 3 / 4; }
 
   /* ---------- 오시는 길 ---------- */
   .venue-name { font-size: 17px; margin-bottom: 4px; }
@@ -216,7 +210,7 @@
       저희도 하나는 굳게 정했습니다.<br /><br />
       같이 살겠습니다.<br />
       기왕 사는 거, 잘 살겠습니다.<br /><br />
-      시월 열이렛날 토요일 오전 열한 시,<br />
+      10월 17일 토요일 오전 11시,<br />
       저희의 첫날을 지켜봐 주세요.
     </p>
     <div class="parents" id="parents"></div>
@@ -244,11 +238,19 @@
     <p class="label">Gallery</p>
     <h2>우리의 순간들</h2>
     <div class="gallery">
-      <div class="ph">사진 1</div>
-      <div class="ph">사진 2</div>
-      <div class="ph">사진 3</div>
-      <div class="ph">사진 4</div>
-      <div class="ph">사진 5</div>
+      <img class="wide" src="../photos/gallery/g03.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g01.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g02.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g06.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g07.jpg" alt="" loading="lazy" />
+      <img class="wide" src="../photos/gallery/g04.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g08.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g09.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g10.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g11.jpg" alt="" loading="lazy" />
+      <img class="wide" src="../photos/gallery/g05.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g12.jpg" alt="" loading="lazy" />
+      <img class="tall" src="../photos/gallery/g13.jpg" alt="" loading="lazy" />
     </div>
   </section>
 
