@@ -33,12 +33,12 @@
   /* 밤하늘 별 */
   #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
   .st {
-    position: absolute; background: #fff; border-radius: 50%; opacity: .15;
+    position: absolute; background: #fff; border-radius: 50%; opacity: .25;
     animation: tw var(--d) ease-in-out var(--dl) infinite;
   }
   @keyframes tw {
-    0%, 100% { opacity: .1; transform: scale(1); }
-    50% { opacity: .95; transform: scale(1.3); }
+    0%, 100% { opacity: .18; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.35); }
   }
   .wrap { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; overflow-x: hidden; }
 
@@ -63,6 +63,7 @@
       rgba(12,21,34,0) 0%, rgba(12,21,34,0) 84%,
       rgba(12,21,34,.7) 95%, var(--bg) 100%);
   }
+  .cover-stars { position: absolute; inset: 0 0 25% 0; overflow: hidden; pointer-events: none; }
   .cover-top {
     position: absolute; top: calc(36px + env(safe-area-inset-top)); left: 0; right: 0;
     text-align: center;
@@ -214,6 +215,7 @@
   <section class="cover">
     <img class="cover-photo" src="../photos/main-night.jpg" alt="우상연과 강예은" />
     <div class="cover-veil"></div>
+    <div class="cover-stars" id="coverStars"></div>
     <div class="cover-top">
       <p class="date-num" id="coverDate"></p>
     </div>
@@ -324,7 +326,6 @@
   <footer class="fade">
     <button class="share-btn" id="shareBtn">🔗 청첩장 링크 복사하기</button>
     <p id="footerNames"></p>
-    <a class="ver-link" href="../sunsin/">이순신 버전으로 보기 →</a>
   </footer>
 
 </div>
@@ -335,8 +336,8 @@
    ★ 여기만 수정하면 됩니다 ★
 =================================================================== */
 const CONFIG = {
-  groom: { name: "우상연", father: "우OO", mother: "OOO", order: "장남", phone: "010-0000-0000" },
-  bride: { name: "강예은", father: "강OO", mother: "OOO", order: "장녀", phone: "010-1111-1111" },
+  groom: { name: "우상연", father: "우경진", mother: "주현옥", order: "장남", phone: "010-3050-2397" },
+  bride: { name: "강예은", father: "강성철", mother: "김태순", order: "차녀", phone: "010-2769-5738" },
 
   // 예식 일시 (년, 월, 일, 시, 분)
   date: new Date(2026, 9, 17, 11, 0),   // ※ 월은 0부터: 9 = 10월
@@ -349,27 +350,30 @@ const CONFIG = {
 
   accounts: {
     groom: [
-      { bank: "국민은행", num: "000000-00-000000", holder: "우상연" },
-      { bank: "신한은행", num: "000-000-000000", holder: "우OO (부)" },
+      { bank: "우리은행", num: "1002-550-793919", holder: "우상연" },
+      // 혼주 계좌는 확정되면 여기에 추가
     ],
     bride: [
-      { bank: "카카오뱅크", num: "0000-00-0000000", holder: "강예은" },
-      { bank: "우리은행", num: "0000-000-000000", holder: "강OO (부)" },
+      { bank: "새마을금고", num: "9003-2573-83150", holder: "강예은" },
     ],
   },
 };
 /* =================================================================== */
 
-/* 밤하늘 별 생성 */
+/* 밤하늘 별 생성 (배경 + 커버 사진 위) */
 (() => {
-  const N = 90;
-  let s = "";
-  for (let i = 0; i < N; i++) {
-    const size = (Math.random() * 1.8 + 0.8).toFixed(1);
-    const glow = Math.random() < 0.12 ? "box-shadow:0 0 6px rgba(255,255,255,.8);" : "";
-    s += `<span class="st" style="left:${(Math.random() * 100).toFixed(2)}%;top:${(Math.random() * 100).toFixed(2)}%;width:${size}px;height:${size}px;--d:${(Math.random() * 3 + 2).toFixed(1)}s;--dl:${(Math.random() * 4).toFixed(1)}s;${glow}"></span>`;
-  }
-  document.getElementById("stars").innerHTML = s;
+  const fill = (el, n, minSize, maxSize, glowP, topMax) => {
+    if (!el) return;
+    let s = "";
+    for (let i = 0; i < n; i++) {
+      const size = (Math.random() * (maxSize - minSize) + minSize).toFixed(1);
+      const glow = Math.random() < glowP ? "box-shadow:0 0 7px rgba(255,255,255,.85);" : "";
+      s += `<span class="st" style="left:${(Math.random() * 100).toFixed(2)}%;top:${(Math.random() * topMax).toFixed(2)}%;width:${size}px;height:${size}px;--d:${(Math.random() * 3 + 2).toFixed(1)}s;--dl:${(Math.random() * 4).toFixed(1)}s;${glow}"></span>`;
+    }
+    el.innerHTML = s;
+  };
+  fill(document.getElementById("stars"), 110, 1.2, 3.4, 0.18, 100);
+  fill(document.getElementById("coverStars"), 30, 1.0, 2.6, 0.25, 68);
 })();
 
 const $ = (id) => document.getElementById(id);
