@@ -643,7 +643,11 @@ $("shareBtn").addEventListener("click", () => copyText(location.href, "청첩장
   setActive(0);
   const idx = () => Math.round(car.scrollLeft / car.clientWidth);
   car.addEventListener("scroll", () => setActive(Math.max(0, Math.min(items.length - 1, idx()))), { passive: true });
-  const go = (i) => car.scrollTo({ left: Math.max(0, Math.min(items.length - 1, i)) * car.clientWidth, behavior: "smooth" });
+  const go = (i) => {
+    const t = Math.max(0, Math.min(items.length - 1, i));
+    setActive(t);
+    car.scrollTo({ left: t * car.clientWidth, behavior: "smooth" });
+  };
   document.getElementById("cPrev").addEventListener("click", () => go(idx() - 1));
   document.getElementById("cNext").addEventListener("click", () => go(idx() + 1));
 
