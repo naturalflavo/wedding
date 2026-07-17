@@ -29,6 +29,7 @@
     color: var(--ink);
     line-height: 1.8;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
   /* 밤하늘 별 */
   #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
@@ -40,7 +41,7 @@
     0%, 100% { opacity: .18; transform: scale(1); }
     50% { opacity: 1; transform: scale(1.35); }
   }
-  .wrap { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; overflow-x: hidden; }
+  .wrap { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; }
 
   /* ---------- 공통 ---------- */
   section { padding: 72px 28px; text-align: center; }

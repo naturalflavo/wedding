@@ -13,23 +13,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&display=swap" rel="stylesheet" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     font-family: "Noto Serif KR", serif;
     color: #35434f;
+    background: #f7fafc;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-  .stage {
-    position: relative; min-height: 100svh;
-    display: flex; flex-direction: column; justify-content: space-between; align-items: center;
-    overflow: hidden;
-  }
-  .bg {
+
+  /* 첫 화면: 사진 */
+  .hero { position: relative; height: 100svh; overflow: hidden; }
+  .hero .bg {
     position: absolute; inset: 0;
     background: url("photos/main.jpg") center / cover no-repeat;
   }
-  .scrim {
+  .hero .scrim {
     position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(30,60,90,.18) 0%, rgba(30,60,90,0) 22%, rgba(247,250,252,0) 68%, rgba(247,250,252,.5) 82%, rgba(247,250,252,.95) 94%, #f7fafc 100%);
+    background: linear-gradient(180deg, rgba(30,60,90,.18) 0%, rgba(30,60,90,0) 24%, rgba(247,250,252,0) 82%, rgba(247,250,252,.9) 97%, #f7fafc 100%);
   }
   .content-top {
     position: relative; z-index: 1; text-align: center;
@@ -41,48 +42,77 @@
   .names { font-size: 27px; font-weight: 400; letter-spacing: 2px; }
   .names .amp { font-size: 18px; margin: 0 12px; font-style: italic; opacity: .85; }
   .place { margin-top: 10px; font-size: 13.5px; opacity: .92; }
-  .content-bottom {
-    position: relative; z-index: 1; width: 100%; max-width: 430px;
-    text-align: center;
-    padding: 0 28px calc(40px + env(safe-area-inset-bottom));
+
+  /* 스크롤 힌트 */
+  .hint {
+    position: absolute; left: 0; right: 0;
+    bottom: calc(22px + env(safe-area-inset-bottom));
+    text-align: center; z-index: 1; color: #4d6274;
+    animation: bounce 2s ease-in-out infinite;
   }
-  .pick { font-size: 11px; letter-spacing: 4px; color: #5f87a8; text-transform: uppercase; margin-bottom: 14px; }
-  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .hint small { display: block; font-size: 11.5px; letter-spacing: 2px; margin-bottom: 2px; }
+  .hint .chev { font-size: 20px; line-height: 1; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(7px); }
+  }
+
+  /* 선택 섹션 */
+  .pick-section {
+    max-width: 430px; margin: 0 auto; text-align: center;
+    padding: 72px 28px calc(80px + env(safe-area-inset-bottom));
+  }
+  .pick { font-size: 11px; letter-spacing: 4px; color: #5f87a8; text-transform: uppercase; margin-bottom: 8px; }
+  .pick-title { font-size: 19px; font-weight: 500; margin-bottom: 28px; }
+  .cards { display: grid; gap: 14px; }
   .cards a {
-    display: block; padding: 18px 10px 16px; border-radius: 14px; text-decoration: none;
-    background: rgba(255,255,255,.94); border: 1px solid #dde7ee; color: #35434f;
-    box-shadow: 0 8px 24px rgba(80, 110, 140, .12);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 24px; border-radius: 16px; text-decoration: none;
+    text-align: left;
   }
-  .cards .t { font-size: 15.5px; }
-  .cards .s { display: block; margin-top: 6px; font-size: 11.5px; color: #83919c; line-height: 1.5; }
-  .cards a.night { background: rgba(15, 25, 42, .92); border-color: #2b3d55; color: #edf2f9; }
+  .cards .t { font-size: 17px; }
+  .cards .s { display: block; margin-top: 4px; font-size: 12px; }
+  .cards .go { font-size: 16px; opacity: .6; }
+  .cards a.night { background: #101a2a; border: 1px solid #2b3d55; color: #edf2f9; }
   .cards a.night .s { color: #9db0c5; }
-  .cards a.sea { background: rgba(13, 26, 33, .92); border-color: #2b4a55; color: #edf3f7; }
+  .cards a.sea { background: #0d1a21; border: 1px solid #2b4a55; color: #edf3f7; }
   .cards a.sea .s { color: #96acb8; }
 </style>
 </head>
 <body>
-<div class="stage">
-  <div class="bg"></div>
-  <div class="scrim"></div>
-  <div class="content-top">
-    <p class="date">2026. 10. 17. 토</p>
-    <p class="names">우상연<span class="amp">&amp;</span>강예은</p>
-    <p class="place">더화이트베일 4층 W홀 · 오전 11시</p>
-  </div>
-  <div class="content-bottom">
-    <p class="pick">Choose Your Invitation</p>
-    <div class="cards">
-      <a class="night" href="star/">
-        <span class="t">✦ 별빛 편</span>
-        <span class="s">처음 만난 그날<br />출발한 빛</span>
-      </a>
-      <a class="sea" href="sunsin/">
-        <span class="t">☾ 이순신 편</span>
-        <span class="s">같이 살기로<br />했습니다</span>
-      </a>
+  <div class="hero">
+    <div class="bg"></div>
+    <div class="scrim"></div>
+    <div class="content-top">
+      <p class="date">2026. 10. 17. 토</p>
+      <p class="names">우상연<span class="amp">&amp;</span>강예은</p>
+      <p class="place">더화이트베일 4층 W홀 · 오전 11시</p>
+    </div>
+    <div class="hint">
+      <small>위로 밀어주세요</small>
+      <div class="chev">⌄</div>
     </div>
   </div>
-</div>
+
+  <section class="pick-section">
+    <p class="pick">Choose Your Invitation</p>
+    <p class="pick-title">초대장을 골라 열어보세요</p>
+    <div class="cards">
+      <a class="night" href="star/">
+        <span>
+          <span class="t">✦ 별빛 편</span>
+          <span class="s">처음 만난 그날 출발한 빛</span>
+        </span>
+        <span class="go">→</span>
+      </a>
+      <a class="sea" href="sunsin/">
+        <span>
+          <span class="t">☾ 이순신 편</span>
+          <span class="s">같이 살기로 했습니다</span>
+        </span>
+        <span class="go">→</span>
+      </a>
+    </div>
+  </section>
 </body>
 </html>

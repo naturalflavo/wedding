@@ -29,6 +29,7 @@
     color: var(--ink);
     line-height: 1.8;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
   /* 밤바다 풍경: 달 · 잔별 · 물결 */
   #scenery { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
@@ -113,7 +114,7 @@
     85% { opacity: 0; transform: scale(1.7); }
     100% { opacity: 0; }
   }
-  .wrap { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; overflow-x: hidden; }
+  .wrap { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; }
 
   /* ---------- 공통 ---------- */
   section { padding: 72px 28px; text-align: center; }
