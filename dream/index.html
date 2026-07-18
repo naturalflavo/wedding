@@ -98,12 +98,14 @@
   .cover { position: relative; padding: 0; }
   .cover-photo {
     display: block; width: 100%; height: 100svh; object-fit: cover;
+    -webkit-mask-image: linear-gradient(180deg, #000 68%, rgba(0, 0, 0, .5) 86%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 68%, rgba(0, 0, 0, .5) 86%, transparent 100%);
   }
   .cover-veil {
     position: absolute; inset: 0;
     background: linear-gradient(180deg,
       rgba(64, 36, 96, .38) 0%, rgba(64, 36, 96, .12) 30%, rgba(36, 26, 62, 0) 55%,
-      rgba(36, 26, 62, .5) 84%, var(--bg) 100%);
+      rgba(30, 22, 56, .35) 100%);
   }
   .cover-stars { position: absolute; inset: 0 0 25% 0; overflow: hidden; pointer-events: none; }
   .cover-top {
