@@ -161,49 +161,44 @@
   .dday-msg { margin-top: 20px; font-size: 13.5px; color: var(--ink-soft); }
   .dday-msg b { color: var(--accent); font-weight: 500; }
 
-  /* ---------- 갤러리 (캐러셀) ---------- */
-  .carousel-wrap { position: relative; }
-  .carousel {
-    display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch; scrollbar-width: none; border-radius: 12px;
+  /* ---------- 갤러리 (격자) ---------- */
+  .grid-gallery {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
   }
-  .carousel::-webkit-scrollbar { display: none; }
-  .c-item {
-    flex: 0 0 100%; aspect-ratio: 3 / 4; scroll-snap-align: center;
-    display: flex; align-items: center; justify-content: center;
+  .grid-gallery img {
+    width: 100%; aspect-ratio: 3 / 4; object-fit: cover;
+    border-radius: 8px; display: block; cursor: pointer;
+    transition: transform .35s ease, opacity .35s ease;
   }
-  .c-item img { max-width: 100%; max-height: 100%; border-radius: 10px; }
-  .c-arrow {
-    position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
-    width: 36px; height: 36px; border: none; border-radius: 50%;
-    background: rgba(20, 30, 40, .35); color: #fff; font-size: 20px; cursor: pointer;
+  .grid-gallery img:active { transform: scale(.97); opacity: .85; }
+  .grid-gallery img:nth-child(7n+1) { grid-column: span 2; aspect-ratio: 4 / 3; }
+  .lightbox {
+    position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, .94);
+    display: none; align-items: center; justify-content: center;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 94vw; max-height: 84vh; object-fit: contain;
+    border-radius: 6px; user-select: none;
+  }
+  .lb-close, .lb-prev, .lb-next {
+    position: absolute; border: none; cursor: pointer; color: #fff;
+    background: rgba(255, 255, 255, .12); backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center; line-height: 1;
   }
-  .c-arrow.left { left: 8px; }
-  .c-arrow.right { right: 8px; }
-  .c-dots { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
-  .c-dots button { width: 8px; height: 8px; border-radius: 50%; border: none; padding: 0; background: var(--line); cursor: pointer; }
-  .c-dots button.active { background: var(--accent); }
-  .all-btn {
-    margin-top: 18px; border: 1px solid var(--line); cursor: pointer;
-    background: transparent; color: inherit; font-family: inherit; font-size: 13px;
-    padding: 10px 26px; border-radius: 22px;
+  .lb-close {
+    top: calc(16px + env(safe-area-inset-top)); right: 16px;
+    width: 38px; height: 38px; border-radius: 50%; font-size: 20px;
   }
-  .photo-modal {
-    position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .6);
-    display: none; align-items: center; justify-content: center; padding: 20px;
+  .lb-prev, .lb-next {
+    top: 50%; transform: translateY(-50%);
+    width: 42px; height: 42px; border-radius: 50%; font-size: 24px;
   }
-  .photo-modal.open { display: flex; }
-  .pm-box {
-    background: var(--card); border-radius: 16px; width: 100%; max-width: 400px;
-    max-height: 84vh; display: flex; flex-direction: column; padding: 18px;
-  }
-  .pm-title { text-align: center; font-size: 15px; margin-bottom: 12px; color: var(--accent); }
-  .pm-grid { overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .pm-grid img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; cursor: pointer; display: block; }
-  .pm-close {
-    margin-top: 14px; border: none; padding: 12px; border-radius: 10px;
-    background: var(--accent-soft); color: inherit; font-family: inherit; font-size: 13px; cursor: pointer;
+  .lb-prev { left: 12px; }
+  .lb-next { right: 12px; }
+  .lb-count {
+    position: absolute; bottom: calc(22px + env(safe-area-inset-bottom));
+    left: 0; right: 0; text-align: center; color: #fff; font-size: 13px; opacity: .8;
   }
 
   /* ---------- 오시는 길 ---------- */
@@ -400,31 +395,31 @@
   <section class="fade">
     <p class="label">Gallery</p>
     <h2>우리의 순간들</h2>
-    <div class="carousel-wrap">
-      <div class="carousel" id="carousel">
-        <div class="c-item"><img src="../photos/gallery/g01.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g02.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g03.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g04.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g05.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g06.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g07.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g08.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g09.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g10.jpg" alt="" loading="lazy" /></div>
-        <div class="c-item"><img src="../photos/gallery/g11.jpg" alt="" loading="lazy" /></div>
-      </div>
-      <button class="c-arrow left" id="cPrev" aria-label="이전 사진">‹</button>
-      <button class="c-arrow right" id="cNext" aria-label="다음 사진">›</button>
-      <div class="c-dots" id="cDots"></div>
-      <button class="all-btn" id="allBtn">사진 전체보기</button>
+    <div class="grid-gallery" id="gallery">
+      <img src="../photos/gallery/g01.jpg" alt="" loading="lazy" data-i="0" />
+      <img src="../photos/gallery/g02.jpg" alt="" loading="lazy" data-i="1" />
+      <img src="../photos/gallery/g03.jpg" alt="" loading="lazy" data-i="2" />
+      <img src="../photos/gallery/g04.jpg" alt="" loading="lazy" data-i="3" />
+      <img src="../photos/gallery/g05.jpg" alt="" loading="lazy" data-i="4" />
+      <img src="../photos/gallery/g06.jpg" alt="" loading="lazy" data-i="5" />
+      <img src="../photos/gallery/g07.jpg" alt="" loading="lazy" data-i="6" />
+      <img src="../photos/gallery/g08.jpg" alt="" loading="lazy" data-i="7" />
+      <img src="../photos/gallery/g09.jpg" alt="" loading="lazy" data-i="8" />
+      <img src="../photos/gallery/g10.jpg" alt="" loading="lazy" data-i="9" />
+      <img src="../photos/gallery/g11.jpg" alt="" loading="lazy" data-i="10" />
+      <img src="../photos/gallery/g12.jpg" alt="" loading="lazy" data-i="11" />
+      <img src="../photos/gallery/g13.jpg" alt="" loading="lazy" data-i="12" />
+      <img src="../photos/gallery/g14.jpg" alt="" loading="lazy" data-i="13" />
+      <img src="../photos/gallery/g15.jpg" alt="" loading="lazy" data-i="14" />
+      <img src="../photos/gallery/g16.jpg" alt="" loading="lazy" data-i="15" />
+      <img src="../photos/gallery/g17.jpg" alt="" loading="lazy" data-i="16" />
     </div>
-    <div class="photo-modal" id="photoModal">
-      <div class="pm-box">
-        <p class="pm-title">사진 전체보기</p>
-        <div class="pm-grid" id="pmGrid"></div>
-        <button class="pm-close" id="pmClose">닫기</button>
-      </div>
+    <div class="lightbox" id="lightbox">
+      <button class="lb-close" id="lbClose" aria-label="닫기">✕</button>
+      <button class="lb-prev" id="lbPrev" aria-label="이전 사진">‹</button>
+      <img id="lbImg" src="" alt="" />
+      <button class="lb-next" id="lbNext" aria-label="다음 사진">›</button>
+      <p class="lb-count" id="lbCount"></p>
     </div>
   </section>
 
@@ -675,38 +670,45 @@ $("shareBtn").addEventListener("click", () => copyText(location.href, "청첩장
   window.addEventListener("click", kick, { once: true });
 })();
 
-/* 갤러리 캐러셀 */
+/* 갤러리 격자 + 라이트박스 */
 (() => {
-  const car = document.getElementById("carousel");
-  if (!car || car.closest("[hidden]")) return;
-  const items = [...car.children];
-  const dots = document.getElementById("cDots");
-  dots.innerHTML = items.map((_, i) => `<button aria-label="${i + 1}번째 사진"></button>`).join("");
-  const dotEls = [...dots.children];
-  const setActive = (i) => dotEls.forEach((el, j) => el.classList.toggle("active", i === j));
-  setActive(0);
-  const idx = () => Math.round(car.scrollLeft / car.clientWidth);
-  car.addEventListener("scroll", () => setActive(Math.max(0, Math.min(items.length - 1, idx()))), { passive: true });
-  const go = (i) => {
-    const t = Math.max(0, Math.min(items.length - 1, i));
-    setActive(t);
-    car.scrollTo({ left: t * car.clientWidth, behavior: "smooth" });
-  };
-  document.getElementById("cPrev").addEventListener("click", () => go(idx() - 1));
-  document.getElementById("cNext").addEventListener("click", () => go(idx() + 1));
+  const grid = document.getElementById("gallery");
+  if (!grid) return;
+  const imgs = [...grid.querySelectorAll("img")];
+  const box = document.getElementById("lightbox");
+  const lbImg = document.getElementById("lbImg");
+  const count = document.getElementById("lbCount");
+  let cur = 0;
 
-  const modal = document.getElementById("photoModal");
-  const grid = document.getElementById("pmGrid");
-  grid.innerHTML = items.map((it, i) => `<img src="${it.querySelector("img").getAttribute("src")}" alt="" loading="lazy" data-i="${i}" />`).join("");
-  document.getElementById("allBtn").addEventListener("click", () => modal.classList.add("open"));
-  document.getElementById("pmClose").addEventListener("click", () => modal.classList.remove("open"));
-  modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
+  const show = (i) => {
+    cur = (i + imgs.length) % imgs.length;
+    lbImg.src = imgs[cur].getAttribute("src");
+    count.textContent = `${cur + 1} / ${imgs.length}`;
+  };
+  const open = (i) => { show(i); box.classList.add("open"); document.body.style.overflow = "hidden"; };
+  const close = () => { box.classList.remove("open"); document.body.style.overflow = ""; };
+
   grid.addEventListener("click", (e) => {
     const im = e.target.closest("img");
-    if (!im) return;
-    modal.classList.remove("open");
-    go(+im.dataset.i);
+    if (im) open(+im.dataset.i);
   });
+  document.getElementById("lbClose").addEventListener("click", close);
+  document.getElementById("lbPrev").addEventListener("click", (e) => { e.stopPropagation(); show(cur - 1); });
+  document.getElementById("lbNext").addEventListener("click", (e) => { e.stopPropagation(); show(cur + 1); });
+  box.addEventListener("click", (e) => { if (e.target === box || e.target === lbImg) close(); });
+  document.addEventListener("keydown", (e) => {
+    if (!box.classList.contains("open")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") show(cur - 1);
+    if (e.key === "ArrowRight") show(cur + 1);
+  });
+  // 스와이프
+  let sx = 0;
+  box.addEventListener("touchstart", (e) => { sx = e.changedTouches[0].clientX; }, { passive: true });
+  box.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 45) show(cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
 })();
 
 /* 스크롤 페이드인 */
