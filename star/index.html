@@ -516,21 +516,96 @@ const CONFIG = {
       </svg>
     </div>`);
 
-  // 소행성: 크레이터 있는 암석이 천천히 굴러가며 가로지름
-  const ROCK = `
-      <svg viewBox="0 0 60 52" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M12,20 Q16,6 30,5 Q45,4 52,14 Q58,24 52,36 Q46,48 30,48 Q14,48 8,36 Q5,27 12,20 Z" fill="#2a3646" stroke="rgba(205, 222, 250, .3)" stroke-width="1.2" />
-        <path d="M12,20 Q16,6 30,5 Q45,4 52,14 Q50,20 40,22 Q24,25 12,20 Z" fill="#42536b" />
-        <circle cx="24" cy="33" r="5" fill="#1d2836" />
-        <path d="M20,30 a5,5 0 0 1 8,-1" stroke="#4a5b73" stroke-width="1" fill="none" />
-        <circle cx="40" cy="30" r="3" fill="#1d2836" />
-        <circle cx="33" cy="41" r="2.2" fill="#212d3d" />
-        <circle cx="44" cy="40" r="1.5" fill="#233040" />
+  // 소행성: 변위 필터로 거칠어진 실루엣 + 크레이터·레골리스 질감 (공용 defs 1회 정의)
+  document.body.insertAdjacentHTML("beforeend", `
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <radialGradient id="astG" cx="32%" cy="27%" r="88%">
+          <stop offset="0%" stop-color="#a3b1c4" /><stop offset="30%" stop-color="#78889d" />
+          <stop offset="60%" stop-color="#4a586d" /><stop offset="100%" stop-color="#1b2431" />
+        </radialGradient>
+        <radialGradient id="astShade" cx="30%" cy="26%" r="105%">
+          <stop offset="55%" stop-color="#000208" stop-opacity="0" />
+          <stop offset="85%" stop-color="#020509" stop-opacity=".45" />
+          <stop offset="100%" stop-color="#010306" stop-opacity=".78" />
+        </radialGradient>
+        <filter id="astRough" x="-8%" y="-8%" width="116%" height="116%">
+          <feTurbulence type="fractalNoise" baseFrequency=".055" numOctaves="3" seed="7" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <filter id="astGrain" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency=".5" numOctaves="2" seed="11" />
+          <feComponentTransfer><feFuncA type="discrete" tableValues="0 0 0 .5 .9" /></feComponentTransfer>
+          <feComposite in2="SourceAlpha" operator="in" />
+          <feColorMatrix type="matrix" values="0 0 0 0 .04  0 0 0 0 .07  0 0 0 0 .11  0 0 0 1 0" />
+        </filter>
+      </defs>
+    </svg>`);
+  // A형: 둥근 크레이터 소행성
+  const ROCK_A_BASE = "M16,46 L22,28 L36,15 L54,9 L74,8 L90,15 L104,27 L112,42 L113,58 L106,74 L93,88 L74,96 L54,97 L36,91 L22,80 L13,64 Z";
+  const ROCK_A = `
+      <svg viewBox="0 0 120 104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g filter="url(#astRough)">
+          <path d="${ROCK_A_BASE}" fill="url(#astG)" />
+          <path d="M16,46 L22,28 L36,15 L54,9 L74,8 L90,15" fill="none" stroke="rgba(214,226,240,.5)" stroke-width="1.6" />
+          <path d="M30,70 Q52,64 74,68" stroke="rgba(10,15,23,.5)" stroke-width="1.1" fill="none" />
+          <path d="M38,80 Q56,75 70,79" stroke="rgba(10,15,23,.35)" stroke-width=".9" fill="none" />
+          <ellipse cx="44" cy="56" rx="13" ry="11.5" fill="#242f40" />
+          <path d="M34,62 A13,11.5 0 0 0 55,63" stroke="#93a4ba" stroke-width="1.5" fill="none" opacity=".85" />
+          <path d="M33,52 A13,11.5 0 0 1 48,45.5" stroke="#0d131c" stroke-width="1.6" fill="none" opacity=".9" />
+          <ellipse cx="44" cy="57" rx="5" ry="4.2" fill="#1a2330" />
+          <ellipse cx="80" cy="36" rx="8" ry="7" fill="#2b3748" />
+          <path d="M74,40 A8,7 0 0 0 87,40" stroke="#9db0c6" stroke-width="1.2" fill="none" opacity=".8" />
+          <path d="M73.5,33.5 A8,7 0 0 1 82,29.5" stroke="#10161f" stroke-width="1.3" fill="none" opacity=".9" />
+          <ellipse cx="68" cy="76" rx="7" ry="6.2" fill="#1f2937" />
+          <path d="M62.5,79.5 A7,6.2 0 0 0 74,79.8" stroke="#7e8fa5" stroke-width="1.1" fill="none" opacity=".75" />
+          <ellipse cx="28" cy="38" rx="4.5" ry="4" fill="#26313f" />
+          <path d="M24.5,40.5 A4.5,4 0 0 0 32,40.8" stroke="#8899ae" stroke-width=".9" fill="none" opacity=".7" />
+          <ellipse cx="92" cy="60" rx="5" ry="4.4" fill="#1e2836" />
+          <path d="M88,62.6 A5,4.4 0 0 0 96.5,62.4" stroke="#7c8da2" stroke-width=".9" fill="none" opacity=".7" />
+          <ellipse cx="58" cy="27" rx="3.5" ry="3" fill="#2c3849" />
+          <ellipse cx="88" cy="82" rx="3" ry="2.6" fill="#151d29" />
+          <ellipse cx="24" cy="60" rx="2.6" ry="2.3" fill="#202b3a" />
+          <circle cx="50" cy="88" r="1.6" fill="#141c27" /><circle cx="76" cy="56" r="1.4" fill="#131b26" />
+          <circle cx="38" cy="26" r="1.3" fill="#334052" /><circle cx="63" cy="42" r="1.2" fill="#8fa0b5" />
+          <circle cx="34" cy="47" r="1" fill="#96a7bc" /><circle cx="83" cy="70" r="1.1" fill="#0f151f" />
+          <circle cx="99" cy="47" r="1.4" fill="#18202d" />
+          <path d="${ROCK_A_BASE}" fill="#fff" filter="url(#astGrain)" opacity=".5" />
+          <path d="${ROCK_A_BASE}" fill="url(#astShade)" />
+        </g>
+      </svg>`;
+  // B형: 길쭉한 땅콩형 소행성
+  const ROCK_B_BASE = "M8,40 L14,26 L28,16 L46,12 L62,16 L74,26 L86,20 L104,14 L124,17 L138,28 L144,40 L140,52 L126,61 L106,64 L88,58 L74,50 L60,58 L42,62 L24,58 L12,50 Z";
+  const ROCK_B = `
+      <svg viewBox="0 0 150 74" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g filter="url(#astRough)">
+          <path d="${ROCK_B_BASE}" fill="url(#astG)" />
+          <path d="M8,40 L14,26 L28,16 L46,12 L62,16 L74,26 L86,20 L104,14 L124,17" fill="none" stroke="rgba(214,226,240,.45)" stroke-width="1.4" />
+          <path d="M74,26 Q69,38 74,50" stroke="rgba(8,12,19,.55)" stroke-width="2.6" fill="none" />
+          <path d="M77,27 Q73,38 77,49" stroke="rgba(8,12,19,.25)" stroke-width="1.4" fill="none" />
+          <ellipse cx="36" cy="38" rx="7" ry="6.2" fill="#232e3f" />
+          <path d="M30.5,41.5 A7,6.2 0 0 0 42,41.8" stroke="#8fa0b6" stroke-width="1.1" fill="none" opacity=".8" />
+          <path d="M30,35.5 A7,6.2 0 0 1 38,32" stroke="#0e141d" stroke-width="1.2" fill="none" opacity=".9" />
+          <ellipse cx="112" cy="36" rx="8" ry="6.8" fill="#26313f" />
+          <path d="M105.5,39.5 A8,6.8 0 0 0 119,40" stroke="#93a4ba" stroke-width="1.2" fill="none" opacity=".8" />
+          <path d="M105,33 A8,6.8 0 0 1 114,29.5" stroke="#10161f" stroke-width="1.3" fill="none" opacity=".9" />
+          <ellipse cx="112" cy="37" rx="3" ry="2.5" fill="#19222f" />
+          <ellipse cx="94" cy="48" rx="4" ry="3.5" fill="#1e2836" />
+          <path d="M91,50.2 A4,3.5 0 0 0 97.5,50" stroke="#7c8da2" stroke-width=".8" fill="none" opacity=".7" />
+          <ellipse cx="52" cy="46" rx="4.5" ry="3.8" fill="#202b3a" />
+          <path d="M48.5,48.3 A4.5,3.8 0 0 0 56,48.2" stroke="#8496ac" stroke-width=".8" fill="none" opacity=".7" />
+          <ellipse cx="128" cy="44" rx="3.5" ry="3" fill="#1a2432" /><ellipse cx="22" cy="44" rx="3" ry="2.6" fill="#26313f" />
+          <circle cx="64" cy="30" r="1.4" fill="#313e50" /><circle cx="46" cy="24" r="1.1" fill="#8fa0b5" />
+          <circle cx="100" cy="26" r="1.2" fill="#96a7bc" /><circle cx="82" cy="42" r="1.3" fill="#121a25" />
+          <circle cx="130" cy="30" r="1" fill="#33405266" /><circle cx="30" cy="52" r="1.2" fill="#101720" />
+          <path d="${ROCK_B_BASE}" fill="#fff" filter="url(#astGrain)" opacity=".5" />
+          <path d="${ROCK_B_BASE}" fill="url(#astShade)" />
+        </g>
       </svg>`;
   document.getElementById("stars").insertAdjacentHTML("beforeend", `
-    <div class="asteroid" style="left:-8%;top:22%;width:17px;--d:150s;--dl:-40s;--t:46s;--tx:120vw;--ty:9vh;">${ROCK}</div>
-    <div class="asteroid" style="left:-8%;top:48%;width:26px;--d:190s;--dl:-120s;--t:64s;--tx:120vw;--ty:-7vh;">${ROCK}</div>
-    <div class="asteroid" style="left:-8%;top:72%;width:38px;--d:230s;--dl:-75s;--t:88s;--tx:120vw;--ty:5vh;">${ROCK}</div>`);
+    <div class="asteroid" style="left:-8%;top:20%;width:26px;--d:150s;--dl:-40s;--t:52s;--tx:120vw;--ty:9vh;">${ROCK_A}</div>
+    <div class="asteroid" style="left:-8%;top:47%;width:40px;--d:190s;--dl:-120s;--t:70s;--tx:120vw;--ty:-7vh;">${ROCK_B}</div>
+    <div class="asteroid" style="left:-8%;top:71%;width:52px;--d:230s;--dl:-75s;--t:95s;--tx:120vw;--ty:5vh;">${ROCK_A}</div>`);
 
   // 별똥별: 간헐적으로 하나씩 떨어짐
   const sky = document.getElementById("stars");
