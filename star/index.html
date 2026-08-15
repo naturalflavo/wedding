@@ -58,6 +58,19 @@
     6.5% { transform: rotate(145deg) translateX(420px); opacity: 0; }
     100% { transform: rotate(145deg) translateX(420px); opacity: 0; }
   }
+  .nebula { position: absolute; border-radius: 50%; filter: blur(2px); pointer-events: none; }
+  .galaxy { position: absolute; pointer-events: none; }
+  .galaxy svg { display: block; width: 100%; height: 100%; }
+  .asteroid { position: absolute; opacity: .92; pointer-events: none; animation: adrift var(--d) linear var(--dl) infinite; }
+  .asteroid svg { display: block; width: 100%; height: auto; animation: tumble var(--t) linear infinite; }
+  @keyframes adrift {
+    from { transform: translate(0, 0); }
+    to { transform: translate(var(--tx), var(--ty)); }
+  }
+  @keyframes tumble {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
   .wrap { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; }
 
   /* ---------- 공통 ---------- */
@@ -474,6 +487,48 @@ const CONFIG = {
   };
   fill(document.getElementById("stars"), 110, 1.2, 3.4, 0.18, 100);
   fill(document.getElementById("coverStars"), 30, 1.0, 2.6, 0.25, 68);
+
+  // 성운·은하: 별 뒤층에 은은하게
+  document.getElementById("stars").insertAdjacentHTML("afterbegin", `
+    <span class="nebula" style="left:6%;top:16%;width:240px;height:170px;background:radial-gradient(ellipse, rgba(128, 108, 198, .13), transparent 70%);"></span>
+    <span class="nebula" style="right:4%;top:52%;width:280px;height:210px;background:radial-gradient(ellipse, rgba(88, 138, 188, .11), transparent 70%);"></span>
+    <span class="nebula" style="left:38%;top:76%;width:200px;height:140px;background:radial-gradient(ellipse, rgba(233, 205, 143, .07), transparent 70%);"></span>
+    <div class="galaxy" style="left:11%;top:30%;width:74px;height:74px;opacity:.5;">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="galA"><stop offset="0" stop-color="#fff6e6" stop-opacity=".95" /><stop offset="38%" stop-color="#d9c8ee" stop-opacity=".4" /><stop offset="100%" stop-color="#8a7fb8" stop-opacity="0" /></radialGradient>
+        </defs>
+        <ellipse cx="50" cy="50" rx="46" ry="16" fill="url(#galA)" transform="rotate(-28 50 50)" />
+        <ellipse cx="50" cy="50" rx="27" ry="9" fill="url(#galA)" transform="rotate(-28 50 50)" opacity=".95" />
+        <circle cx="50" cy="50" r="3.2" fill="#fff" opacity=".95" />
+      </svg>
+    </div>
+    <div class="galaxy" style="right:8%;top:12%;width:100px;height:100px;opacity:.42;">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="galB"><stop offset="0" stop-color="#eafaff" stop-opacity=".9" /><stop offset="40%" stop-color="#a8cfe0" stop-opacity=".32" /><stop offset="100%" stop-color="#6d94b8" stop-opacity="0" /></radialGradient>
+        </defs>
+        <ellipse cx="50" cy="50" rx="45" ry="22" fill="url(#galB)" transform="rotate(18 50 50)" />
+        <ellipse cx="50" cy="50" rx="24" ry="11" fill="url(#galB)" transform="rotate(18 50 50)" opacity=".9" />
+        <circle cx="50" cy="50" r="2.8" fill="#fff" opacity=".9" />
+      </svg>
+    </div>`);
+
+  // 소행성: 크레이터 있는 암석이 천천히 굴러가며 가로지름
+  const ROCK = `
+      <svg viewBox="0 0 60 52" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12,20 Q16,6 30,5 Q45,4 52,14 Q58,24 52,36 Q46,48 30,48 Q14,48 8,36 Q5,27 12,20 Z" fill="#2a3646" stroke="rgba(205, 222, 250, .3)" stroke-width="1.2" />
+        <path d="M12,20 Q16,6 30,5 Q45,4 52,14 Q50,20 40,22 Q24,25 12,20 Z" fill="#42536b" />
+        <circle cx="24" cy="33" r="5" fill="#1d2836" />
+        <path d="M20,30 a5,5 0 0 1 8,-1" stroke="#4a5b73" stroke-width="1" fill="none" />
+        <circle cx="40" cy="30" r="3" fill="#1d2836" />
+        <circle cx="33" cy="41" r="2.2" fill="#212d3d" />
+        <circle cx="44" cy="40" r="1.5" fill="#233040" />
+      </svg>`;
+  document.getElementById("stars").insertAdjacentHTML("beforeend", `
+    <div class="asteroid" style="left:-8%;top:22%;width:17px;--d:150s;--dl:-40s;--t:46s;--tx:120vw;--ty:9vh;">${ROCK}</div>
+    <div class="asteroid" style="left:-8%;top:48%;width:26px;--d:190s;--dl:-120s;--t:64s;--tx:120vw;--ty:-7vh;">${ROCK}</div>
+    <div class="asteroid" style="left:-8%;top:72%;width:38px;--d:230s;--dl:-75s;--t:88s;--tx:120vw;--ty:5vh;">${ROCK}</div>`);
 
   // 별똥별: 간헐적으로 하나씩 떨어짐
   const sky = document.getElementById("stars");
