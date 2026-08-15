@@ -118,17 +118,34 @@
   .dday-msg { margin-top: 20px; font-size: 13.5px; color: var(--ink-soft); }
   .dday-msg b { color: var(--accent); font-weight: 500; }
 
-  /* ---------- 갤러리 (격자) ---------- */
-  .grid-gallery {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  /* ---------- 갤러리 (페이지형 격자) ---------- */
+  .gal-wrap { position: relative; }
+  .gal-viewport { overflow: hidden; }
+  .gal-track {
+    display: flex; transition: transform .4s cubic-bezier(.4, 0, .2, 1);
   }
-  .grid-gallery img {
-    width: 100%; aspect-ratio: 3 / 4; object-fit: cover;
-    border-radius: 8px; display: block; cursor: pointer;
-    transition: transform .35s ease, opacity .35s ease;
+  .gal-page {
+    flex: 0 0 100%; display: grid;
+    grid-template-columns: repeat(3, 1fr); gap: 6px;
+    align-content: start;
   }
-  .grid-gallery img:active { transform: scale(.97); opacity: .85; }
-  .grid-gallery img:nth-child(7n+1) { grid-column: span 2; aspect-ratio: 4 / 3; }
+  .gal-page img {
+    width: 100%; aspect-ratio: 1; object-fit: cover;
+    border-radius: 6px; display: block; cursor: pointer;
+    transition: opacity .25s ease;
+  }
+  .gal-page img:active { opacity: .7; }
+  .gal-nav {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin-top: 16px;
+  }
+  .gal-nav button {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line);
+    background: transparent; color: inherit; font-size: 17px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .gal-nav button:disabled { opacity: .3; cursor: default; }
+  .gal-page-num { font-size: 12.5px; opacity: .7; min-width: 46px; text-align: center; }
   .lightbox {
     position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, .94);
     display: none; align-items: center; justify-content: center;
@@ -305,24 +322,34 @@
   <section class="fade">
     <p class="label">Gallery</p>
     <h2>우리의 순간들</h2>
-    <div class="grid-gallery" id="gallery">
-      <img src="../photos/gallery/g01.jpg" alt="" loading="lazy" data-i="0" />
-      <img src="../photos/gallery/g02.jpg" alt="" loading="lazy" data-i="1" />
-      <img src="../photos/gallery/g03.jpg" alt="" loading="lazy" data-i="2" />
-      <img src="../photos/gallery/g04.jpg" alt="" loading="lazy" data-i="3" />
-      <img src="../photos/gallery/g05.jpg" alt="" loading="lazy" data-i="4" />
-      <img src="../photos/gallery/g06.jpg" alt="" loading="lazy" data-i="5" />
-      <img src="../photos/gallery/g07.jpg" alt="" loading="lazy" data-i="6" />
-      <img src="../photos/gallery/g08.jpg" alt="" loading="lazy" data-i="7" />
-      <img src="../photos/gallery/g09.jpg" alt="" loading="lazy" data-i="8" />
-      <img src="../photos/gallery/g10.jpg" alt="" loading="lazy" data-i="9" />
-      <img src="../photos/gallery/g11.jpg" alt="" loading="lazy" data-i="10" />
-      <img src="../photos/gallery/g12.jpg" alt="" loading="lazy" data-i="11" />
-      <img src="../photos/gallery/g13.jpg" alt="" loading="lazy" data-i="12" />
-      <img src="../photos/gallery/g14.jpg" alt="" loading="lazy" data-i="13" />
-      <img src="../photos/gallery/g15.jpg" alt="" loading="lazy" data-i="14" />
-      <img src="../photos/gallery/g16.jpg" alt="" loading="lazy" data-i="15" />
-      <img src="../photos/gallery/g17.jpg" alt="" loading="lazy" data-i="16" />
+    <div class="gal-wrap">
+      <div class="gal-viewport">
+        <div class="gal-track" id="galTrack"></div>
+      </div>
+      <div class="gal-nav">
+        <button id="galPrev" aria-label="이전 사진들">‹</button>
+        <span class="gal-page-num" id="galNum"></span>
+        <button id="galNext" aria-label="다음 사진들">›</button>
+      </div>
+    </div>
+    <div id="galSource" hidden>
+        <img src="../photos/gallery/p01.jpg" alt="" loading="lazy" data-i="0" />
+        <img src="../photos/gallery/p02.jpg" alt="" loading="lazy" data-i="1" />
+        <img src="../photos/gallery/p03.jpg" alt="" loading="lazy" data-i="2" />
+        <img src="../photos/gallery/p04.jpg" alt="" loading="lazy" data-i="3" />
+        <img src="../photos/gallery/p05.jpg" alt="" loading="lazy" data-i="4" />
+        <img src="../photos/gallery/p06.jpg" alt="" loading="lazy" data-i="5" />
+        <img src="../photos/gallery/p07.jpg" alt="" loading="lazy" data-i="6" />
+        <img src="../photos/gallery/p08.jpg" alt="" loading="lazy" data-i="7" />
+        <img src="../photos/gallery/p09.jpg" alt="" loading="lazy" data-i="8" />
+        <img src="../photos/gallery/p10.jpg" alt="" loading="lazy" data-i="9" />
+        <img src="../photos/gallery/p11.jpg" alt="" loading="lazy" data-i="10" />
+        <img src="../photos/gallery/p12.jpg" alt="" loading="lazy" data-i="11" />
+        <img src="../photos/gallery/p13.jpg" alt="" loading="lazy" data-i="12" />
+        <img src="../photos/gallery/p14.jpg" alt="" loading="lazy" data-i="13" />
+        <img src="../photos/gallery/p15.jpg" alt="" loading="lazy" data-i="14" />
+        <img src="../photos/gallery/p16.jpg" alt="" loading="lazy" data-i="15" />
+        <img src="../photos/gallery/p17.jpg" alt="" loading="lazy" data-i="16" />
     </div>
     <div class="lightbox" id="lightbox">
       <button class="lb-close" id="lbClose" aria-label="닫기">✕</button>
@@ -569,28 +596,65 @@ $("shareBtn").addEventListener("click", () => copyText(location.href, "청첩장
   window.addEventListener("click", kick, { once: true });
 })();
 
-/* 갤러리 격자 + 라이트박스 */
+/* 갤러리: 10장씩 페이지 + 라이트박스 */
 (() => {
-  const grid = document.getElementById("gallery");
-  if (!grid) return;
-  const imgs = [...grid.querySelectorAll("img")];
+  const source = document.getElementById("galSource");
+  if (!source) return;
+  const srcs = [...source.querySelectorAll("img")].map(i => i.getAttribute("src"));
+  const PER = 10;
+  const pages = Math.ceil(srcs.length / PER);
+  const track = document.getElementById("galTrack");
+
+  track.innerHTML = Array.from({ length: pages }, (_, p) => {
+    const items = srcs.slice(p * PER, (p + 1) * PER)
+      .map((s, k) => `<img src="${s}" alt="" loading="lazy" data-i="${p * PER + k}" />`).join("");
+    return `<div class="gal-page">${items}</div>`;
+  }).join("");
+
+  let page = 0;
+  const num = document.getElementById("galNum");
+  const prev = document.getElementById("galPrev");
+  const next = document.getElementById("galNext");
+  const render = () => {
+    track.style.transform = `translateX(-${page * 100}%)`;
+    num.textContent = `${page + 1} / ${pages}`;
+    prev.disabled = page === 0;
+    next.disabled = page === pages - 1;
+  };
+  prev.addEventListener("click", () => { if (page > 0) { page--; render(); } });
+  next.addEventListener("click", () => { if (page < pages - 1) { page++; render(); } });
+  render();
+
+  // 페이지 스와이프
+  let px = 0;
+  track.addEventListener("touchstart", (e) => { px = e.changedTouches[0].clientX; }, { passive: true });
+  track.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - px;
+    if (Math.abs(dx) > 50) {
+      if (dx < 0 && page < pages - 1) page++;
+      else if (dx > 0 && page > 0) page--;
+      render();
+    }
+  }, { passive: true });
+
+  // 라이트박스
   const box = document.getElementById("lightbox");
   const lbImg = document.getElementById("lbImg");
   const count = document.getElementById("lbCount");
   let cur = 0;
-
   const show = (i) => {
-    cur = (i + imgs.length) % imgs.length;
-    lbImg.src = imgs[cur].getAttribute("src");
-    count.textContent = `${cur + 1} / ${imgs.length}`;
+    cur = (i + srcs.length) % srcs.length;
+    lbImg.src = srcs[cur];
+    count.textContent = `${cur + 1} / ${srcs.length}`;
   };
-  const open = (i) => { show(i); box.classList.add("open"); document.body.style.overflow = "hidden"; };
-  const close = () => { box.classList.remove("open"); document.body.style.overflow = ""; };
-
-  grid.addEventListener("click", (e) => {
+  track.addEventListener("click", (e) => {
     const im = e.target.closest("img");
-    if (im) open(+im.dataset.i);
+    if (!im) return;
+    show(+im.dataset.i);
+    box.classList.add("open");
+    document.body.style.overflow = "hidden";
   });
+  const close = () => { box.classList.remove("open"); document.body.style.overflow = ""; };
   document.getElementById("lbClose").addEventListener("click", close);
   document.getElementById("lbPrev").addEventListener("click", (e) => { e.stopPropagation(); show(cur - 1); });
   document.getElementById("lbNext").addEventListener("click", (e) => { e.stopPropagation(); show(cur + 1); });
@@ -601,7 +665,6 @@ $("shareBtn").addEventListener("click", () => copyText(location.href, "청첩장
     if (e.key === "ArrowLeft") show(cur - 1);
     if (e.key === "ArrowRight") show(cur + 1);
   });
-  // 스와이프
   let sx = 0;
   box.addEventListener("touchstart", (e) => { sx = e.changedTouches[0].clientX; }, { passive: true });
   box.addEventListener("touchend", (e) => {
