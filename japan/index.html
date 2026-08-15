@@ -37,17 +37,17 @@
   #scenery { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
     background: linear-gradient(180deg, #f7f0dd 0%, #f6ecd6 40%, #f3e3cd 66%, #eddac6 100%);
   }
-  .sun {
-    position: absolute; top: 9%; right: 13%; width: 92px; height: 92px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(207, 92, 64, .72) 0 55%, rgba(207, 92, 64, .16) 63%, rgba(207, 92, 64, 0) 72%);
+  #scenery .sun {
+    position: absolute; top: 6.5%; right: 10%; width: 84px; height: 84px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(207, 92, 64, .6) 0 55%, rgba(207, 92, 64, .14) 63%, rgba(207, 92, 64, 0) 72%);
   }
   .fuji { position: absolute; left: 52%; transform: translateX(-50%); bottom: 9.5%; width: min(160vw, 760px); }
   .fuji svg, .torii svg, .waves svg { display: block; width: 100%; height: 100%; }
   .mist {
-    position: absolute; left: 0; right: 0; bottom: 11%; height: 120px;
-    background: linear-gradient(180deg, rgba(246, 240, 224, 0) 0%, rgba(246, 240, 224, .9) 55%, rgba(246, 240, 224, 0) 100%);
+    position: absolute; left: 0; right: 0; bottom: 10%; height: 180px;
+    background: linear-gradient(180deg, rgba(246, 240, 224, 0) 0%, rgba(246, 240, 224, .85) 55%, rgba(246, 240, 224, .2) 100%);
   }
-  .torii { position: absolute; left: 7%; bottom: 12.5%; width: 76px; height: 82px; }
+  .torii { position: absolute; left: 7%; bottom: 10.5%; width: 66px; height: 71px; }
   .waves { position: absolute; left: -2%; right: -2%; }
   .wave-back { bottom: 30px; height: 52px; opacity: .5; }
   .wave-front { bottom: -2px; height: 86px; }
@@ -304,12 +304,13 @@
     <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>
         <linearGradient id="gj1" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#42697c" />
-          <stop offset="1" stop-color="#264653" />
+          <stop offset="0" stop-color="#7b9dae" />
+          <stop offset=".55" stop-color="#5d8296" />
+          <stop offset="1" stop-color="#88a5b1" />
         </linearGradient>
       </defs>
       <path d="M360,34 Q330,130 194,226 Q118,274 22,298 L698,298 Q602,274 526,226 Q390,130 360,34 Z" fill="url(#gj1)" />
-      <path d="M360,34 Q330,130 194,226 Q118,274 22,298 L148,298 Q216,260 288,198 Q346,142 360,34 Z" fill="#1f3d4a" opacity=".32" />
+      <path d="M360,34 Q330,130 194,226 Q118,274 22,298 L148,298 Q216,260 288,198 Q346,142 360,34 Z" fill="#3d6274" opacity=".22" />
       <path d="M360,34 Q343,90 312,128 L327,113 L340,129 L354,111 L368,129 L382,111 L395,127 Q377,90 360,34 Z" fill="#fbf7ec" />
     </svg>
   </div>
