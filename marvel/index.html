@@ -651,7 +651,7 @@ $("shareBtn").addEventListener("click", () => copyText(location.href, "청첩장
   const source = document.getElementById("galSource");
   if (!source) return;
   const srcs = [...source.querySelectorAll("img")].map(i => i.getAttribute("src"));
-  const PER = 10;
+  const PER = 12;
   const pages = Math.ceil(srcs.length / PER);
   const track = document.getElementById("galTrack");
 
