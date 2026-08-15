@@ -557,7 +557,7 @@ $("mapTmap").href = `https://tmap.life/route?goalname=${q}`;
 /* 계좌 */
 $("accounts").innerHTML = [["신랑측", CONFIG.accounts.groom], ["신부측", CONFIG.accounts.bride]]
   .map(([title, list], i) => `
-  <details class="acc"${i === 0 ? " open" : ""}>
+  <details class="acc">
     <summary>${title} 계좌번호</summary>
     ${list.map(a => `
       <div class="acc-row">
