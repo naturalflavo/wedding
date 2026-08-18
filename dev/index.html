@@ -236,16 +236,28 @@
   }
 
   /* ---------- 스네이크 ---------- */
-  .snake-box { display: inline-block; text-align: center; margin-top: 8px; }
-  pre.snake {
-    font-family: inherit; font-size: 15px; line-height: 1.22; letter-spacing: 1px;
+  .snake-box { display: block; text-align: center; margin-top: 8px; }
+  /* 보드는 글자가 아니라 그리드로 그린다 — 폰트 글자폭에 좌우되지 않아
+     어떤 기기에서도 잘리지 않고 화면 폭에 맞춰 늘어난다. */
+  .snake-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cw), 1fr);
+    grid-auto-rows: 1fr;
+    aspect-ratio: var(--cw) / var(--ch);
+    width: 100%; max-width: 300px; margin: 0 auto;
+    gap: 1px; padding: 5px;
     background: #070c13; border: 1px solid var(--line); border-radius: 6px;
-    padding: 8px 10px; display: inline-block; text-align: left;
     touch-action: none; user-select: none;
   }
-  pre.snake .sh { color: var(--grn); }
-  pre.snake .sb { color: var(--grn); opacity: .62; }
-  pre.snake .sf { color: var(--red); }
+  .snake-grid i { border-radius: 1px; }
+  .snake-grid i.h { background: var(--grn); box-shadow: 0 0 4px var(--grn); }
+  .snake-grid i.b { background: var(--grn); opacity: .5; }
+  .snake-grid i.f {
+    background: var(--red); border-radius: 50%;
+    box-shadow: 0 0 5px var(--red); animation: fpulse 1s ease-in-out infinite;
+  }
+  @keyframes fpulse { 50% { transform: scale(.72); } }
+  @media (prefers-reduced-motion: reduce) { .snake-grid i.f { animation: none; } }
   .snake-hud { font-size: 12.5px; color: var(--dim); margin-top: 6px; }
   .snake-pad { display: flex; gap: 8px; margin-top: 8px; justify-content: center; }
   .snake-pad button {
@@ -860,15 +872,19 @@ function outSnake() {
   if (snakeStop) snakeStop(false);
   const el = appendBlock(
     L(`SNAKE — ♥ 를 모아주세요! <span class="o-dim">(방향키·스와이프 / 종료 Q)</span>`)
-    + L(`<span class="snake-box"><pre class="snake"></pre><div class="snake-hud"></div>
+    + L(`<span class="snake-box"><div class="snake-grid"></div><div class="snake-hud"></div>
         <span class="snake-pad">
           <button data-d="-1,0">◀</button><button data-d="0,-1">▲</button>
           <button data-d="0,1">▼</button><button data-d="1,0">▶</button>
           <button data-d="q">✕</button>
         </span></span>`), true);
-  const scr = el.querySelector("pre.snake");
+  const scr = el.querySelector(".snake-grid");
   const hud = el.querySelector(".snake-hud");
   const CW = 19, CH = 12;
+  scr.style.setProperty("--cw", CW);
+  scr.style.setProperty("--ch", CH);
+  scr.innerHTML = "<i></i>".repeat(CW * CH);
+  const cells = scr.children;
   let snake = [[9, 6], [8, 6], [7, 6]], dir = [1, 0], nextDir = dir, food = null, score = 0, over = false;
   let best = 0, newRecord = false;
   try { best = parseInt(localStorage.getItem("snakeBest"), 10) || 0; } catch {}
@@ -877,19 +893,11 @@ function outSnake() {
   const placeFood = () => { do { food = [rand(CW), rand(CH)]; } while (onSnake(food[0], food[1])); };
   placeFood();
   const render = () => {
-    let out = "┌" + "─".repeat(CW) + "┐\n";
-    for (let y = 0; y < CH; y++) {
-      out += "│";
-      for (let x = 0; x < CW; x++) {
-        if (snake[0][0] === x && snake[0][1] === y) out += `<span class="sh">█</span>`;
-        else if (onSnake(x, y)) out += `<span class="sb">▓</span>`;
-        else if (food[0] === x && food[1] === y) out += `<span class="sf">♥</span>`;
-        else out += " ";
-      }
-      out += "│\n";
+    for (let i = 0; i < cells.length; i++) if (cells[i].className) cells[i].className = "";
+    cells[food[1] * CW + food[0]].className = "f";
+    for (let i = snake.length - 1; i >= 0; i--) {
+      cells[snake[i][1] * CW + snake[i][0]].className = i ? "b" : "h";
     }
-    out += "└" + "─".repeat(CW) + "┘";
-    scr.innerHTML = out;
     hud.textContent = over
       ? `게임 오버! ♥ ${score}개${newRecord ? " — 🏆 신기록!" : best ? ` · 최고 기록 ${best}개` : ""} (다시: snake)`
       : `♥ ${score}${best ? ` · 최고 ${best}` : ""}`;
