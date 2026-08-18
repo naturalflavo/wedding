@@ -223,7 +223,10 @@
   }
 
   /* ---------- matrix 이스터에그 ---------- */
-  #mtx { position: fixed; inset: 0; z-index: 70; pointer-events: none; opacity: 0; transition: opacity .7s; }
+  #mtx {
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    z-index: 70; pointer-events: none; opacity: 0; transition: opacity .7s;
+  }
   #mtx.on { opacity: 1; }
 
   /* ---------- npm test ---------- */
@@ -655,14 +658,33 @@ function outMatrix() {
   let cv = document.getElementById("mtx");
   if (!cv) { cv = document.createElement("canvas"); cv.id = "mtx"; document.body.appendChild(cv); }
   const ctx = cv.getContext("2d");
-  const W = cv.width = innerWidth, H = cv.height = innerHeight;
-  const fs = 16, cols = Math.ceil(W / fs);
-  const drops = Array.from({ length: cols }, () => Math.random() * -40);
   const glyphs = "アイウエオカキクケコサシスセソ0123456789ABCDEF<>{}/;=+우상연강예은♥";
+  const fs = 16;
+  let W = 0, H = 0, cols = 0, drops = [];
+
+  /* 화면을 꽉 채우도록 실제 레이아웃 크기(CSS px)를 재서 버퍼를 맞춘다.
+     innerHeight 를 쓰면 모바일 키보드가 올라온 순간 절반 크기로 굳어버린다. */
+  const fit = () => {
+    const w = cv.clientWidth || innerWidth;
+    const h = cv.clientHeight || innerHeight;
+    if (w === W && h === H) return;
+    W = w; H = h;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const next = Math.ceil(W / fs);
+    for (let i = cols; i < next; i++) drops[i] = Math.random() * -40;
+    drops.length = next;
+    cols = next;
+  };
+
+  fit();
   ctx.clearRect(0, 0, W, H);
   cv.classList.add("on");
   mtxEnd = performance.now() + 8000;
   cancelAnimationFrame(mtxRaf);
+  addEventListener("resize", fit);
   const draw = () => {
     ctx.fillStyle = "rgba(1, 4, 9, .08)"; ctx.fillRect(0, 0, W, H);
     ctx.font = fs + "px monospace";
@@ -673,7 +695,11 @@ function outMatrix() {
       drops[i]++;
     }
     if (performance.now() < mtxEnd) mtxRaf = requestAnimationFrame(draw);
-    else { cv.classList.remove("on"); setTimeout(() => ctx.clearRect(0, 0, W, H), 800); }
+    else {
+      removeEventListener("resize", fit);
+      cv.classList.remove("on");
+      setTimeout(() => ctx.clearRect(0, 0, W, H), 800);
+    }
   };
   draw();
   return L(`Wake up, Neo…`, "o-grn")
