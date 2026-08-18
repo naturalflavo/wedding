@@ -1,0 +1,32 @@
+// Firebase 콘솔 → Firestore Database → 규칙 탭에 붙여넣고 "게시"
+//
+// snakeScores: 누구나 읽고 새 기록을 남길 수 있지만,
+//   - 필드는 name/score/ts 세 개만 허용
+//   - 이름은 1~12자 문자열
+//   - 점수는 1~250 사이 정수 (보드 19x12 = 228칸이 이론상 최대)
+//   - 이미 등록된 기록의 수정·삭제는 불가
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /snakeScores/{doc} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasOnly(['name', 'score', 'ts'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() >= 1
+                    && request.resource.data.name.size() <= 12
+                    && request.resource.data.score is int
+                    && request.resource.data.score >= 1
+                    && request.resource.data.score <= 250;
+
+      allow update, delete: if false;
+    }
+
+    // 그 외 모든 경로는 차단
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

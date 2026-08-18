@@ -250,6 +250,31 @@
     background: var(--card); color: var(--txt); border: 1px solid var(--line); border-radius: 8px;
   }
 
+  /* ---------- 랭킹 ---------- */
+  .rank-form {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    align-items: center; justify-content: center; margin-top: 10px;
+  }
+  .rank-name {
+    font-family: inherit; font-size: 15px; width: 132px;
+    background: #070c13; color: var(--txt); border: 1px solid var(--line);
+    border-radius: 6px; padding: 7px 10px; outline: none;
+  }
+  .rank-name:focus { border-color: var(--grn); }
+  .rank-name:disabled { opacity: .6; }
+  .rank-go {
+    font-family: inherit; font-size: 12.5px; cursor: pointer;
+    color: var(--ylw); background: var(--card); border: 1px solid var(--line);
+    padding: 8px 13px; border-radius: 6px;
+  }
+  .rank-go:disabled { opacity: .5; cursor: default; }
+  .rank-msg { flex-basis: 100%; font-size: 12px; }
+  .rk { display: flex; gap: 10px; text-align: left; }
+  .rk .rk-i { flex: 0 0 38px; }
+  .rk .rk-n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rk .rk-s { flex: 0 0 auto; color: var(--grn); }
+  .rk.rk-me .rk-n { color: var(--ylw); }
+
   /* ---------- 라이트박스 ---------- */
   .lightbox {
     position: fixed; inset: 0; z-index: 80; background: rgba(1, 4, 9, .96);
@@ -426,6 +451,7 @@ function outHelp() {
     ["music", "배경음악 재생 · 곡 변경 (3곡)"],
     ["share", "청첩장 링크 복사"],
     ["snake", "🐍 뱀게임 (♥ 모으기)"],
+    ["rank", "🏆 뱀게임 랭킹 TOP 10"],
     ["theme", "CRT 레트로 테마 (amber/green)"],
     ["clear", "화면 지우기"],
     ["cd ..", "다른 초대장 보러 가기"],
@@ -680,6 +706,128 @@ function runNpmTest() {
   }, 300);
 }
 
+/* ===================================================================
+   랭킹 — Firestore REST API (SDK 없이 fetch 만 사용)
+=================================================================== */
+const FB = {
+  projectId: "naturalflavo",
+  apiKey: "AIzaSyDqW9Gt7z-6bojV0zMm1MGxIuTpc659tB0",
+  col: "snakeScores",
+  max: 250,   // 보드 19x12 = 228칸, 그 이상은 비정상 값
+};
+const fbUrl = (suffix) =>
+  `https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents${suffix}&key=${FB.apiKey}`;
+
+/* 응답이 없어도 무한 대기하지 않도록 8초 타임아웃 */
+async function fbPost(url, payload, ms = 8000) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ms);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: ac.signal,
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function rankFetch(limit = 10) {
+  const rows = await fbPost(fbUrl(":runQuery?alt=json"), {
+    structuredQuery: {
+      from: [{ collectionId: FB.col }],
+      orderBy: [{ field: { fieldPath: "score" }, direction: "DESCENDING" }],
+      limit,
+    },
+  });
+  return (Array.isArray(rows) ? rows : [])
+    .filter((r) => r && r.document)
+    .map((r) => ({
+      name: r.document.fields?.name?.stringValue || "익명",
+      score: parseInt(r.document.fields?.score?.integerValue || "0", 10),
+    }));
+}
+
+async function rankSubmit(name, score) {
+  return fbPost(fbUrl(`/${FB.col}?alt=json`), {
+    fields: {
+      name: { stringValue: name },
+      score: { integerValue: String(score) },
+      ts: { timestampValue: new Date().toISOString() },
+    },
+  });
+}
+
+function outRank() {
+  const el = appendBlock(L(`# 🏆 SNAKE 랭킹 TOP 10`, "o-h") + L(`불러오는 중…`, "o-dim"), true);
+  let myName = "";
+  try { myName = localStorage.getItem("rankName") || ""; } catch {}
+  rankFetch(10).then((list) => {
+    if (!list.length) {
+      el.innerHTML = L(`# 🏆 SNAKE 랭킹 TOP 10`, "o-h")
+        + L(`아직 등록된 기록이 없습니다. 첫 주인공이 되어보세요!`, "o-dim")
+        + L(`<span class="o-cyn">snake</span> 로 게임 시작`, "o-dim");
+      return;
+    }
+    const medal = ["🥇", "🥈", "🥉"];
+    el.innerHTML = L(`# 🏆 SNAKE 랭킹 TOP 10`, "o-h")
+      + list.map((r, i) => L(`<span class="rk${r.name === myName ? " rk-me" : ""}">
+          <span class="rk-i">${medal[i] || `${i + 1}.`}</span>
+          <span class="rk-n">${esc(r.name)}</span>
+          <span class="rk-s">♥ ${r.score}</span>
+        </span>`)).join("")
+      + GAP
+      + L(`<span class="o-cyn">snake</span> 로 도전해 보세요!`, "o-dim");
+    el.querySelectorAll(".tl").forEach((n, i) => n.style.setProperty("--i", i));
+    scrollBottom();
+  }).catch(() => {
+    el.innerHTML = L(`# 🏆 SNAKE 랭킹`, "o-h")
+      + L(`랭킹 서버에 연결하지 못했습니다.`, "o-red")
+      + L(`네트워크 상태를 확인하고 다시 시도해 주세요.`, "o-dim");
+    scrollBottom();
+  });
+  return null;
+}
+
+/* 게임 오버 후 랭킹 등록 폼 */
+function showRankForm(box, score) {
+  let saved = "";
+  try { saved = localStorage.getItem("rankName") || ""; } catch {}
+  const wrap = document.createElement("div");
+  wrap.className = "rank-form";
+  wrap.innerHTML = `
+    <input class="rank-name" maxlength="12" value="${esc(saved)}" placeholder="이름 (최대 12자)" aria-label="랭킹에 등록할 이름" />
+    <button class="rank-go">🏆 랭킹 등록</button>
+    <div class="rank-msg o-dim">전체 랭킹에 기록을 남겨보세요.</div>`;
+  box.appendChild(wrap);
+  const inp = wrap.querySelector(".rank-name");
+  const btn = wrap.querySelector(".rank-go");
+  const msg = wrap.querySelector(".rank-msg");
+  const go = async () => {
+    const nm = inp.value.trim().slice(0, 12);
+    if (!nm) { msg.innerHTML = `<span class="o-ylw">이름을 입력해 주세요.</span>`; inp.focus(); return; }
+    btn.disabled = true;
+    msg.textContent = "등록 중…";
+    try {
+      await rankSubmit(nm, score);
+      try { localStorage.setItem("rankName", nm); } catch {}
+      inp.disabled = true;
+      msg.innerHTML = `<span class="o-grn">등록 완료!</span> <span class="o-dim">rank 명령어로 순위를 확인하세요.</span>`;
+    } catch {
+      btn.disabled = false;
+      msg.innerHTML = `<span class="o-red">등록 실패</span> <span class="o-dim">— 네트워크를 확인 후 다시 눌러주세요.</span>`;
+    }
+  };
+  btn.addEventListener("click", go);
+  inp.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); go(); }
+  });
+}
+
 /* ---------- 스네이크 ---------- */
 let snakeStop = null;
 function outSnake() {
@@ -730,7 +878,10 @@ function outSnake() {
         best = score; newRecord = true;
         try { localStorage.setItem("snakeBest", best); } catch {}
       }
-      render(); stop(false); return;
+      render(); stop(false);
+      if (score >= 1) showRankForm(el.querySelector(".snake-box"), score);
+      scrollBottom();
+      return;
     }
     snake.unshift(h);
     if (h[0] === food[0] && h[1] === food[1]) { score++; placeFood(); } else snake.pop();
@@ -738,12 +889,11 @@ function outSnake() {
   };
   const timer = setInterval(step, 160);
   const keyH = (e) => {
-    if (e.key === "q" || e.key === "Q") { stop(true); return; }
+    const typing = document.activeElement && document.activeElement.tagName === "INPUT";
+    if (!typing && (e.key === "q" || e.key === "Q")) { stop(true); return; }
     const m = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
     let nd = m[e.key];
-    if (!nd && document.activeElement !== input) {
-      nd = { a: [-1, 0], d: [1, 0], w: [0, -1], s: [0, 1] }[e.key.toLowerCase()];
-    }
+    if (!nd && !typing) nd = { a: [-1, 0], d: [1, 0], w: [0, -1], s: [0, 1] }[e.key.toLowerCase()];
     if (nd) { e.preventDefault(); e.stopPropagation(); setDir(nd); }
   };
   document.addEventListener("keydown", keyH, true);
@@ -795,6 +945,7 @@ const COMMANDS = {
   "./dday.sh": outDday,
   matrix: outMatrix, neo: outMatrix,
   snake: outSnake, game: outSnake,
+  rank: outRank, ranking: outRank, top: outRank,
 };
 const CAT_FILES = {
   "invitation.txt": outInfo,
@@ -898,7 +1049,7 @@ function startCountdowns() {
 =================================================================== */
 const CHIP_LIST = [
   ["❓", "help"], ["📖", "info"], ["📅", "dday"], ["📷", "gallery"],
-  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🐍", "snake"], ["🔗", "share"],
+  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🐍", "snake"], ["🏆", "rank"], ["🔗", "share"],
 ];
 $("chips").innerHTML = CHIP_LIST
   .map(([e, c]) => `<button class="chip" data-cmd="${c}">${e} ${c}</button>`).join("");
