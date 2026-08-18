@@ -248,7 +248,7 @@
 </style>
 </head>
 <body>
-<audio id="bgm" src="../music/star.m4a" loop preload="none"></audio>
+<audio id="bgm" src="../music/dev.m4a" loop preload="none"></audio>
 
 <div class="term">
   <div class="term-bar">
@@ -506,7 +506,7 @@ function outMusic() {
     ? L(`⏸ 배경음악을 정지했습니다.`, "o-ylw")
     : L(`▶ 배경음악을 재생합니다.`, "o-grn");
   toggleBgm(!playing);
-  return status + L(`BGM: Amberlight — Scott Buckley (scottbuckley.com.au) / CC BY 4.0`, "o-dim");
+  return status + L(`BGM: Pachelbel — Canon in D (8bit arrangement) / Public Domain`, "o-dim");
 }
 
 function outShare() {
@@ -689,10 +689,26 @@ input.addEventListener("keydown", (e) => {
     if (histIdx < hist.length) { histIdx++; input.value = hist[histIdx] || ""; }
   } else if (e.key === "Tab") {
     e.preventDefault();
-    const v = input.value.trim().toLowerCase();
-    if (!v) return;
-    const cand = Object.keys(COMMANDS).find((c) => c.startsWith(v));
-    if (cand) input.value = cand + " ";
+    const val = input.value.replace(/^\s+/, "");
+    const catM = val.match(/^(cat\s+)(\S*)$/i);
+    let pool, prefix, cur;
+    if (catM) {
+      pool = Object.keys(CAT_FILES).concat("gallery/");
+      prefix = catM[1]; cur = catM[2].toLowerCase();
+    } else {
+      if (!val || /\s/.test(val)) return;
+      pool = [...new Set(Object.keys(COMMANDS).concat(["clear", "sudo marry", "git log", "cat", "cd .."]))];
+      prefix = ""; cur = val.toLowerCase();
+    }
+    const matches = pool.filter((c) => c.startsWith(cur)).sort();
+    if (!matches.length) return;
+    if (matches.length === 1) { input.value = prefix + matches[0] + " "; return; }
+    // bash처럼: 공통 접두사까지 채우고 후보 목록 출력
+    let common = matches[0];
+    for (const c of matches) while (!c.startsWith(common)) common = common.slice(0, -1);
+    input.value = prefix + common;
+    appendBlock(L(matches.map(esc).join("&nbsp;&nbsp;"), "o-dim"), true);
+    scrollBottom();
   }
 });
 
@@ -833,7 +849,7 @@ async function bootPause(ms) { if (!reduceMotion && !skipBoot) await sleep(ms); 
     L(`<span class="o-grn">✔</span> 평생의 약속 빌드 성공 <span class="o-dim">(0 errors, 0 warnings)</span>`),
     L(`<span class="o-grn">✔</span> 초대장 배포 완료`),
     GAP,
-    L(`# BGM: Amberlight — Scott Buckley / CC BY 4.0 · 우측 상단 ♪`, "o-dim"),
+    L(`# BGM: Canon in D 8bit ver. · 우측 상단 ♪ 또는 music`, "o-dim"),
   ], 140);
   await bootPause(400);
   await typeCmd("help");
