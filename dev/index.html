@@ -206,6 +206,50 @@
   }
   #cmd::placeholder { color: #484f58; }
 
+  /* ---------- CRT 레트로 테마 ---------- */
+  body.crt-green {
+    --term: #020a03; --card: #07140a; --line: #14401f;
+    --txt: #5cff7d; --dim: #2f9a4c; --grn: #8dffab; --cyn: #4de07a;
+    --ylw: #c8ff5c; --red: #ff7d5c; --mag: #9dffb8;
+  }
+  body.crt-amber {
+    --term: #0a0500; --card: #160c00; --line: #4a3000;
+    --txt: #ffb757; --dim: #b07c2e; --grn: #ffd25c; --cyn: #ffc880;
+    --ylw: #ffe08a; --red: #ff9257; --mag: #ffd9a3;
+  }
+  body.crt-green #screen, body.crt-amber #screen { text-shadow: 0 0 7px currentColor; }
+  body.crt-green .term::after, body.crt-amber .term::after {
+    background: repeating-linear-gradient(180deg, rgba(0, 0, 0, .22) 0 1px, transparent 1px 3px);
+  }
+
+  /* ---------- matrix 이스터에그 ---------- */
+  #mtx { position: fixed; inset: 0; z-index: 70; pointer-events: none; opacity: 0; transition: opacity .7s; }
+  #mtx.on { opacity: 1; }
+
+  /* ---------- npm test ---------- */
+  .npass {
+    background: #238636; color: #fff; padding: 1px 7px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; margin-right: 8px;
+  }
+
+  /* ---------- 스네이크 ---------- */
+  .snake-box { display: inline-block; text-align: center; margin-top: 8px; }
+  pre.snake {
+    font-family: inherit; font-size: 15px; line-height: 1.22; letter-spacing: 1px;
+    background: #070c13; border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px 10px; display: inline-block; text-align: left;
+    touch-action: none; user-select: none;
+  }
+  pre.snake .sh { color: var(--grn); }
+  pre.snake .sb { color: var(--grn); opacity: .62; }
+  pre.snake .sf { color: var(--red); }
+  .snake-hud { font-size: 12.5px; color: var(--dim); margin-top: 6px; }
+  .snake-pad { display: flex; gap: 8px; margin-top: 8px; justify-content: center; }
+  .snake-pad button {
+    width: 46px; height: 40px; font-family: inherit; font-size: 15px; cursor: pointer;
+    background: var(--card); color: var(--txt); border: 1px solid var(--line); border-radius: 8px;
+  }
+
   /* ---------- 라이트박스 ---------- */
   .lightbox {
     position: fixed; inset: 0; z-index: 80; background: rgba(1, 4, 9, .96);
@@ -381,13 +425,15 @@ function outHelp() {
     ["contact", "신랑 · 신부에게 연락"],
     ["music", "배경음악 켜기 / 끄기"],
     ["share", "청첩장 링크 복사"],
+    ["snake", "🐍 뱀게임 (♥ 모으기)"],
+    ["theme", "CRT 레트로 테마 (amber/green)"],
     ["clear", "화면 지우기"],
     ["cd ..", "다른 초대장 보러 가기"],
   ];
   return L(`사용 가능한 명령어`, "o-h")
     + rows.map(([c, t]) => L(`<span class="cmdrow"><b>${c}</b><span>${t}</span></span>`)).join("")
     + GAP
-    + L(`숨겨진 명령어도 있어요. <span class="o-dim">(힌트: sudo, git, ls …)</span>`, "o-dim");
+    + L(`숨겨진 명령어도 있어요. <span class="o-dim">(힌트: sudo, git, matrix, npm test …)</span>`, "o-dim");
 }
 
 function outInfo() {
@@ -434,11 +480,22 @@ function buildCalendar() {
 }
 
 function outDday() {
+  const fmtZ = (dt) => dt.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const dtEnd = new Date(d.getTime() + 2 * 36e5);
+  const gcal = `https://calendar.google.com/calendar/render?action=TEMPLATE`
+    + `&text=${encodeURIComponent(`${CONFIG.groom.name} ♥ ${CONFIG.bride.name} 결혼식`)}`
+    + `&dates=${fmtZ(d)}/${fmtZ(dtEnd)}`
+    + `&location=${encodeURIComponent(`${CONFIG.venue.name} (${CONFIG.venue.addr})`)}`
+    + `&details=${encodeURIComponent(dateKo)}`;
   return L(`# ${dateKo}`, "o-h")
     + L(`<pre class="cal">${buildCalendar()}</pre>`)
     + GAP
     + L(`<span class="cd-line" data-cd>계산 중…</span>`)
-    + L(`<span class="o-dim" data-cd-sub></span>`);
+    + L(`<span class="o-dim" data-cd-sub></span>`)
+    + L(`<span class="t-btns">
+        <a class="t-btn" href="wedding.ics" download="wedding.ics">📅 캘린더에 추가</a>
+        <a class="t-btn" target="_blank" rel="noopener" href="${esc(gcal)}">🗓 Google 캘린더</a>
+      </span>`);
 }
 
 function outGallery() {
@@ -539,6 +596,148 @@ const outExit = () => L(`logout`, "o-dim")
   + L(`…라고 할 뻔했지만, 연결은 계속 유지됩니다 :)`)
   + L(`${d.getMonth() + 1}월 ${d.getDate()}일에 꼭 만나요!`, "o-grn");
 
+/* ---------- matrix 이스터에그 ---------- */
+let mtxRaf = null, mtxEnd = 0;
+function outMatrix() {
+  let cv = document.getElementById("mtx");
+  if (!cv) { cv = document.createElement("canvas"); cv.id = "mtx"; document.body.appendChild(cv); }
+  const ctx = cv.getContext("2d");
+  const W = cv.width = innerWidth, H = cv.height = innerHeight;
+  const fs = 16, cols = Math.ceil(W / fs);
+  const drops = Array.from({ length: cols }, () => Math.random() * -40);
+  const glyphs = "アイウエオカキクケコサシスセソ0123456789ABCDEF<>{}/;=+우상연강예은♥";
+  ctx.clearRect(0, 0, W, H);
+  cv.classList.add("on");
+  mtxEnd = performance.now() + 8000;
+  cancelAnimationFrame(mtxRaf);
+  const draw = () => {
+    ctx.fillStyle = "rgba(1, 4, 9, .08)"; ctx.fillRect(0, 0, W, H);
+    ctx.font = fs + "px monospace";
+    for (let i = 0; i < cols; i++) {
+      ctx.fillStyle = Math.random() < .06 ? "#d2ffd9" : "#3fb950";
+      ctx.fillText(glyphs[Math.floor(Math.random() * glyphs.length)], i * fs, drops[i] * fs);
+      if (drops[i] * fs > H && Math.random() > .975) drops[i] = 0;
+      drops[i]++;
+    }
+    if (performance.now() < mtxEnd) mtxRaf = requestAnimationFrame(draw);
+    else { cv.classList.remove("on"); setTimeout(() => ctx.clearRect(0, 0, W, H), 800); }
+  };
+  draw();
+  return L(`Wake up, Neo…`, "o-grn")
+    + L(`매트릭스가 두 사람을 연결했습니다. 💊`, "o-dim")
+    + L(`${d.getMonth() + 1}월 ${d.getDate()}일, 매트릭스 밖에서 만나요.`);
+}
+
+/* ---------- npm test: 궁합 테스트 ---------- */
+function runNpmTest() {
+  const el = appendBlock("", true);
+  const lines = [
+    `<div class="o-dim">&gt; wedding@1.0.0 test</div>`,
+    `<div class="o-dim">&gt; jest --couple "${CONFIG.groom.name} ♥ ${CONFIG.bride.name}"</div>`,
+    `<div class="o-gap"></div>`,
+    `<div><span class="npass">PASS</span> love/첫눈에-반함.test.js</div>`,
+    `<div><span class="npass">PASS</span> love/취향-싱크로율.test.js</div>`,
+    `<div><span class="npass">PASS</span> love/싸워도-금방-화해.test.js</div>`,
+    `<div><span class="npass">PASS</span> love/평생-함께.test.js</div>`,
+    `<div class="o-gap"></div>`,
+    `<div>궁합: <b class="o-grn">100%</b> ❤ <span class="o-dim">(coverage: 서로의 마음 전부)</span></div>`,
+    `<div><span class="o-grn">Tests: 4 passed</span>, 4 total</div>`,
+    `<div class="o-dim">Time: 평생</div>`,
+  ];
+  if (reduceMotion) { el.innerHTML = lines.join(""); scrollBottom(); return; }
+  let i = 0;
+  const t = setInterval(() => {
+    if (i >= lines.length) { clearInterval(t); return; }
+    el.insertAdjacentHTML("beforeend", lines[i++]);
+    scrollBottom();
+  }, 300);
+}
+
+/* ---------- 스네이크 ---------- */
+let snakeStop = null;
+function outSnake() {
+  if (snakeStop) snakeStop(false);
+  const el = appendBlock(
+    L(`SNAKE — ♥ 를 모아주세요! <span class="o-dim">(방향키·스와이프 / 종료 Q)</span>`)
+    + L(`<span class="snake-box"><pre class="snake"></pre><div class="snake-hud"></div>
+        <span class="snake-pad">
+          <button data-d="-1,0">◀</button><button data-d="0,-1">▲</button>
+          <button data-d="0,1">▼</button><button data-d="1,0">▶</button>
+          <button data-d="q">✕</button>
+        </span></span>`), true);
+  const scr = el.querySelector("pre.snake");
+  const hud = el.querySelector(".snake-hud");
+  const CW = 19, CH = 12;
+  let snake = [[9, 6], [8, 6], [7, 6]], dir = [1, 0], nextDir = dir, food = null, score = 0, over = false;
+  const rand = (n) => Math.floor(Math.random() * n);
+  const onSnake = (x, y) => snake.some((s) => s[0] === x && s[1] === y);
+  const placeFood = () => { do { food = [rand(CW), rand(CH)]; } while (onSnake(food[0], food[1])); };
+  placeFood();
+  const render = () => {
+    let out = "┌" + "─".repeat(CW) + "┐\n";
+    for (let y = 0; y < CH; y++) {
+      out += "│";
+      for (let x = 0; x < CW; x++) {
+        if (snake[0][0] === x && snake[0][1] === y) out += `<span class="sh">█</span>`;
+        else if (onSnake(x, y)) out += `<span class="sb">▓</span>`;
+        else if (food[0] === x && food[1] === y) out += `<span class="sf">♥</span>`;
+        else out += " ";
+      }
+      out += "│\n";
+    }
+    out += "└" + "─".repeat(CW) + "┘";
+    scr.innerHTML = out;
+    hud.textContent = over ? `게임 오버! ♥ ${score}개 획득 — 다시 하려면 snake` : `♥ ${score}`;
+  };
+  const setDir = (nd) => { if (nd[0] !== -dir[0] || nd[1] !== -dir[1]) nextDir = nd; };
+  const step = () => {
+    dir = nextDir;
+    const h = [snake[0][0] + dir[0], snake[0][1] + dir[1]];
+    if (h[0] < 0 || h[0] >= CW || h[1] < 0 || h[1] >= CH || onSnake(h[0], h[1])) {
+      over = true; render(); stop(false); return;
+    }
+    snake.unshift(h);
+    if (h[0] === food[0] && h[1] === food[1]) { score++; placeFood(); } else snake.pop();
+    render();
+  };
+  const timer = setInterval(step, 160);
+  const keyH = (e) => {
+    if (e.key === "q" || e.key === "Q") { stop(true); return; }
+    const m = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    let nd = m[e.key];
+    if (!nd && document.activeElement !== input) {
+      nd = { a: [-1, 0], d: [1, 0], w: [0, -1], s: [0, 1] }[e.key.toLowerCase()];
+    }
+    if (nd) { e.preventDefault(); e.stopPropagation(); setDir(nd); }
+  };
+  document.addEventListener("keydown", keyH, true);
+  let tsx = 0, tsy = 0;
+  const tS = (e) => { tsx = e.changedTouches[0].clientX; tsy = e.changedTouches[0].clientY; };
+  const tE = (e) => {
+    const dx = e.changedTouches[0].clientX - tsx, dy = e.changedTouches[0].clientY - tsy;
+    if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+    setDir(Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)]);
+  };
+  scr.addEventListener("touchstart", tS, { passive: true });
+  scr.addEventListener("touchend", tE, { passive: true });
+  const padH = (e) => {
+    const b = e.target.closest("button[data-d]");
+    if (!b) return;
+    if (b.dataset.d === "q") { stop(true); return; }
+    setDir(b.dataset.d.split(",").map(Number));
+  };
+  el.querySelector(".snake-pad").addEventListener("click", padH);
+  function stop(byUser) {
+    clearInterval(timer);
+    document.removeEventListener("keydown", keyH, true);
+    snakeStop = null;
+    if (byUser) hud.textContent = `종료 — ♥ ${score}개 획득`;
+  }
+  snakeStop = stop;
+  render();
+  return null;
+}
+
 /* ===================================================================
    명령어 실행
 =================================================================== */
@@ -558,6 +757,8 @@ const COMMANDS = {
   vim: outVim, vi: outVim,
   exit: outExit, logout: outExit,
   "./dday.sh": outDday,
+  matrix: outMatrix, neo: outMatrix,
+  snake: outSnake, game: outSnake,
 };
 const CAT_FILES = {
   "invitation.txt": outInfo,
@@ -597,6 +798,21 @@ function execute(raw) {
     html = parts[1] === "marry"
       ? outSudoMarry()
       : L(`sudo: 힌트 — <span class="o-cyn">sudo marry</span> 를 입력해 보세요.`, "o-dim");
+  } else if (name === "npm") {
+    if (parts[1] === "test") { runNpmTest(); html = null; }
+    else html = L(`npm: 이건 어때요 — <span class="o-cyn">npm test</span> (두 사람 궁합 테스트)`, "o-dim");
+  } else if (name === "theme") {
+    const v = (parts[1] || "").toLowerCase();
+    if (["amber", "green", "default", "off"].includes(v)) {
+      document.body.classList.remove("crt-amber", "crt-green");
+      if (v === "amber" || v === "green") document.body.classList.add("crt-" + v);
+      try { localStorage.setItem("devTheme", v); } catch {}
+      html = v === "amber" ? L(`🟠 앰버 CRT 모드 — 1980년대 모니터에 오신 것을 환영합니다`, "o-ylw")
+        : v === "green" ? L(`🟢 그린 CRT 모드 — 형광 인광의 감성`, "o-grn")
+        : L(`기본 테마로 돌아왔습니다.`);
+    } else {
+      html = L(`사용법: <span class="o-cyn">theme amber</span> · <span class="o-cyn">theme green</span> · <span class="o-cyn">theme default</span>`, "o-dim");
+    }
   } else if (name === "git") {
     html = outGitLog();
   } else if (name === "rm") {
@@ -613,7 +829,7 @@ function execute(raw) {
       + L(`help 를 입력하면 명령어 목록이 나와요.`, "o-dim");
   }
 
-  appendBlock(html);
+  if (html != null) appendBlock(html);
   startCountdowns();
   scrollToEl(echoEl);
 }
@@ -646,7 +862,7 @@ function startCountdowns() {
 =================================================================== */
 const CHIP_LIST = [
   ["❓", "help"], ["📖", "info"], ["📅", "dday"], ["📷", "gallery"],
-  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🔗", "share"],
+  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🐍", "snake"], ["🔗", "share"],
 ];
 $("chips").innerHTML = CHIP_LIST
   .map(([e, c]) => `<button class="chip" data-cmd="${c}">${e} ${c}</button>`).join("");
@@ -697,7 +913,7 @@ input.addEventListener("keydown", (e) => {
       prefix = catM[1]; cur = catM[2].toLowerCase();
     } else {
       if (!val || /\s/.test(val)) return;
-      pool = [...new Set(Object.keys(COMMANDS).concat(["clear", "sudo marry", "git log", "cat", "cd .."]))];
+      pool = [...new Set(Object.keys(COMMANDS).concat(["clear", "sudo marry", "git log", "cat", "cd ..", "npm test", "theme amber", "theme green"]))];
       prefix = ""; cur = val.toLowerCase();
     }
     const matches = pool.filter((c) => c.startsWith(cur)).sort();
@@ -726,6 +942,12 @@ document.addEventListener("click", (e) => {
   const btn = e.target.closest(".cp");
   if (btn) copyText(btn.dataset.copy, "계좌번호가 복사되었습니다");
 });
+
+/* CRT 테마 복원 */
+try {
+  const th = localStorage.getItem("devTheme");
+  if (th === "amber" || th === "green") document.body.classList.add("crt-" + th);
+} catch {}
 
 /* ===================================================================
    배경 음악
