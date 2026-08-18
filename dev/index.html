@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+<meta name="color-scheme" content="dark" />
+<title>상연 ♥ 예은 결혼합니다</title>
+<meta property="og:title" content="상연 ♥ 예은 결혼합니다" />
+<meta property="og:description" content="2026년 10월 17일 토요일 오전 11시, 더화이트베일 W홀" />
+<meta property="og:image" content="https://naturalflavo.github.io/wedding/photos/main-night.jpg" />
+<meta property="og:url" content="https://naturalflavo.github.io/wedding/dev/" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Nanum+Gothic+Coding:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root { color-scheme: dark; }
+  :root {
+    --bg: #010409;
+    --term: #0d1117;
+    --card: #161b22;
+    --line: #30363d;
+    --txt: #c9d1d9;
+    --dim: #8b949e;
+    --grn: #3fb950;
+    --cyn: #79c0ff;
+    --ylw: #e3b341;
+    --red: #f85149;
+    --mag: #d2a8ff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: "JetBrains Mono", "Nanum Gothic Coding", ui-monospace, Menlo, Consolas, monospace;
+    background: var(--bg);
+    color: var(--txt);
+    height: 100svh;
+    display: flex; justify-content: center;
+    padding: 10px;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  ::selection { background: rgba(63, 185, 80, .35); }
+
+  /* ---------- 터미널 창 ---------- */
+  .term {
+    position: relative;
+    width: 100%; max-width: 520px; height: 100%;
+    display: flex; flex-direction: column;
+    background: var(--term);
+    border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, .6);
+    overflow: hidden;
+  }
+  /* 은은한 스캔라인 */
+  .term::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+    background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .022) 0 1px, transparent 1px 3px);
+  }
+  .term-bar {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border-bottom: 1px solid var(--line);
+    background: var(--card);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex: 0 0 auto; }
+  .dot.r { background: #ff5f56; } .dot.y { background: #ffbd2e; } .dot.g { background: #27c93f; }
+  .term-title {
+    flex: 1; text-align: center; font-size: 12px; color: var(--dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bgm-btn {
+    position: relative; flex: 0 0 auto;
+    width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line);
+    background: var(--term); color: var(--txt); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .bgm-btn.off { opacity: .55; }
+  .bgm-btn.off::after {
+    content: ""; position: absolute; width: 16px; height: 1.5px; background: var(--txt);
+    transform: rotate(-45deg); border-radius: 2px;
+  }
+
+  /* ---------- 출력 영역 ---------- */
+  #screen {
+    position: relative;
+    flex: 1; overflow-y: auto; overscroll-behavior: contain;
+    padding: 14px 14px 20px;
+    font-size: 13.5px; line-height: 1.75;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  }
+  #screen::-webkit-scrollbar { width: 5px; }
+  #screen::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+  .echo { margin-top: 14px; word-break: break-all; }
+  .echo:first-child { margin-top: 0; }
+  .p-user { color: var(--grn); font-weight: 700; }
+  .p-path { color: var(--cyn); }
+  .p-dollar { color: var(--dim); }
+  .echo b { color: var(--txt); font-weight: 400; }
+
+  .out { margin-top: 2px; }
+  .tl { opacity: 0; animation: tin .22s ease forwards; animation-delay: calc(min(var(--i, 0), 26) * 46ms); }
+  @keyframes tin { from { opacity: 0; } to { opacity: 1; } }
+  .noanim .tl { animation: none; opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .tl { animation: none; opacity: 1; } }
+
+  .o-dim { color: var(--dim); }
+  .o-grn { color: var(--grn); }
+  .o-cyn { color: var(--cyn); }
+  .o-ylw { color: var(--ylw); }
+  .o-red { color: var(--red); }
+  .o-mag { color: var(--mag); }
+  .o-h { color: var(--grn); font-weight: 700; margin-top: 10px; }
+  .o-gap { height: 10px; }
+  .cursor { display: inline-block; width: 8px; height: 15px; background: var(--grn); vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  pre.ascii {
+    font-family: inherit; font-size: 10px; line-height: 1.35;
+    color: var(--grn); text-shadow: 0 0 12px rgba(63, 185, 80, .45);
+    overflow-x: auto; margin: 8px 0 2px;
+  }
+  pre.cal {
+    font-family: inherit; font-size: 13.5px; line-height: 1.9;
+    display: inline-block; text-align: left; margin-top: 4px;
+  }
+  pre.cal .sun { color: var(--red); }
+  pre.cal .dd { background: var(--grn); color: #04120a; font-weight: 700; border-radius: 3px; }
+
+  .cmdrow { display: flex; gap: 14px; }
+  .cmdrow b { flex: 0 0 88px; color: var(--cyn); font-weight: 400; }
+
+  /* 진행바/카운트다운 */
+  .cd-line b { color: var(--grn); font-weight: 700; }
+
+  /* 갤러리 */
+  .g-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 8px; }
+  .g-grid img {
+    width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
+    border-radius: 4px; border: 1px solid var(--line); cursor: pointer;
+    transition: opacity .2s;
+  }
+  .g-grid img:active { opacity: .65; }
+
+  /* 지도 */
+  .map-embed {
+    width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--card); display: block; margin: 10px 0 2px;
+    filter: saturate(.85) brightness(.92);
+  }
+
+  /* 터미널풍 버튼/링크 */
+  .t-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 2px; }
+  .t-btn {
+    font-family: inherit; font-size: 12.5px; text-decoration: none; cursor: pointer;
+    color: var(--cyn); background: var(--card); border: 1px solid var(--line);
+    padding: 8px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .t-btn:active { background: #1c2431; }
+
+  /* 계좌 */
+  .acc-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px dashed #21262d; text-align: left;
+  }
+  .acc-row .info { font-size: 13px; word-break: keep-all; }
+  .acc-row .info small { display: block; color: var(--dim); font-size: 11.5px; }
+  .cp {
+    flex: 0 0 auto; font-family: inherit; font-size: 12px; cursor: pointer;
+    color: var(--ylw); background: transparent; border: 1px dashed var(--line);
+    padding: 5px 10px; border-radius: 6px;
+  }
+
+  /* 연락처 */
+  .ct-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .ct-row .who { color: var(--dim); font-size: 12.5px; }
+  .ct-row .nm { flex: 1; text-align: left; }
+
+  /* ---------- 명령어 칩 ---------- */
+  .chips {
+    flex: 0 0 auto; display: none; gap: 8px; align-items: center;
+    padding: 9px 12px; border-top: 1px solid var(--line);
+    overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    background: rgba(22, 27, 34, .6);
+  }
+  .chips.on { display: flex; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto; font-family: inherit; font-size: 12.5px; cursor: pointer;
+    color: var(--cyn); background: var(--card); border: 1px solid var(--line);
+    padding: 7px 13px; border-radius: 999px; line-height: 1; white-space: nowrap;
+  }
+  .chip:active { border-color: var(--grn); color: var(--grn); }
+
+  /* ---------- 입력줄 ---------- */
+  .in-line {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 9px;
+    padding: 11px 14px calc(11px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line); background: var(--term);
+  }
+  .in-line .arrow { color: var(--grn); font-weight: 700; font-size: 16px; }
+  #cmd {
+    flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+    color: var(--txt); font-family: inherit; font-size: 16px;
+    caret-color: var(--grn);
+  }
+  #cmd::placeholder { color: #484f58; }
+
+  /* ---------- 라이트박스 ---------- */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 80; background: rgba(1, 4, 9, .96);
+    display: none; align-items: center; justify-content: center;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 94vw; max-height: 84vh; object-fit: contain;
+    border-radius: 6px; user-select: none;
+  }
+  .lb-close, .lb-prev, .lb-next {
+    position: absolute; border: 1px solid var(--line); cursor: pointer; color: #fff;
+    background: rgba(22, 27, 34, .8); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .lb-close {
+    top: calc(16px + env(safe-area-inset-top)); right: 16px;
+    width: 38px; height: 38px; border-radius: 50%; font-size: 18px;
+  }
+  .lb-prev, .lb-next {
+    top: 50%; transform: translateY(-50%);
+    width: 42px; height: 42px; border-radius: 50%; font-size: 22px;
+  }
+  .lb-prev { left: 12px; }
+  .lb-next { right: 12px; }
+  .lb-count {
+    position: absolute; bottom: calc(22px + env(safe-area-inset-bottom));
+    left: 0; right: 0; text-align: center; color: #fff; font-size: 13px; opacity: .8;
+  }
+
+  /* ---------- 토스트 ---------- */
+  #toast {
+    position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%) translateY(14px);
+    background: var(--card); border: 1px solid var(--grn); color: var(--grn);
+    font-size: 12.5px; padding: 10px 20px; border-radius: 8px;
+    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+    white-space: nowrap; z-index: 99;
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<audio id="bgm" src="../music/star.m4a" loop preload="none"></audio>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="term-title">guest@wedding: ~ — ssh</span>
+    <button class="bgm-btn off" id="bgmBtn" aria-label="배경음악 켜기/끄기">♪</button>
+  </div>
+
+  <div id="screen" aria-live="polite"></div>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="in-line">
+    <span class="arrow">❯</span>
+    <input id="cmd" type="text" enterkeyhint="go" autocomplete="off" autocapitalize="off"
+           autocorrect="off" spellcheck="false" placeholder="명령어 입력… (help)" aria-label="명령어 입력" />
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose" aria-label="닫기">✕</button>
+  <button class="lb-prev" id="lbPrev" aria-label="이전 사진">‹</button>
+  <img id="lbImg" src="" alt="" />
+  <button class="lb-next" id="lbNext" aria-label="다음 사진">›</button>
+  <p class="lb-count" id="lbCount"></p>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ===================================================================
+   ★ 여기만 수정하면 됩니다 ★
+=================================================================== */
+const CONFIG = {
+  groom: { name: "우상연", father: "우경진", mother: "주현옥", order: "장남", phone: "010-3050-2397" },
+  bride: { name: "강예은", father: "강성철", mother: "김태순", order: "차녀", phone: "010-2769-5738" },
+
+  // 예식 일시 (년, 월, 일, 시, 분)
+  date: new Date(2026, 9, 17, 11, 0),   // ※ 월은 0부터: 9 = 10월
+
+  venue: {
+    name: "더화이트베일 4층 W홀",
+    addr: "서울특별시 서초구 서초중앙로 14",
+    mapQuery: "더화이트베일",           // 지도 앱 검색어
+  },
+
+  accounts: {
+    groom: [
+      { bank: "우리은행", num: "1002-550-793919", holder: "우상연" },
+      { bank: "우리은행", num: "1002-649-735193", holder: "우경진 (부)" },
+      { bank: "농협", num: "544-12-190062", holder: "주현옥 (모)" },
+    ],
+    bride: [
+      { bank: "새마을금고", num: "9003-2573-83150", holder: "강예은" },
+      { bank: "국민은행", num: "821-05-0003-200", holder: "강성철 (부)" },
+      { bank: "국민은행", num: "048-21-0582-310", holder: "김태순 (모)" },
+    ],
+  },
+
+  photoCount: 19,   // photos/gallery/p01~p19.webp
+};
+/* =================================================================== */
+
+const $ = (id) => document.getElementById(id);
+const screenEl = $("screen");
+const input = $("cmd");
+const d = CONFIG.date;
+const week = ["일", "월", "화", "수", "목", "금", "토"];
+const monthEn = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const pad = (n) => String(n).padStart(2, "0");
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const hour12 = d.getHours() > 12 ? d.getHours() - 12 : d.getHours();
+const ampm = d.getHours() >= 12 ? "오후" : "오전";
+const dateKo = `${d.getFullYear()}. ${pad(d.getMonth() + 1)}. ${pad(d.getDate())}. (${week[d.getDay()]}) ${ampm} ${hour12}:${pad(d.getMinutes())}`;
+
+/* ---------- 출력 헬퍼 ---------- */
+const L = (html, cls = "") => `<div class="tl ${cls}">${html}</div>`;
+const GAP = L("", "o-gap");
+
+function appendBlock(html, noanim = false) {
+  const el = document.createElement("div");
+  el.className = "out" + (noanim ? " noanim" : "");
+  el.innerHTML = html;
+  el.querySelectorAll(".tl").forEach((n, i) => n.style.setProperty("--i", i));
+  screenEl.appendChild(el);
+  return el;
+}
+function appendEcho(cmdText) {
+  const el = document.createElement("div");
+  el.className = "echo";
+  el.innerHTML = `<span class="p-user">guest@wedding</span><span class="p-dollar">:</span><span class="p-path">~</span><span class="p-dollar">$ </span><b>${esc(cmdText)}</b>`;
+  screenEl.appendChild(el);
+  return el;
+}
+const scrollBottom = () => { screenEl.scrollTop = screenEl.scrollHeight; };
+const scrollToEl = (el) => { screenEl.scrollTo({ top: Math.max(0, el.offsetTop - 8), behavior: reduceMotion ? "auto" : "smooth" }); };
+
+/* ---------- 토스트 & 복사 ---------- */
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = "✓ " + msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 2000);
+}
+async function copyText(text, msg) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); ta.remove();
+  }
+  toast(msg);
+}
+
+/* ===================================================================
+   명령어 출력 내용
+=================================================================== */
+function outHelp() {
+  const rows = [
+    ["info", "모시는 글"],
+    ["dday", "예식 일시 · D-DAY"],
+    ["gallery", "우리의 순간들 (사진)"],
+    ["location", "오시는 길"],
+    ["account", "마음 전하실 곳"],
+    ["contact", "신랑 · 신부에게 연락"],
+    ["music", "배경음악 켜기 / 끄기"],
+    ["share", "청첩장 링크 복사"],
+    ["clear", "화면 지우기"],
+    ["cd ..", "다른 초대장 보러 가기"],
+  ];
+  return L(`사용 가능한 명령어`, "o-h")
+    + rows.map(([c, t]) => L(`<span class="cmdrow"><b>${c}</b><span>${t}</span></span>`)).join("")
+    + GAP
+    + L(`숨겨진 명령어도 있어요. <span class="o-dim">(힌트: sudo, git, ls …)</span>`, "o-dim");
+}
+
+function outInfo() {
+  const g = CONFIG.groom, b = CONFIG.bride;
+  return L(`# cat invitation.txt`, "o-h")
+    + GAP
+    + L(`서로 다른 두 사람이 만나`)
+    + L(`수많은 시행착오를 거치며 알게 되었습니다.`)
+    + GAP
+    + L(`함께일 때 가장 편안하고`)
+    + L(`가장 단단하다는 것을요.`)
+    + GAP
+    + L(`이제 둘이서 하나의 팀이 되어`)
+    + L(`평생을 함께 만들어 가려 합니다.`)
+    + GAP
+    + L(`저희의 첫 배포 날, 소중한 분들을 초대합니다.`)
+    + GAP
+    + L(`<span class="o-cyn">${dateKo}</span>`)
+    + L(`<span class="o-cyn">${CONFIG.venue.name}</span>`)
+    + GAP
+    + L(`${g.father} · ${g.mother} <span class="o-dim">의 ${g.order}</span> <span class="o-grn">${g.name.slice(1)}</span>`)
+    + L(`${b.father} · ${b.mother} <span class="o-dim">의 ${b.order}</span> <span class="o-grn">${b.name.slice(1)}</span>`);
+}
+
+function buildCalendar() {
+  const first = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  const title = `${monthEn[d.getMonth()]} ${d.getFullYear()}`;
+  const padTitle = " ".repeat(Math.max(0, Math.floor((20 - title.length) / 2)));
+  let s = padTitle + title + "\n";
+  s += `<span class="sun">Su</span> Mo Tu We Th Fr Sa\n`;
+  let cell = 0, line = "";
+  for (let i = 0; i < first; i++) { line += "   "; cell++; }
+  for (let day = 1; day <= last; day++) {
+    let txt = String(day).padStart(2, " ");
+    if (day === d.getDate()) txt = `<span class="dd">${txt}</span>`;
+    else if (cell % 7 === 0) txt = `<span class="sun">${txt}</span>`;
+    line += txt + (cell % 7 === 6 ? "" : " ");
+    cell++;
+    if (cell % 7 === 0) { s += line + "\n"; line = ""; }
+  }
+  if (line) s += line + "\n";
+  return s.replace(/\n$/, "");
+}
+
+function outDday() {
+  return L(`# ${dateKo}`, "o-h")
+    + L(`<pre class="cal">${buildCalendar()}</pre>`)
+    + GAP
+    + L(`<span class="cd-line" data-cd>계산 중…</span>`)
+    + L(`<span class="o-dim" data-cd-sub></span>`);
+}
+
+function outGallery() {
+  const imgs = Array.from({ length: CONFIG.photoCount }, (_, i) =>
+    `<img src="../photos/gallery/p${pad(i + 1)}.webp" alt="갤러리 사진 ${i + 1}" loading="lazy" data-i="${i}" />`).join("");
+  return L(`# ls gallery/  <span class="o-dim">(${CONFIG.photoCount} photos)</span>`, "o-h")
+    + L(`<div class="g-grid">${imgs}</div>`)
+    + L(`사진을 누르면 크게 볼 수 있어요.`, "o-dim");
+}
+
+function outLocation() {
+  const q = encodeURIComponent(CONFIG.venue.mapQuery);
+  return L(`# cat location.md`, "o-h")
+    + GAP
+    + L(`<span class="o-cyn">${CONFIG.venue.name}</span>`)
+    + L(`${CONFIG.venue.addr}`, "o-dim")
+    + L(`<iframe class="map-embed" title="${CONFIG.venue.mapQuery} 지도" src="https://maps.google.com/maps?q=${q}&hl=ko&z=16&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`)
+    + L(`<span class="t-btns">
+        <a class="t-btn" target="_blank" rel="noopener" href="https://map.kakao.com/link/search/${q}">카카오맵</a>
+        <a class="t-btn" target="_blank" rel="noopener" href="https://map.naver.com/v5/search/${q}">네이버지도</a>
+        <a class="t-btn" target="_blank" rel="noopener" href="https://tmap.life/route?goalname=${q}">티맵</a>
+      </span>`)
+    + GAP
+    + L(`## 지하철`, "o-grn")
+    + L(`3호선 남부터미널역 4-1번 출구 바로 앞`)
+    + L(`## 버스`, "o-grn")
+    + L(`지선 4319 · 간선 461, 641 · 공항 5300-1, 8501`)
+    + L(`남부터미널 하차`, "o-dim")
+    + L(`## 자가용 · 주차`, "o-grn")
+    + L(`경부고속도로 서초 I.C에서 500m`)
+    + L(`맞은편 전용 주차타워 이용 (서초중앙로2길 10)`, "o-dim");
+}
+
+function outAccount() {
+  const group = (title, cls, list) =>
+    L(`[${title}]`, cls)
+    + list.map((a) => L(`<span class="acc-row">
+        <span class="info">${a.bank} ${a.num}<small>${a.holder}</small></span>
+        <button class="cp" data-copy="${a.bank} ${a.num} ${a.holder}">복사</button>
+      </span>`)).join("");
+  return L(`# cat account.json`, "o-h")
+    + L(`참석이 어려우신 분들을 위해 계좌번호를 기재하였습니다.`, "o-dim")
+    + L(`너그러운 마음으로 양해 부탁드립니다.`, "o-dim")
+    + GAP
+    + group("신랑측", "o-grn", CONFIG.accounts.groom)
+    + GAP
+    + group("신부측", "o-cyn", CONFIG.accounts.bride);
+}
+
+function outContact() {
+  const row = (who, p) => L(`<span class="ct-row">
+      <span class="who">[${who}]</span><span class="nm">${p.name}</span>
+      <a class="t-btn" href="tel:${p.phone}">📞 전화</a>
+      <a class="t-btn" href="sms:${p.phone}">✉ 문자</a>
+    </span>`);
+  return L(`# cat contact.vcf`, "o-h")
+    + row("신랑", CONFIG.groom)
+    + row("신부", CONFIG.bride);
+}
+
+function outMusic() {
+  const audio = $("bgm");
+  const playing = !audio.paused;
+  const status = playing
+    ? L(`⏸ 배경음악을 정지했습니다.`, "o-ylw")
+    : L(`▶ 배경음악을 재생합니다.`, "o-grn");
+  toggleBgm(!playing);
+  return status + L(`BGM: Amberlight — Scott Buckley (scottbuckley.com.au) / CC BY 4.0`, "o-dim");
+}
+
+function outShare() {
+  copyText(location.href, "청첩장 링크가 복사되었습니다");
+  return L(`청첩장 링크가 클립보드에 복사되었습니다.`, "o-grn")
+    + L(esc(location.href), "o-dim");
+}
+
+/* ---------- 이스터에그 ---------- */
+const outWhoami = () => L(`소중한 하객님 <span class="o-dim">(권한: VIP)</span>`, "o-grn");
+const outLs = () => L(`invitation.txt  <span class="o-grn">dday.sh*</span>  <span class="o-cyn">gallery/</span>  location.md  account.json  contact.vcf`)
+  + L(`cat 명령어로 열어볼 수 있어요. (예: cat invitation.txt)`, "o-dim");
+const outLove = () => L(`love: 실행 중… 종료 조건을 찾을 수 없습니다.`, "o-mag")
+  + L(`(무한 루프 — 의도된 동작입니다 ❤)`, "o-dim");
+const outVim = () => L(`vim: 종료 방법을 아신다면 진정한 개발자십니다.`, "o-ylw")
+  + L(`(힌트: :q! …하지만 이 초대장에서는 나가지 마세요)`, "o-dim");
+const outSudoMarry = () => L(`[sudo] password for guest: ********`, "o-dim")
+  + L(`혼인이 승인되었습니다. 💍`, "o-grn")
+  + L(`평생 유효한 권한이 부여됩니다. (만료일: 없음)`);
+const outGitLog = () => [
+    ["a1b2c3d", `<span class="o-ylw">(HEAD -&gt; main, tag: v1.0.0)</span> feat: 결혼식 — 2026-10-17 예정`],
+    ["9f8e7d6", `feat: 프러포즈, 평생을 머지하기로 결정 💍`],
+    ["5c4d3e2", `fix: 서로 달랐던 두 브랜치의 충돌 해결`],
+    ["2b1a0f9", `feat: 첫 데이트`],
+    ["d0c9b8a", `init: 첫 만남`],
+  ].map(([h, m]) => L(`<span class="o-cyn">${h}</span> ${m}`)).join("");
+const outRm = () => L(`rm: '우리의 사랑' 을(를) 삭제할 수 없습니다: Permission denied ❤`, "o-red");
+const outExit = () => L(`logout`, "o-dim")
+  + L(`Connection to our-wedding.dev closed.`, "o-dim")
+  + L(`…라고 할 뻔했지만, 연결은 계속 유지됩니다 :)`)
+  + L(`${d.getMonth() + 1}월 ${d.getDate()}일에 꼭 만나요!`, "o-grn");
+
+/* ===================================================================
+   명령어 실행
+=================================================================== */
+const COMMANDS = {
+  help: outHelp,
+  info: outInfo, invitation: outInfo,
+  dday: outDday, date: outDday, "d-day": outDday,
+  gallery: outGallery, photos: outGallery,
+  location: outLocation, map: outLocation,
+  account: outAccount, accounts: outAccount,
+  contact: outContact,
+  music: outMusic,
+  share: outShare,
+  whoami: outWhoami,
+  ls: outLs, dir: outLs,
+  love: outLove,
+  vim: outVim, vi: outVim,
+  exit: outExit, logout: outExit,
+  "./dday.sh": outDday,
+};
+const CAT_FILES = {
+  "invitation.txt": outInfo,
+  "dday.sh": outDday,
+  "location.md": outLocation,
+  "account.json": outAccount,
+  "contact.vcf": outContact,
+};
+
+const hist = [];
+let histIdx = 0;
+
+function execute(raw) {
+  const line = raw.trim();
+  if (!line) return;
+  hist.push(line);
+  histIdx = hist.length;
+
+  const echoEl = appendEcho(line);
+  const parts = line.split(/\s+/);
+  const name = parts[0].toLowerCase();
+  let html = null;
+
+  if (name === "clear" || name === "cls") {
+    screenEl.innerHTML = "";
+    appendBlock(L(`화면을 지웠습니다. <span class="o-dim">help 를 입력하면 명령어 목록이 나와요.</span>`));
+    return;
+  }
+  if (name === "cd") {
+    if (parts[1] === "..") {
+      html = L(`다른 초대장 목록으로 이동합니다…`, "o-cyn");
+      setTimeout(() => { location.href = "../"; }, 700);
+    } else {
+      html = L(`cd: 갈 수 있는 곳: <span class="o-cyn">cd ..</span> (초대장 목록)`, "o-dim");
+    }
+  } else if (name === "sudo") {
+    html = parts[1] === "marry"
+      ? outSudoMarry()
+      : L(`sudo: 힌트 — <span class="o-cyn">sudo marry</span> 를 입력해 보세요.`, "o-dim");
+  } else if (name === "git") {
+    html = outGitLog();
+  } else if (name === "rm") {
+    html = outRm();
+  } else if (name === "cat") {
+    const f = parts[1];
+    if (f && CAT_FILES[f]) html = CAT_FILES[f]();
+    else if (f === "gallery" || f === "gallery/") html = L(`cat: gallery/: 디렉터리입니다. <span class="o-cyn">gallery</span> 명령어를 사용하세요.`, "o-dim");
+    else html = L(`cat: ${esc(f || "")}: No such file or directory`, "o-red") + L(`ls 로 파일 목록을 볼 수 있어요.`, "o-dim");
+  } else if (COMMANDS[name]) {
+    html = COMMANDS[name]();
+  } else {
+    html = L(`bash: ${esc(name)}: command not found`, "o-red")
+      + L(`help 를 입력하면 명령어 목록이 나와요.`, "o-dim");
+  }
+
+  appendBlock(html);
+  startCountdowns();
+  scrollToEl(echoEl);
+}
+
+/* ---------- 카운트다운 (dday 출력마다 살아있는 숫자) ---------- */
+let cdTimer = null;
+function startCountdowns() {
+  const mains = screenEl.querySelectorAll("[data-cd]");
+  if (!mains.length) return;
+  const tick = () => {
+    const diff = d - new Date();
+    const t = Math.abs(diff);
+    const days = Math.floor(t / 864e5);
+    const hh = pad(Math.floor(t / 36e5) % 24), mm = pad(Math.floor(t / 6e4) % 60), ss = pad(Math.floor(t / 1e3) % 60);
+    const main = diff >= 0
+      ? `D-<b>${days}</b> · 남은 시간 <b>${days}일 ${hh}:${mm}:${ss}</b>`
+      : `결혼식 +<b>${days}</b>일 — 함께해 주셔서 감사합니다`;
+    const sub = diff >= 0
+      ? `${CONFIG.groom.name.slice(1)} ♥ ${CONFIG.bride.name.slice(1)}의 결혼식이 ${days}일 남았습니다.`
+      : ``;
+    screenEl.querySelectorAll("[data-cd]").forEach((el) => { el.innerHTML = main; });
+    screenEl.querySelectorAll("[data-cd-sub]").forEach((el) => { el.textContent = sub; });
+  };
+  tick();
+  if (!cdTimer) cdTimer = setInterval(tick, 1000);
+}
+
+/* ===================================================================
+   입력 / 칩 / 자동완성 / 히스토리
+=================================================================== */
+const CHIP_LIST = [
+  ["❓", "help"], ["📖", "info"], ["📅", "dday"], ["📷", "gallery"],
+  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🔗", "share"],
+];
+$("chips").innerHTML = CHIP_LIST
+  .map(([e, c]) => `<button class="chip" data-cmd="${c}">${e} ${c}</button>`).join("");
+
+let typingChip = false;
+async function typeAndRun(cmd) {
+  if (typingChip) return;
+  typingChip = true;
+  input.value = "";
+  if (!reduceMotion) {
+    for (const ch of cmd) {
+      input.value += ch;
+      await sleep(28);
+    }
+    await sleep(120);
+  } else {
+    input.value = cmd;
+  }
+  input.value = "";
+  execute(cmd);
+  typingChip = false;
+}
+$("chips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (chip) typeAndRun(chip.dataset.cmd);
+});
+
+input.addEventListener("keydown", (e) => {
+  if (booting) { skipBoot = true; return; }
+  if (typingChip) { e.preventDefault(); return; }
+  if (e.key === "Enter") {
+    const v = input.value;
+    input.value = "";
+    execute(v);
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    if (histIdx > 0) { histIdx--; input.value = hist[histIdx] || ""; }
+  } else if (e.key === "ArrowDown") {
+    e.preventDefault();
+    if (histIdx < hist.length) { histIdx++; input.value = hist[histIdx] || ""; }
+  } else if (e.key === "Tab") {
+    e.preventDefault();
+    const v = input.value.trim().toLowerCase();
+    if (!v) return;
+    const cand = Object.keys(COMMANDS).find((c) => c.startsWith(v));
+    if (cand) input.value = cand + " ";
+  }
+});
+
+/* 데스크톱: 터미널 아무 곳이나 클릭하면 입력창 포커스 */
+if (matchMedia("(hover: hover)").matches) {
+  document.querySelector(".term").addEventListener("click", (e) => {
+    if (e.target.closest("button, a, input, img, iframe")) return;
+    if (String(getSelection())) return;
+    input.focus({ preventScroll: true });
+  });
+}
+
+/* ---------- 복사 버튼 ---------- */
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".cp");
+  if (btn) copyText(btn.dataset.copy, "계좌번호가 복사되었습니다");
+});
+
+/* ===================================================================
+   배경 음악
+=================================================================== */
+const audio = $("bgm");
+const bgmBtn = $("bgmBtn");
+audio.volume = 0.5;
+let bgmWanted = true;
+const syncBgm = () => bgmBtn.classList.toggle("off", audio.paused);
+function toggleBgm(on) {
+  if (on) { bgmWanted = true; audio.play().then(syncBgm).catch(() => {}); }
+  else { bgmWanted = false; audio.pause(); }
+  syncBgm();
+}
+bgmBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleBgm(audio.paused); });
+audio.addEventListener("play", syncBgm);
+audio.addEventListener("pause", syncBgm);
+const kick = () => { if (bgmWanted) audio.play().then(syncBgm).catch(() => {}); };
+window.addEventListener("touchend", kick, { once: true });
+window.addEventListener("click", kick, { once: true });
+kick();
+
+/* ===================================================================
+   라이트박스
+=================================================================== */
+(() => {
+  const box = $("lightbox");
+  const lbImg = $("lbImg");
+  const count = $("lbCount");
+  const srcs = Array.from({ length: CONFIG.photoCount }, (_, i) => `../photos/gallery/p${pad(i + 1)}.webp`);
+  let cur = 0;
+  const show = (i) => {
+    cur = (i + srcs.length) % srcs.length;
+    lbImg.src = srcs[cur];
+    count.textContent = `${cur + 1} / ${srcs.length}`;
+  };
+  screenEl.addEventListener("click", (e) => {
+    const im = e.target.closest(".g-grid img");
+    if (!im) return;
+    show(+im.dataset.i);
+    box.classList.add("open");
+    document.body.style.overflow = "hidden";
+  });
+  const close = () => { box.classList.remove("open"); document.body.style.overflow = ""; };
+  $("lbClose").addEventListener("click", close);
+  $("lbPrev").addEventListener("click", (e) => { e.stopPropagation(); show(cur - 1); });
+  $("lbNext").addEventListener("click", (e) => { e.stopPropagation(); show(cur + 1); });
+  box.addEventListener("click", (e) => { if (e.target === box || e.target === lbImg) close(); });
+  document.addEventListener("keydown", (e) => {
+    if (!box.classList.contains("open")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") show(cur - 1);
+    if (e.key === "ArrowRight") show(cur + 1);
+  });
+  let sx = 0;
+  box.addEventListener("touchstart", (e) => { sx = e.changedTouches[0].clientX; }, { passive: true });
+  box.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 45) show(cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+})();
+
+/* ===================================================================
+   부팅 시퀀스
+=================================================================== */
+const ASCII = [
+  "__      _____ ___  ___  ___ _  _  ___ ",
+  "\\ \\    / / __|   \\|   \\|_ _| \\| |/ __|",
+  " \\ \\/\\/ /| _|| |) | |) || || .` | (_ |",
+  "  \\_/\\_/ |___|___/|___/|___|_|\\_|\\___|",
+].join("\n");
+
+let booting = true;
+let skipBoot = false;
+document.addEventListener("pointerdown", () => { if (booting) skipBoot = true; }, { passive: true });
+
+async function typeCmd(text) {
+  const el = appendEcho("");
+  const b = el.querySelector("b");
+  if (reduceMotion || skipBoot) { b.textContent = text; return; }
+  b.insertAdjacentHTML("afterend", `<span class="cursor"></span>`);
+  for (const ch of text) {
+    b.textContent += ch;
+    scrollBottom();
+    await sleep(42);
+    if (skipBoot) { b.textContent = text; break; }
+  }
+  el.querySelector(".cursor")?.remove();
+}
+async function bootOut(lines, perLine = 90) {
+  for (const html of lines) {
+    appendBlock(html, true);
+    scrollBottom();
+    if (!reduceMotion && !skipBoot) await sleep(perLine);
+  }
+}
+async function bootPause(ms) { if (!reduceMotion && !skipBoot) await sleep(ms); }
+
+(async () => {
+  await bootPause(350);
+  await typeCmd("ssh guest@our-wedding.dev");
+  await bootPause(200);
+  await bootOut([
+    L(`Connecting to our-wedding.dev… <span class="o-grn">connected.</span>`, "o-dim"),
+    L(`<pre class="ascii">${ASCII}</pre>`),
+    L(`Welcome to <span class="o-grn">WeddingOS v1.0 LTS</span> <span class="o-dim">(kernel 2026.10.17)</span>`),
+    GAP,
+    L(` * 신랑&nbsp;&nbsp;: ${CONFIG.groom.name}`),
+    L(` * 신부&nbsp;&nbsp;: ${CONFIG.bride.name}`),
+    L(` * 예식일: ${dateKo}`),
+    L(` * 장소&nbsp;&nbsp;: ${CONFIG.venue.name}`),
+  ]);
+  await bootPause(500);
+  await typeCmd("npm run invitation");
+  await bootPause(250);
+  await bootOut([
+    L(`&gt; wedding@1.0.0 invitation`, "o-dim"),
+    L(`&gt; love --forever`, "o-dim"),
+    GAP,
+    L(`<span class="o-grn">✔</span> 두 사람의 마음 컴파일 완료`),
+    L(`<span class="o-grn">✔</span> 평생의 약속 빌드 성공 <span class="o-dim">(0 errors, 0 warnings)</span>`),
+    L(`<span class="o-grn">✔</span> 초대장 배포 완료`),
+    GAP,
+    L(`# BGM: Amberlight — Scott Buckley / CC BY 4.0 · 우측 상단 ♪`, "o-dim"),
+  ], 140);
+  await bootPause(400);
+  await typeCmd("help");
+  appendBlock(outHelp(), skipBoot || reduceMotion);
+  scrollBottom();
+  booting = false;
+  $("chips").classList.add("on");
+})();
+</script>
+</body>
+</html>
