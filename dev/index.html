@@ -423,7 +423,7 @@ function outHelp() {
     ["location", "오시는 길"],
     ["account", "마음 전하실 곳"],
     ["contact", "신랑 · 신부에게 연락"],
-    ["music", "배경음악 켜기 / 끄기"],
+    ["music", "배경음악 재생 · 곡 변경 (3곡)"],
     ["share", "청첩장 링크 복사"],
     ["snake", "🐍 뱀게임 (♥ 모으기)"],
     ["theme", "CRT 레트로 테마 (amber/green)"],
@@ -556,14 +556,41 @@ function outContact() {
     + row("신부", CONFIG.bride);
 }
 
-function outMusic() {
+/* ---------- BGM 플레이리스트 (3곡) ---------- */
+const TRACKS = [
+  { file: "../music/dev.m4a", name: "Canon in D (8bit)", credit: "Pachelbel — Canon in D / Public Domain · 8bit arr." },
+  { file: "../music/dev2.m4a", name: "Bridal Chorus (8bit march)", credit: "Wagner — Bridal Chorus / Public Domain · 8bit arr." },
+  { file: "../music/dev3.m4a", name: "Love Loop (lo-fi 8bit)", credit: "자작곡 / CC0" },
+];
+let trackIdx = 0;
+try {
+  const s = parseInt(localStorage.getItem("devTrack"), 10);
+  if (s >= 0 && s < TRACKS.length) trackIdx = s;
+} catch {}
+
+function setTrack(i) {
+  trackIdx = ((i % TRACKS.length) + TRACKS.length) % TRACKS.length;
+  try { localStorage.setItem("devTrack", trackIdx); } catch {}
+  $("bgm").src = TRACKS[trackIdx].file;
+  toggleBgm(true);
+}
+const nowPlayingMsg = () =>
+  L(`♪ ${TRACKS[trackIdx].name} 재생`, "o-grn") + L(TRACKS[trackIdx].credit, "o-dim");
+
+function outMusic(args = []) {
   const audio = $("bgm");
+  const a = (args[0] || "").toLowerCase();
+  if (a === "list" || a === "ls") {
+    return L(`# 플레이리스트`, "o-h")
+      + TRACKS.map((t, i) => L(`${i === trackIdx ? `<span class="o-grn">▶</span>` : `&nbsp;`} ${i + 1}. ${t.name} <span class="o-dim">— ${t.credit}</span>`)).join("")
+      + L(`곡 변경: <span class="o-cyn">music 1·2·3</span> 또는 <span class="o-cyn">music next</span>`, "o-dim");
+  }
+  if (/^[1-9]$/.test(a) && +a <= TRACKS.length) { setTrack(+a - 1); return nowPlayingMsg(); }
+  if (a === "next") { setTrack(trackIdx + 1); return nowPlayingMsg(); }
   const playing = !audio.paused;
-  const status = playing
-    ? L(`⏸ 배경음악을 정지했습니다.`, "o-ylw")
-    : L(`▶ 배경음악을 재생합니다.`, "o-grn");
   toggleBgm(!playing);
-  return status + L(`BGM: Pachelbel — Canon in D (8bit arrangement) / Public Domain`, "o-dim");
+  return (playing ? L(`⏸ 배경음악을 정지했습니다.`, "o-ylw") : nowPlayingMsg())
+    + L(`곡 목록: <span class="o-cyn">music list</span>`, "o-dim");
 }
 
 function outShare() {
@@ -669,6 +696,8 @@ function outSnake() {
   const hud = el.querySelector(".snake-hud");
   const CW = 19, CH = 12;
   let snake = [[9, 6], [8, 6], [7, 6]], dir = [1, 0], nextDir = dir, food = null, score = 0, over = false;
+  let best = 0, newRecord = false;
+  try { best = parseInt(localStorage.getItem("snakeBest"), 10) || 0; } catch {}
   const rand = (n) => Math.floor(Math.random() * n);
   const onSnake = (x, y) => snake.some((s) => s[0] === x && s[1] === y);
   const placeFood = () => { do { food = [rand(CW), rand(CH)]; } while (onSnake(food[0], food[1])); };
@@ -687,14 +716,21 @@ function outSnake() {
     }
     out += "└" + "─".repeat(CW) + "┘";
     scr.innerHTML = out;
-    hud.textContent = over ? `게임 오버! ♥ ${score}개 획득 — 다시 하려면 snake` : `♥ ${score}`;
+    hud.textContent = over
+      ? `게임 오버! ♥ ${score}개${newRecord ? " — 🏆 신기록!" : best ? ` · 최고 기록 ${best}개` : ""} (다시: snake)`
+      : `♥ ${score}${best ? ` · 최고 ${best}` : ""}`;
   };
   const setDir = (nd) => { if (nd[0] !== -dir[0] || nd[1] !== -dir[1]) nextDir = nd; };
   const step = () => {
     dir = nextDir;
     const h = [snake[0][0] + dir[0], snake[0][1] + dir[1]];
     if (h[0] < 0 || h[0] >= CW || h[1] < 0 || h[1] >= CH || onSnake(h[0], h[1])) {
-      over = true; render(); stop(false); return;
+      over = true;
+      if (score > best) {
+        best = score; newRecord = true;
+        try { localStorage.setItem("snakeBest", best); } catch {}
+      }
+      render(); stop(false); return;
     }
     snake.unshift(h);
     if (h[0] === food[0] && h[1] === food[1]) { score++; placeFood(); } else snake.pop();
@@ -823,7 +859,7 @@ function execute(raw) {
     else if (f === "gallery" || f === "gallery/") html = L(`cat: gallery/: 디렉터리입니다. <span class="o-cyn">gallery</span> 명령어를 사용하세요.`, "o-dim");
     else html = L(`cat: ${esc(f || "")}: No such file or directory`, "o-red") + L(`ls 로 파일 목록을 볼 수 있어요.`, "o-dim");
   } else if (COMMANDS[name]) {
-    html = COMMANDS[name]();
+    html = COMMANDS[name](parts.slice(1));
   } else {
     html = L(`bash: ${esc(name)}: command not found`, "o-red")
       + L(`help 를 입력하면 명령어 목록이 나와요.`, "o-dim");
@@ -913,7 +949,7 @@ input.addEventListener("keydown", (e) => {
       prefix = catM[1]; cur = catM[2].toLowerCase();
     } else {
       if (!val || /\s/.test(val)) return;
-      pool = [...new Set(Object.keys(COMMANDS).concat(["clear", "sudo marry", "git log", "cat", "cd ..", "npm test", "theme amber", "theme green"]))];
+      pool = [...new Set(Object.keys(COMMANDS).concat(["clear", "sudo marry", "git log", "cat", "cd ..", "npm test", "theme amber", "theme green", "music list", "music next"]))];
       prefix = ""; cur = val.toLowerCase();
     }
     const matches = pool.filter((c) => c.startsWith(cur)).sort();
@@ -954,6 +990,7 @@ try {
 =================================================================== */
 const audio = $("bgm");
 const bgmBtn = $("bgmBtn");
+audio.src = TRACKS[trackIdx].file;
 audio.volume = 0.5;
 let bgmWanted = true;
 const syncBgm = () => bgmBtn.classList.toggle("off", audio.paused);
@@ -1071,7 +1108,7 @@ async function bootPause(ms) { if (!reduceMotion && !skipBoot) await sleep(ms); 
     L(`<span class="o-grn">✔</span> 평생의 약속 빌드 성공 <span class="o-dim">(0 errors, 0 warnings)</span>`),
     L(`<span class="o-grn">✔</span> 초대장 배포 완료`),
     GAP,
-    L(`# BGM: Canon in D 8bit ver. · 우측 상단 ♪ 또는 music`, "o-dim"),
+    L(`# BGM 3곡 탑재 — music list · 우측 상단 ♪`, "o-dim"),
   ], 140);
   await bootPause(400);
   await typeCmd("help");
