@@ -1234,6 +1234,13 @@ const COMMANDS = {
   run: outRun, mario: outRun, jump: outRun,
   rank: outRank, ranking: outRank, top: outRank,
 };
+/* Tab 자동완성 후보 — 인자까지 포함한 전체 명령 문자열 */
+const COMPLETIONS = [...new Set(Object.keys(COMMANDS).concat([
+  "clear", "cat", "cd ..", "sudo marry", "git log", "npm test",
+  "theme amber", "theme green", "theme default",
+  "music list", "music next", "music 1", "music 2", "music 3",
+]))].sort();
+
 const CAT_FILES = {
   "invitation.txt": outInfo,
   "dday.sh": outDday,
@@ -1381,14 +1388,15 @@ input.addEventListener("keydown", (e) => {
   } else if (e.key === "Tab") {
     e.preventDefault();
     const val = input.value.replace(/^\s+/, "");
+    if (!val) return;
     const catM = val.match(/^(cat\s+)(\S*)$/i);
     let pool, prefix, cur;
     if (catM) {
       pool = Object.keys(CAT_FILES).concat("gallery/");
       prefix = catM[1]; cur = catM[2].toLowerCase();
     } else {
-      if (!val || /\s/.test(val)) return;
-      pool = [...new Set(Object.keys(COMMANDS).concat(["clear", "sudo marry", "git log", "cat", "cd ..", "npm test", "theme amber", "theme green", "music list", "music next", "run"]))];
+      // 입력한 문장 전체로 대조 — "theme g" → "theme green" 처럼 인자도 완성된다
+      pool = COMPLETIONS;
       prefix = ""; cur = val.toLowerCase();
     }
     const matches = pool.filter((c) => c.startsWith(cur)).sort();
