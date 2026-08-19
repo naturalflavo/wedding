@@ -267,6 +267,23 @@
     background: var(--card); color: var(--txt); border: 1px solid var(--line); border-radius: 8px;
   }
 
+  /* ---------- 점프 액션 게임 ---------- */
+  .run-box { display: block; text-align: center; margin-top: 8px; }
+  .run-cv {
+    width: 100%; max-width: 320px; display: block; margin: 0 auto;
+    aspect-ratio: 20 / 12; image-rendering: pixelated;
+    background: #070c13; border: 1px solid var(--line); border-radius: 6px;
+    touch-action: manipulation; user-select: none; cursor: pointer;
+  }
+  .run-hud { font-size: 12.5px; color: var(--dim); margin-top: 6px; }
+  .run-pad { display: flex; gap: 8px; margin-top: 8px; justify-content: center; }
+  .run-pad button {
+    font-family: inherit; font-size: 14px; cursor: pointer; padding: 11px 16px;
+    background: var(--card); color: var(--txt); border: 1px solid var(--line); border-radius: 8px;
+    touch-action: manipulation; user-select: none;
+  }
+  .run-pad button.jump { flex: 1; max-width: 232px; color: var(--grn); font-weight: 700; }
+
   /* ---------- 랭킹 ---------- */
   .rank-form {
     display: flex; flex-wrap: wrap; gap: 8px;
@@ -467,6 +484,7 @@ function outHelp() {
     ["contact", "신랑 · 신부에게 연락"],
     ["music", "배경음악 재생 · 곡 변경 (3곡)"],
     ["share", "청첩장 링크 복사"],
+    ["run", "🏃 예식장까지 달리기 (원버튼)"],
     ["snake", "🐍 뱀게임 (♥ 모으기)"],
     ["rank", "🏆 뱀게임 랭킹 TOP 10"],
     ["theme", "CRT 레트로 테마 (green은 BGM도 바뀜)"],
@@ -888,6 +906,277 @@ function showRankForm(box, score) {
   });
 }
 
+/* ---------- RUN TO THE ALTAR — 원버튼 오토러너 ---------- */
+let runStop = null;
+function outRun() {
+  if (runStop) runStop(false);
+
+  const T = 16, VW = 20, VH = 12;        // 타일 크기 / 화면 타일 수
+  const W = VW * T, H = VH * T;          // 320 x 192 (논리 해상도)
+  const LW = 184;                        // 레벨 전체 가로 타일 수
+  const GY = 10;                         // 바닥 윗면 타일 y
+  const GOAL = 176;                      // 신부 위치 (타일)
+
+  const GAPS = [[18, 3], [36, 3], [56, 3], [78, 3], [98, 3], [118, 3], [140, 3], [158, 3]];
+  const BLOCKS = [[72, 8, 4], [132, 8, 4]];              // [x, y, w] 올라설 수 있는 단
+  const BUGS = [26, 46, 66, 68, 88, 108, 128, 148, 166];
+  const HEARTS0 = [
+    [6, 9], [9, 9], [12, 9], [19, 7], [20, 7], [30, 9], [33, 9], [37, 7], [38, 7],
+    [50, 9], [57, 6], [58, 6], [73, 7], [74, 7], [79, 7], [80, 7], [92, 9],
+    [99, 6], [100, 6], [112, 9], [119, 7], [120, 7], [133, 7], [134, 7],
+    [141, 6], [142, 6], [152, 9], [159, 7], [160, 7], [170, 9], [172, 9],
+  ];
+
+  const el = appendBlock(
+    L(`RUN TO THE ALTAR <span class="o-dim">— 자동으로 달립니다. 탭해서 점프!</span>`)
+    + L(`<span class="run-box">
+        <canvas class="run-cv" width="${W}" height="${H}"></canvas>
+        <div class="run-hud"></div>
+        <span class="run-pad">
+          <button class="jump" data-k="j">▲ 점프 (화면 탭도 가능)</button>
+          <button data-k="q">✕</button>
+        </span></span>`), true);
+
+  const cv = el.querySelector(".run-cv");
+  const ctx = cv.getContext("2d");
+  const hud = el.querySelector(".run-hud");
+  ctx.imageSmoothingEnabled = false;
+
+  const inGap = (tx) => GAPS.some(([g, w]) => tx >= g && tx < g + w);
+  const solid = (tx, ty) => {
+    if (tx < 0) return true;
+    if (tx >= LW) return false;
+    if (ty >= GY && ty < VH) return !inGap(tx);
+    return BLOCKS.some((b) => ty === b[1] && tx >= b[0] && tx < b[0] + b[2]);
+  };
+
+  let hearts, foes, p, cam, dead, won, tick = 0, deaths = 0, best = 0;
+  try { best = parseInt(localStorage.getItem("runBest"), 10) || 0; } catch {}
+
+  function reset() {
+    hearts = HEARTS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
+    foes = BUGS.map((x) => ({ x: x * T, y: GY * T - 13, w: 13, h: 13, dead: 0, ph: x }));
+    p = { x: 2 * T, y: (GY - 3) * T, w: 11, h: 14, vy: 0, on: false, coy: 0, buf: 0 };
+    cam = 0; dead = 0; won = 0;
+  }
+  reset();
+
+  const G = 0.46, SPD = 2.3, JMP = -9.6;   // 모바일에서 넉넉한 점프 타이밍(≈275ms)
+  let holding = false;
+
+  function jump() { p.buf = 8; }
+
+  function moveY(dy) {
+    p.y += dy;
+    p.on = false;
+    const c0 = Math.floor(p.x / T), c1 = Math.floor((p.x + p.w - 1) / T);
+    if (dy > 0) {
+      const r = Math.floor((p.y + p.h - 1) / T);
+      for (let tx = c0; tx <= c1; tx++) if (solid(tx, r)) { p.y = r * T - p.h; p.vy = 0; p.on = true; break; }
+    } else if (dy < 0) {
+      const r = Math.floor(p.y / T);
+      for (let tx = c0; tx <= c1; tx++) if (solid(tx, r)) { p.y = (r + 1) * T; p.vy = 0; break; }
+    }
+  }
+
+  function die() {
+    if (dead || won) return;
+    dead = 1; deaths++;
+    setTimeout(() => { if (runStop) reset(); }, 1000);
+  }
+
+  function step() {
+    tick++;
+    if (won) return;
+    if (dead) { p.vy = Math.min(p.vy + G, 11); p.y += p.vy; return; }
+
+    // 자동 전진 — 벽(단의 옆면)에 막히면 밀어 올리지 않고 그대로 통과시키지 않는다
+    const nx = p.x + SPD;
+    const tCol = Math.floor((nx + p.w - 1) / T);
+    let blocked = false;
+    for (let ty = Math.floor(p.y / T); ty <= Math.floor((p.y + p.h - 1) / T); ty++) {
+      if (solid(tCol, ty)) { blocked = true; break; }
+    }
+    p.x = blocked ? tCol * T - p.w : nx;
+
+    // 점프 (코요테 타임 + 입력 버퍼)
+    p.coy = p.on ? 7 : Math.max(0, p.coy - 1);
+    p.buf = Math.max(0, p.buf - 1);
+    if (p.buf && p.coy) { p.vy = JMP; p.on = false; p.coy = 0; p.buf = 0; }
+    if (p.vy < 0 && !holding) p.vy *= 0.86;      // 짧게 탭하면 낮게 점프
+    p.vy = Math.min(p.vy + G, 11);
+    moveY(p.vy);
+
+    if (p.y > H + 40) { die(); return; }
+
+    // 버그 — 제자리에서 좌우로 조금씩
+    for (const f of foes) {
+      if (f.dead) { f.dead++; continue; }
+      f.x += Math.sin((tick + f.ph) / 34) * 0.5;
+      if (p.x + p.w > f.x + 2 && p.x < f.x + f.w - 2 &&
+          p.y + p.h > f.y + 2 && p.y < f.y + f.h) {
+        if (p.vy > 0 && p.y + p.h - p.vy <= f.y + 7) { f.dead = 1; p.vy = -6.4; }
+        else die();
+      }
+    }
+    for (const h of hearts) {
+      if (!h.got && Math.abs(h.x - (p.x + p.w / 2)) < 12 && Math.abs(h.y - (p.y + p.h / 2)) < 13) h.got = true;
+    }
+    if (p.x + p.w > GOAL * T) {
+      won = 1;
+      const got = hearts.filter((h) => h.got).length;
+      if (got > best) { best = got; try { localStorage.setItem("runBest", best); } catch {} }
+    }
+    cam = Math.max(0, Math.min(p.x - 110, LW * T - W));
+  }
+
+  // ---------- 그리기 ----------
+  const px = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+
+  function drawGroom(x, y) {
+    const run = p.on ? Math.floor(tick / 5) % 2 : 0;
+    px(x + 2, y, 7, 4, "#2b2118");
+    px(x + 2, y + 3, 7, 4, "#e8b98c");
+    px(x + 6, y + 4, 2, 2, "#1b1b1b");
+    px(x + 1, y + 7, 9, 6, "#20262e");
+    px(x + 4, y + 7, 3, 5, "#eef2f7");
+    px(x + 5, y + 7, 1, 4, "#c0392b");
+    if (p.on) { px(x + 1 + run * 2, y + 13, 3, 2, "#15181d"); px(x + 7 - run * 2, y + 13, 3, 2, "#15181d"); }
+    else { px(x, y + 12, 3, 2, "#15181d"); px(x + 8, y + 12, 3, 2, "#15181d"); }
+  }
+  function drawBride(x, y) {
+    const s = Math.sin(tick / 22) * 1.2;
+    px(x + 2, y - 2 + s, 10, 2, "#ffffff");
+    px(x + 3, y - 1 + s, 8, 4, "#3a2a1e");
+    px(x + 3, y + 2 + s, 8, 4, "#f0c39a");
+    px(x + 4, y + 3 + s, 2, 2, "#1b1b1b"); px(x + 8, y + 3 + s, 2, 2, "#1b1b1b");
+    px(x + 2, y + 6 + s, 10, 5, "#ffffff");
+    px(x, y + 10 + s, 14, 5, "#f4f6fa");
+  }
+  function drawHeart(x, y) {
+    const b = Math.sin(tick / 9) > 0 ? 0 : 1;
+    px(x - 3, y - 3 + b, 2, 2, "#f85149"); px(x + 1, y - 3 + b, 2, 2, "#f85149");
+    px(x - 4, y - 1 + b, 8, 3, "#f85149");
+    px(x - 3, y + 2 + b, 6, 1, "#f85149"); px(x - 1, y + 3 + b, 2, 1, "#f85149");
+  }
+  function drawFoe(f, sx) {
+    if (f.dead) { px(sx, f.y + 9, 13, 4, "#5c2b2b"); return; }
+    const w = Math.floor(tick / 8) % 2;
+    px(sx + 1, f.y + 2, 11, 9, "#8b3a3a");
+    px(sx + 3, f.y + 4, 2, 2, "#ffe08a"); px(sx + 8, f.y + 4, 2, 2, "#ffe08a");
+    px(sx + 2, f.y, 2, 2, "#8b3a3a"); px(sx + 9, f.y, 2, 2, "#8b3a3a");
+    px(sx + (w ? 0 : 1), f.y + 11, 3, 2, "#5c2b2b");
+    px(sx + (w ? 10 : 9), f.y + 11, 3, 2, "#5c2b2b");
+  }
+
+  function draw() {
+    const green = document.body.classList.contains("crt-green");
+    const amber = document.body.classList.contains("crt-amber");
+    const C = green ? { bg: "#020a03", gr: "#14401f", gt: "#5cff7d", dot: "#2f9a4c" }
+          : amber ? { bg: "#0a0500", gr: "#4a3000", gt: "#ffb757", dot: "#b07c2e" }
+          : { bg: "#070c13", gr: "#1d2a3a", gt: "#3fb950", dot: "#2b6cb0" };
+    px(0, 0, W, H, C.bg);
+    ctx.globalAlpha = .5;
+    for (let i = 0; i < 26; i++) {
+      let bx = (i * 137 - cam * 0.3) % (W + 20);
+      if (bx < 0) bx += W + 20;
+      px(bx, (i * 53) % 70 + 6, 1, 1, "#8b949e");
+    }
+    ctx.globalAlpha = 1;
+    const t0 = Math.floor(cam / T), t1 = t0 + VW + 1;
+    for (let tx = t0; tx <= t1; tx++) {
+      if (tx < 0 || tx >= LW || inGap(tx)) continue;
+      const sx = tx * T - cam;
+      px(sx, GY * T, T, T * 2, C.gr);
+      px(sx, GY * T, T, 3, C.gt);
+      px(sx + 3, GY * T + 6, 2, 2, C.dot); px(sx + 9, GY * T + 11, 2, 2, C.dot);
+    }
+    for (const [bx, by, bw] of BLOCKS) {
+      if (bx * T - cam > W || (bx + bw) * T - cam < 0) continue;
+      for (let i = 0; i < bw; i++) {
+        const sx = (bx + i) * T - cam;
+        px(sx, by * T, T, (GY - by) * T, C.gr);
+        px(sx, by * T, T, 3, C.gt);
+      }
+    }
+    for (const h of hearts) {
+      if (h.got) continue;
+      const sx = h.x - cam;
+      if (sx > -10 && sx < W + 10) drawHeart(sx, h.y);
+    }
+    for (const f of foes) {
+      const sx = f.x - cam;
+      if (sx > -20 && sx < W + 20) drawFoe(f, sx);
+    }
+    const gx = GOAL * T - cam;
+    if (gx > -40 && gx < W + 40) {
+      px(gx - 6, GY * T - 36, 26, 3, C.gt);
+      px(gx - 6, GY * T - 36, 3, 36, C.gt); px(gx + 17, GY * T - 36, 3, 36, C.gt);
+      drawBride(gx, GY * T - 15);
+    }
+    if (!dead || Math.floor(tick / 4) % 2) drawGroom(p.x - cam, p.y);
+
+    const got = hearts.filter((h) => h.got).length;
+    hud.innerHTML = won
+      ? `🎉 예식장 도착! ♥ ${got}/${hearts.length}${deaths ? ` · 넘어진 횟수 ${deaths}` : " · 무사고!"} — 다시: <b>run</b>`
+      : dead ? `💥 앗! 다시 출발합니다…`
+      : `♥ ${got}/${hearts.length}　${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%` +
+        (best ? `　최고 ♥${best}` : "");
+  }
+
+  let raf = 0, acc = 0, last = performance.now();
+  function loop(now) {
+    const dt = Math.min(now - last, 60); last = now;
+    acc += dt;
+    while (acc >= 16.7) { step(); acc -= 16.7; }
+    draw();
+    raf = requestAnimationFrame(loop);
+  }
+  raf = requestAnimationFrame(loop);
+
+  // ---------- 조작: 원버튼 ----------
+  const press = (e) => {
+    const q = e.target.closest && e.target.closest('button[data-k="q"]');
+    if (q) { e.preventDefault(); stop(true); return; }
+    e.preventDefault();
+    holding = true;
+    jump();
+  };
+  const release = () => { holding = false; };
+  cv.addEventListener("pointerdown", press);
+  el.querySelector(".run-pad").addEventListener("pointerdown", press);
+  document.addEventListener("pointerup", release);
+  document.addEventListener("pointercancel", release);
+
+  const kd = (e) => {
+    const typing = document.activeElement && document.activeElement.tagName === "INPUT";
+    if (!typing && (e.key === "q" || e.key === "Q")) { stop(true); return; }
+    if (e.key === " " || e.key === "ArrowUp" || e.key === "Spacebar" || e.key === "Enter") {
+      if (typing && e.key === "Enter") return;
+      e.preventDefault(); e.stopPropagation();
+      holding = true; jump();
+    }
+  };
+  const ku = (e) => {
+    if (e.key === " " || e.key === "ArrowUp" || e.key === "Spacebar") holding = false;
+  };
+  document.addEventListener("keydown", kd, true);
+  document.addEventListener("keyup", ku, true);
+
+  function stop(byUser) {
+    cancelAnimationFrame(raf);
+    document.removeEventListener("keydown", kd, true);
+    document.removeEventListener("keyup", ku, true);
+    document.removeEventListener("pointerup", release);
+    document.removeEventListener("pointercancel", release);
+    cv.removeEventListener("pointerdown", press);
+    runStop = null;
+    if (byUser) hud.textContent = `종료 — ♥ ${hearts.filter((h) => h.got).length}개 획득`;
+  }
+  runStop = stop;
+  return null;
+}
+
 /* ---------- 스네이크 ---------- */
 let snakeStop = null;
 function outSnake() {
@@ -1001,6 +1290,7 @@ const COMMANDS = {
   "./dday.sh": outDday,
   matrix: outMatrix, neo: outMatrix,
   snake: outSnake, game: outSnake,
+  run: outRun, mario: outRun, jump: outRun,
   rank: outRank, ranking: outRank, top: outRank,
 };
 const CAT_FILES = {
@@ -1106,7 +1396,7 @@ function startCountdowns() {
 =================================================================== */
 const CHIP_LIST = [
   ["❓", "help"], ["📖", "info"], ["📅", "dday"], ["📷", "gallery"],
-  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🐍", "snake"], ["🏆", "rank"], ["🔗", "share"],
+  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🏃", "run"], ["🐍", "snake"], ["🏆", "rank"], ["🔗", "share"],
 ];
 $("chips").innerHTML = CHIP_LIST
   .map(([e, c]) => `<button class="chip" data-cmd="${c}">${e} ${c}</button>`).join("");
@@ -1157,7 +1447,7 @@ input.addEventListener("keydown", (e) => {
       prefix = catM[1]; cur = catM[2].toLowerCase();
     } else {
       if (!val || /\s/.test(val)) return;
-      pool = [...new Set(Object.keys(COMMANDS).concat(["clear", "sudo marry", "git log", "cat", "cd ..", "npm test", "theme amber", "theme green", "music list", "music next"]))];
+      pool = [...new Set(Object.keys(COMMANDS).concat(["clear", "sudo marry", "git log", "cat", "cd ..", "npm test", "theme amber", "theme green", "music list", "music next", "run"]))];
       prefix = ""; cur = val.toLowerCase();
     }
     const matches = pool.filter((c) => c.startsWith(cur)).sort();
