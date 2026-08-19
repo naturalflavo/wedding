@@ -28,16 +28,21 @@
     --mag: #d2a8ff;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; }
+  html { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  /* 페이지를 뷰포트에 고정한다.
+     카카오톡 등 인앱 웹뷰에서는 100svh 가 실제 화면과 어긋나 body 가 넘치고,
+     그 결과 터미널이 통째로 밀리거나 튀는 현상이 생긴다.
+     position:fixed + inset:0 으로 고정하면 안쪽 #screen 만 스크롤된다. */
   body {
+    position: fixed; inset: 0;
     font-family: "JetBrains Mono", "Nanum Gothic Coding", ui-monospace, Menlo, Consolas, monospace;
     background: var(--bg);
     color: var(--txt);
-    height: 100svh;
     display: flex; justify-content: center;
     padding: 10px;
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
+    overscroll-behavior: none;
   }
   ::selection { background: rgba(63, 185, 80, .35); }
 
@@ -180,7 +185,8 @@
   .chips {
     flex: 0 0 auto; display: none; gap: 8px; align-items: center;
     padding: 9px 12px; border-top: 1px solid var(--line);
-    overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    overflow-x: auto; overscroll-behavior: contain;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
     background: rgba(22, 27, 34, .6);
   }
   .chips.on { display: flex; }
@@ -1617,6 +1623,15 @@ document.addEventListener("click", (e) => {
   const btn = e.target.closest(".cp");
   if (btn) copyText(btn.dataset.copy, "계좌번호가 복사되었습니다");
 });
+
+/* 스크롤할 수 있는 영역 밖에서의 터치 이동은 막는다.
+   일부 인앱 웹뷰는 overflow:hidden 을 무시하고 페이지를 통째로 끌어당긴다. */
+document.addEventListener("touchmove", (e) => {
+  if (e.touches.length > 1) return;                  // 확대/축소는 그대로 둔다
+  const t = e.target;
+  if (t && t.closest && t.closest("#screen, .chips")) return;   // 실제 스크롤 영역만 허용
+  e.preventDefault();
+}, { passive: false });
 
 /* CRT 테마 복원 */
 try {
