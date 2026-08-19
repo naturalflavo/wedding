@@ -803,8 +803,8 @@ document.querySelectorAll(".fade").forEach((el) => io.observe(el));
     });
   }
 
-/* 이스터에그: 푸터 이름 옆 깜빡이는 >_ 를 3번 톡톡 → 개발자 편으로.
-   커서를 보여줘 "눌러볼 수 있다"는 단서를 남긴다. */
+/* 이스터에그: 푸터 문구를 3번 톡톡 → 개발자 편으로.
+   빛이 스치는 반짝임 + 깜빡이는 >_ 커서로 "눌러보고 싶게" 만든다. */
 (() => {
   const el = document.getElementById("footerNames");
   if (!el) return;
@@ -812,18 +812,50 @@ document.querySelectorAll(".fade").forEach((el) => io.observe(el));
   el.style.webkitTapHighlightColor = "transparent";
   el.style.cursor = "pointer";
 
+  // 배경 밝기로 반짝임 색을 정한다.
+  // (글자색으로 판단하면 흰 배경 테마에서 흰빛이 골라져 글자가 사라져 보인다)
+  let node = el, bg = "";
+  while (node && node !== document.documentElement) {
+    const c = getComputedStyle(node).backgroundColor;
+    if (c && !/^rgba\(0,\s*0,\s*0,\s*0\)$|transparent/.test(c)) { bg = c; break; }
+    node = node.parentElement;
+  }
+  const rgb = (bg.match(/\d+/g) || [255, 255, 255]).map(Number);
+  const lum = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+  const shine = lum < 0.5 ? "#ffffff" : "#d4a017";   // 어두운 배경=흰빛, 밝은 배경=금빛
+
   const st = document.createElement("style");
-  st.textContent = "@keyframes devblink{50%{opacity:0}}"
-    + ".devcur{display:inline-block;margin-left:6px;opacity:.5;font-family:ui-monospace,Menlo,Consolas,monospace;"
-    + "animation:devblink 1.15s steps(1) infinite}"
-    + "@media (prefers-reduced-motion: reduce){.devcur{animation:none}}";
+  st.textContent =
+    "@keyframes devblink{50%{opacity:0}}" +
+    "@keyframes devshine{0%{background-position:0 0}100%{background-position:166.667% 0}}" +
+    ".devtap{display:inline-block;position:relative}" +
+    ".devcur{display:inline-block;margin-left:6px;opacity:.75;" +
+      "font-family:ui-monospace,Menlo,Consolas,monospace;" +
+      /* 부모의 투명 채움을 물려받지 않도록 커서는 직접 칠한다 */
+      "-webkit-text-fill-color:currentColor;color:inherit;" +
+      "animation:devblink 1.15s steps(1) infinite}" +
+    "@supports ((-webkit-background-clip:text) or (background-clip:text)){" +
+      ".devtap{background-image:linear-gradient(100deg," +
+        "currentColor 38%," + shine + " 50%,currentColor 62%);" +
+      "background-size:250% 100%;" +   /* no-repeat 이면 덮이지 않는 글자가 투명해진다 */
+      "-webkit-background-clip:text;background-clip:text;" +
+      "-webkit-text-fill-color:transparent;" +
+      "animation:devshine 2.8s linear infinite}}" +
+    "@media (prefers-reduced-motion: reduce){" +
+      ".devtap{animation:none;-webkit-text-fill-color:currentColor}" +
+      ".devcur{animation:none}}";
   document.head.appendChild(st);
 
+  // 문구 전체를 반짝임 대상으로 감싼다
+  const wrap = document.createElement("span");
+  wrap.className = "devtap";
+  while (el.firstChild) wrap.appendChild(el.firstChild);
   const cur = document.createElement("span");
   cur.className = "devcur";
   cur.textContent = ">_";
   cur.setAttribute("aria-hidden", "true");
-  el.appendChild(cur);
+  wrap.appendChild(cur);
+  el.appendChild(wrap);
 
   const NEED = 3;
   let n = 0, last = 0;
