@@ -601,14 +601,17 @@ function outContact() {
 
 /* ---------- BGM 플레이리스트 (3곡) ---------- */
 const TRACKS = [
+  { file: "../music/dev-oneday.m4a", name: "One Day", credit: "자작곡 · 8bit hip-hop / CC0" },
   { file: "../music/dev.m4a", name: "Canon in D (8bit)", credit: "Pachelbel — Canon in D / Public Domain · 8bit arr." },
   { file: "../music/dev2.m4a", name: "Bridal Chorus (8bit march)", credit: "Wagner — Bridal Chorus / Public Domain · 8bit arr." },
-  { file: "../music/dev3.m4a", name: "Love Loop (lo-fi 8bit)", credit: "자작곡 / CC0" },
 ];
 let trackIdx = 0;
 try {
-  const s = parseInt(localStorage.getItem("devTrack"), 10);
-  if (s >= 0 && s < TRACKS.length) trackIdx = s;
+  const saved = localStorage.getItem("devTrack");
+  const v = parseInt(saved, 10);
+  // 곡 목록이 바뀌었으므로 이전 버전의 선택은 무시하고 새 곡부터 재생
+  if (localStorage.getItem("devTrackVer") === "2" && v >= 0 && v < TRACKS.length) trackIdx = v;
+  localStorage.setItem("devTrackVer", "2");
 } catch {}
 
 function setTrack(i) {
@@ -1302,7 +1305,7 @@ async function bootPause(ms) { if (!reduceMotion && !skipBoot) await sleep(ms); 
     L(`<span class="o-grn">✔</span> 평생의 약속 빌드 성공 <span class="o-dim">(0 errors, 0 warnings)</span>`),
     L(`<span class="o-grn">✔</span> 초대장 배포 완료`),
     GAP,
-    L(`# BGM 3곡 탑재 — music list · 우측 상단 ♪`, "o-dim"),
+    L(`# BGM: One Day (자작곡) 외 2곡 — music list · 우측 상단 ♪`, "o-dim"),
   ], 140);
   await bootPause(400);
   await typeCmd("help");
