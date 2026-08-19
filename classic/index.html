@@ -702,6 +702,28 @@ const io = new IntersectionObserver((entries) => {
   entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("show"); io.unobserve(en.target); } });
 }, { threshold: 0.1 });
 document.querySelectorAll(".fade").forEach((el) => io.observe(el));
+
+/* 이스터에그: 푸터의 두 사람 이름을 5번 톡톡 → 개발자 편으로 */
+(() => {
+  const el = document.getElementById("footerNames");
+  if (!el) return;
+  el.style.userSelect = "none";
+  el.style.webkitTapHighlightColor = "transparent";
+  let n = 0, last = 0;
+  el.addEventListener("click", () => {
+    const now = Date.now();
+    if (now - last > 1500) n = 0;
+    last = now;
+    n++;
+    if (n >= 5) {
+      n = 0;
+      toast(">_ 개발자 편으로 이동합니다");
+      setTimeout(() => { location.href = "../dev/"; }, 900);
+    } else if (n >= 3) {
+      toast(">_ " + (5 - n) + "번 더");
+    }
+  });
+})();
 </script>
 </body>
 </html>

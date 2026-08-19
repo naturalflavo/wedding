@@ -230,10 +230,12 @@
   #mtx.on { opacity: 1; }
 
   /* ---------- npm test ---------- */
-  .npass {
-    background: #238636; color: #fff; padding: 1px 7px; border-radius: 4px;
+  .npass, .nfail {
+    color: #fff; padding: 1px 7px; border-radius: 4px;
     font-size: 11px; font-weight: 700; margin-right: 8px;
   }
+  .npass { background: #238636; }
+  .nfail { background: #da3633; }
 
   /* ---------- 스네이크 ---------- */
   .snake-box { display: block; text-align: center; margin-top: 8px; }
@@ -719,21 +721,28 @@ function outMatrix() {
     + L(`${d.getMonth() + 1}월 ${d.getDate()}일, 매트릭스 밖에서 만나요.`);
 }
 
-/* ---------- npm test: 궁합 테스트 ---------- */
+/* ---------- npm test ---------- */
 function runNpmTest() {
   const el = appendBlock("", true);
   const lines = [
     `<div class="o-dim">&gt; wedding@1.0.0 test</div>`,
-    `<div class="o-dim">&gt; jest --couple "${CONFIG.groom.name} ♥ ${CONFIG.bride.name}"</div>`,
+    `<div class="o-dim">&gt; jest --ci</div>`,
     `<div class="o-gap"></div>`,
-    `<div><span class="npass">PASS</span> love/첫눈에-반함.test.js</div>`,
-    `<div><span class="npass">PASS</span> love/취향-싱크로율.test.js</div>`,
-    `<div><span class="npass">PASS</span> love/싸워도-금방-화해.test.js</div>`,
-    `<div><span class="npass">PASS</span> love/평생-함께.test.js</div>`,
+    `<div><span class="npass">PASS</span> src/venue.test.js</div>`,
+    `<div><span class="npass">PASS</span> src/schedule.test.js</div>`,
+    `<div><span class="npass">PASS</span> src/guests.test.js</div>`,
+    `<div><span class="nfail">FAIL</span> src/groom.test.js</div>`,
     `<div class="o-gap"></div>`,
-    `<div>궁합: <b class="o-grn">100%</b> ❤ <span class="o-dim">(coverage: 서로의 마음 전부)</span></div>`,
-    `<div><span class="o-grn">Tests: 4 passed</span>, 4 total</div>`,
-    `<div class="o-dim">Time: 평생</div>`,
+    `<div class="o-red">  ● 신랑 › 신부 입장 › 울지 않는다</div>`,
+    `<div class="o-gap"></div>`,
+    `<div class="o-dim">    expect(received).toBe(expected)</div>`,
+    `<div class="o-dim">    Expected: false</div>`,
+    `<div class="o-dim">    Received: true</div>`,
+    `<div class="o-gap"></div>`,
+    `<div>Tests: <span class="o-red">1 failed</span>, <span class="o-grn">3 passed</span>, 4 total</div>`,
+    `<div class="o-dim">Time:  10.17 s</div>`,
+    `<div class="o-gap"></div>`,
+    `<div class="o-dim">// known issue · 수정 계획 없음</div>`,
   ];
   if (reduceMotion) { el.innerHTML = lines.join(""); scrollBottom(); return; }
   let i = 0;
@@ -741,7 +750,7 @@ function runNpmTest() {
     if (i >= lines.length) { clearInterval(t); return; }
     el.insertAdjacentHTML("beforeend", lines[i++]);
     scrollBottom();
-  }, 300);
+  }, 190);
 }
 
 /* ===================================================================
