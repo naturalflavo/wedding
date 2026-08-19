@@ -237,36 +237,6 @@
   .npass { background: #238636; }
   .nfail { background: #da3633; }
 
-  /* ---------- 스네이크 ---------- */
-  .snake-box { display: block; text-align: center; margin-top: 8px; }
-  /* 보드는 글자가 아니라 그리드로 그린다 — 폰트 글자폭에 좌우되지 않아
-     어떤 기기에서도 잘리지 않고 화면 폭에 맞춰 늘어난다. */
-  .snake-grid {
-    display: grid;
-    grid-template-columns: repeat(var(--cw), 1fr);
-    grid-auto-rows: 1fr;
-    aspect-ratio: var(--cw) / var(--ch);
-    width: 100%; max-width: 300px; margin: 0 auto;
-    gap: 1px; padding: 5px;
-    background: #070c13; border: 1px solid var(--line); border-radius: 6px;
-    touch-action: none; user-select: none;
-  }
-  .snake-grid i { border-radius: 1px; }
-  .snake-grid i.h { background: var(--grn); box-shadow: 0 0 4px var(--grn); }
-  .snake-grid i.b { background: var(--grn); opacity: .5; }
-  .snake-grid i.f {
-    background: var(--red); border-radius: 50%;
-    box-shadow: 0 0 5px var(--red); animation: fpulse 1s ease-in-out infinite;
-  }
-  @keyframes fpulse { 50% { transform: scale(.72); } }
-  @media (prefers-reduced-motion: reduce) { .snake-grid i.f { animation: none; } }
-  .snake-hud { font-size: 12.5px; color: var(--dim); margin-top: 6px; }
-  .snake-pad { display: flex; gap: 8px; margin-top: 8px; justify-content: center; }
-  .snake-pad button {
-    width: 46px; height: 40px; font-family: inherit; font-size: 15px; cursor: pointer;
-    background: var(--card); color: var(--txt); border: 1px solid var(--line); border-radius: 8px;
-  }
-
   /* ---------- 점프 액션 게임 ---------- */
   .run-box { display: block; text-align: center; margin-top: 8px; }
   .run-cv {
@@ -485,8 +455,7 @@ function outHelp() {
     ["music", "배경음악 재생 · 곡 변경 (3곡)"],
     ["share", "청첩장 링크 복사"],
     ["run", "🏃 예식장까지 달리기 (원버튼)"],
-    ["snake", "🐍 뱀게임 (♥ 모으기)"],
-    ["rank", "🏆 뱀게임 랭킹 TOP 10"],
+    ["rank", "🏆 달리기 랭킹 TOP 10"],
     ["theme", "CRT 레트로 테마 (green은 BGM도 바뀜)"],
     ["clear", "화면 지우기"],
     ["cd ..", "다른 초대장 보러 가기"],
@@ -630,6 +599,10 @@ const GREEN_TRACK = {
   credit: "Pachelbel — Canon in D / Public Domain · 8bit rock arr.",
 };
 let greenOn = false;
+
+/* 달리기 게임 전용 BGM — 게임 중에만 재생하고 끝나면 원래 곡으로 */
+const GAME_TRACK = { file: "../music/dev-journey.m4a", name: "Journey (8bit)" };
+let gameBgmPrev = null;
 
 let trackIdx = 0;
 try {
@@ -790,7 +763,7 @@ function runNpmTest() {
 const FB = {
   projectId: "naturalflavo",
   apiKey: "AIzaSyDqW9Gt7z-6bojV0zMm1MGxIuTpc659tB0",
-  col: "snakeScores",
+  col: "snakeScores",   // 초기 게임에서 쓰던 이름 — 보안 규칙 재사용을 위해 유지
   max: 250,   // 보드 19x12 = 228칸, 그 이상은 비정상 값
 };
 const fbUrl = (suffix) =>
@@ -841,29 +814,29 @@ async function rankSubmit(name, score) {
 }
 
 function outRank() {
-  const el = appendBlock(L(`# 🏆 SNAKE 랭킹 TOP 10`, "o-h") + L(`불러오는 중…`, "o-dim"), true);
+  const el = appendBlock(L(`# 🏆 RUN 랭킹 TOP 10`, "o-h") + L(`불러오는 중…`, "o-dim"), true);
   let myName = "";
   try { myName = localStorage.getItem("rankName") || ""; } catch {}
   rankFetch(10).then((list) => {
     if (!list.length) {
-      el.innerHTML = L(`# 🏆 SNAKE 랭킹 TOP 10`, "o-h")
+      el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10`, "o-h")
         + L(`아직 등록된 기록이 없습니다. 첫 주인공이 되어보세요!`, "o-dim")
-        + L(`<span class="o-cyn">snake</span> 로 게임 시작`, "o-dim");
+        + L(`<span class="o-cyn">run</span> 으로 게임 시작`, "o-dim");
       return;
     }
     const medal = ["🥇", "🥈", "🥉"];
-    el.innerHTML = L(`# 🏆 SNAKE 랭킹 TOP 10`, "o-h")
+    el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10`, "o-h")
       + list.map((r, i) => L(`<span class="rk${r.name === myName ? " rk-me" : ""}">
           <span class="rk-i">${medal[i] || `${i + 1}.`}</span>
           <span class="rk-n">${esc(r.name)}</span>
           <span class="rk-s">♥ ${r.score}</span>
         </span>`)).join("")
       + GAP
-      + L(`<span class="o-cyn">snake</span> 로 도전해 보세요!`, "o-dim");
+      + L(`<span class="o-cyn">run</span> 으로 도전해 보세요!`, "o-dim");
     el.querySelectorAll(".tl").forEach((n, i) => n.style.setProperty("--i", i));
     scrollBottom();
   }).catch(() => {
-    el.innerHTML = L(`# 🏆 SNAKE 랭킹`, "o-h")
+    el.innerHTML = L(`# 🏆 RUN 랭킹`, "o-h")
       + L(`랭킹 서버에 연결하지 못했습니다.`, "o-red")
       + L(`네트워크 상태를 확인하고 다시 시도해 주세요.`, "o-dim");
     scrollBottom();
@@ -880,7 +853,7 @@ function showRankForm(box, score) {
   wrap.innerHTML = `
     <input class="rank-name" maxlength="12" value="${esc(saved)}" placeholder="이름 (최대 12자)" aria-label="랭킹에 등록할 이름" />
     <button class="rank-go">🏆 랭킹 등록</button>
-    <div class="rank-msg o-dim">전체 랭킹에 기록을 남겨보세요.</div>`;
+    <div class="rank-msg o-dim">모은 ♥ 개수로 전체 랭킹에 도전해 보세요.</div>`;
   box.appendChild(wrap);
   const inp = wrap.querySelector(".rank-name");
   const btn = wrap.querySelector(".rank-go");
@@ -913,22 +886,52 @@ function outRun() {
 
   const T = 16, VW = 20, VH = 12;        // 타일 크기 / 화면 타일 수
   const W = VW * T, H = VH * T;          // 320 x 192 (논리 해상도)
-  const LW = 184;                        // 레벨 전체 가로 타일 수
   const GY = 10;                         // 바닥 윗면 타일 y
-  const GOAL = 176;                      // 신부 위치 (타일)
 
-  const GAPS = [[18, 3], [36, 3], [56, 3], [78, 3], [98, 3], [118, 3], [140, 3], [158, 3]];
-  const BLOCKS = [[72, 8, 4], [132, 8, 4]];              // [x, y, w] 올라설 수 있는 단
-  const BUGS = [26, 46, 66, 68, 88, 108, 128, 148, 166];
-  const HEARTS0 = [
-    [6, 9], [9, 9], [12, 9], [19, 7], [20, 7], [30, 9], [33, 9], [37, 7], [38, 7],
-    [50, 9], [57, 6], [58, 6], [73, 7], [74, 7], [79, 7], [80, 7], [92, 9],
-    [99, 6], [100, 6], [112, 9], [119, 7], [120, 7], [133, 7], [134, 7],
-    [141, 6], [142, 6], [152, 9], [159, 7], [160, 7], [170, 9], [172, 9],
+  /* 스테이지 3종 — 뒤로 갈수록 낭떠러지·버그가 촘촘해진다.
+     점수 = 하트 1점 + 스테이지 클리어 30점 (최대 52 + 90 = 142점) */
+  const STAGES = [
+    { // 1. 첫 걸음
+      name: "출발", lw: 124, goal: 116,
+      gaps: [[18, 3], [38, 3], [60, 3], [82, 3], [102, 3]],
+      blocks: [[50, 8, 4]],
+      bugs: [28, 48, 70, 92, 110],
+      hearts: [[6, 9], [9, 9], [12, 9], [19, 7], [20, 7], [30, 9], [39, 7], [40, 7],
+               [51, 7], [52, 7], [61, 7], [62, 7], [83, 7], [84, 7], [103, 7], [104, 7], [113, 9]],
+    },
+    { // 2. 골목길
+      name: "골목길", lw: 140, goal: 132,
+      gaps: [[16, 3], [32, 3], [50, 3], [66, 3], [84, 3], [102, 3], [118, 3]],
+      blocks: [[42, 8, 4], [94, 8, 4]],
+      bugs: [24, 40, 58, 76, 78, 94, 110, 126],
+      hearts: [[6, 9], [10, 9], [17, 7], [18, 7], [33, 7], [34, 7], [43, 7], [44, 7],
+               [51, 7], [52, 7], [67, 7], [68, 7], [85, 7], [86, 7], [95, 7], [96, 7],
+               [103, 7], [104, 7], [119, 7], [120, 7], [128, 9]],
+    },
+    { // 3. 마지막 언덕
+      name: "마지막 언덕", lw: 148, goal: 140,
+      gaps: [[14, 3], [30, 3], [46, 3], [62, 3], [78, 3], [94, 3], [110, 3], [126, 3]],
+      blocks: [[38, 8, 4], [86, 8, 4], [118, 8, 4]],
+      bugs: [22, 24, 38, 54, 70, 72, 86, 102, 118, 134],
+      hearts: [[6, 9], [15, 7], [16, 7], [31, 7], [32, 7], [39, 7], [40, 7], [47, 7], [48, 7],
+               [63, 7], [64, 7], [79, 7], [80, 7], [87, 7], [88, 7], [95, 7], [96, 7],
+               [111, 7], [112, 7], [119, 7], [120, 7], [127, 7], [128, 7], [136, 9]],
+    },
   ];
+  const CLEAR_BONUS = 30;
+
+  let stage = 0;
+  let LW, GOAL, GAPS, BLOCKS, BUGS, HEARTS0;
+  function loadStage(i) {
+    const st = STAGES[i];
+    LW = st.lw; GOAL = st.goal;
+    GAPS = st.gaps; BLOCKS = st.blocks; BUGS = st.bugs; HEARTS0 = st.hearts;
+  }
+  loadStage(0);
 
   const el = appendBlock(
-    L(`RUN TO THE ALTAR <span class="o-dim">— 자동으로 달립니다. 탭해서 점프!</span>`)
+    L(`RUN TO THE ALTAR <span class="o-dim">— 전 ${STAGES.length}스테이지 · 탭해서 점프!</span>`)
+    + L(`<span class="o-dim">♥ 1점 · 스테이지 클리어 ${CLEAR_BONUS}점</span>`)
     + L(`<span class="run-box">
         <canvas class="run-cv" width="${W}" height="${H}"></canvas>
         <div class="run-hud"></div>
@@ -951,7 +954,10 @@ function outRun() {
   };
 
   let hearts, foes, p, cam, dead, won, tick = 0, deaths = 0, best = 0;
+  let banked = 0, cleared = 0, allDone = false;   // 이전 스테이지에서 확정된 점수
   try { best = parseInt(localStorage.getItem("runBest"), 10) || 0; } catch {}
+  const curHearts = () => hearts.filter((h) => h.got).length;
+  const totalScore = () => banked + (won ? 0 : curHearts());
 
   function reset() {
     hearts = HEARTS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
@@ -1024,8 +1030,16 @@ function outRun() {
     }
     if (p.x + p.w > GOAL * T) {
       won = 1;
-      const got = hearts.filter((h) => h.got).length;
-      if (got > best) { best = got; try { localStorage.setItem("runBest", best); } catch {} }
+      banked += curHearts() + CLEAR_BONUS;
+      cleared++;
+      if (stage < STAGES.length - 1) {
+        setTimeout(() => { if (runStop) { stage++; loadStage(stage); reset(); won = 0; } }, 1700);
+      } else {
+        allDone = true;
+        const sc = banked;
+        if (sc > best) { best = sc; try { localStorage.setItem("runBest", best); } catch {} }
+        offerRank(sc);
+      }
     }
     cam = Math.max(0, Math.min(p.x - 110, LW * T - W));
   }
@@ -1116,12 +1130,14 @@ function outRun() {
     }
     if (!dead || Math.floor(tick / 4) % 2) drawGroom(p.x - cam, p.y);
 
-    const got = hearts.filter((h) => h.got).length;
-    hud.innerHTML = won
-      ? `🎉 예식장 도착! ♥ ${got}/${hearts.length}${deaths ? ` · 넘어진 횟수 ${deaths}` : " · 무사고!"} — 다시: <b>run</b>`
+    const got = curHearts();
+    const head = `STAGE ${stage + 1}/${STAGES.length} <span class="o-dim">${STAGES[stage].name}</span>`;
+    hud.innerHTML = allDone
+      ? `🎉 전 스테이지 클리어! <b>${banked}점</b>${deaths ? ` · 넘어진 횟수 ${deaths}` : " · 무사고!"} — 다시: <b>run</b>`
+      : won ? `✅ STAGE ${stage + 1} 클리어! <b>+${CLEAR_BONUS}</b> · 다음 스테이지로…`
       : dead ? `💥 앗! 다시 출발합니다…`
-      : `♥ ${got}/${hearts.length}　${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%` +
-        (best ? `　최고 ♥${best}` : "");
+      : `${head}　♥ ${got}/${hearts.length}　${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%　` +
+        `<b>${totalScore()}점</b>` + (best ? ` <span class="o-dim">최고 ${best}</span>` : "");
   }
 
   let raf = 0, acc = 0, last = performance.now();
@@ -1133,6 +1149,7 @@ function outRun() {
     raf = requestAnimationFrame(loop);
   }
   raf = requestAnimationFrame(loop);
+  gameBgm(true);
 
   // ---------- 조작: 원버튼 ----------
   const press = (e) => {
@@ -1149,8 +1166,10 @@ function outRun() {
   document.addEventListener("pointercancel", release);
 
   const kd = (e) => {
-    const typing = document.activeElement && document.activeElement.tagName === "INPUT";
-    if (!typing && (e.key === "q" || e.key === "Q")) { stop(true); return; }
+    const act = document.activeElement;
+    // 입력창에 뭔가 치는 중이 아니면 Q로 종료 (명령 입력 직후 포커스가 남아 있어도 동작)
+    const typing = act && act.tagName === "INPUT" && act.value !== "";
+    if (!typing && (e.key === "q" || e.key === "Q")) { e.preventDefault(); stop(true); return; }
     if (e.key === " " || e.key === "ArrowUp" || e.key === "Spacebar" || e.key === "Enter") {
       if (typing && e.key === "Enter") return;
       e.preventDefault(); e.stopPropagation();
@@ -1163,111 +1182,34 @@ function outRun() {
   document.addEventListener("keydown", kd, true);
   document.addEventListener("keyup", ku, true);
 
+  /* 기록이 있으면 랭킹 등록 폼을 한 번만 띄운다 */
+  let rankShown = false;
+  function offerRank(score) {
+    if (rankShown || score < 1) return;
+    rankShown = true;
+    showRankForm(el.querySelector(".run-box"), score);
+    scrollBottom();
+  }
+
   function stop(byUser) {
     cancelAnimationFrame(raf);
+    gameBgm(false);
     document.removeEventListener("keydown", kd, true);
     document.removeEventListener("keyup", ku, true);
     document.removeEventListener("pointerup", release);
     document.removeEventListener("pointercancel", release);
     cv.removeEventListener("pointerdown", press);
     runStop = null;
-    if (byUser) hud.textContent = `종료 — ♥ ${hearts.filter((h) => h.got).length}개 획득`;
+    if (byUser) {
+      const sc = totalScore();
+      hud.textContent = `종료 — ${sc}점 (스테이지 ${cleared}개 클리어)`;
+      offerRank(sc);
+    }
   }
   runStop = stop;
   return null;
 }
 
-/* ---------- 스네이크 ---------- */
-let snakeStop = null;
-function outSnake() {
-  if (snakeStop) snakeStop(false);
-  const el = appendBlock(
-    L(`SNAKE — ♥ 를 모아주세요! <span class="o-dim">(방향키·스와이프 / 종료 Q)</span>`)
-    + L(`<span class="snake-box"><div class="snake-grid"></div><div class="snake-hud"></div>
-        <span class="snake-pad">
-          <button data-d="-1,0">◀</button><button data-d="0,-1">▲</button>
-          <button data-d="0,1">▼</button><button data-d="1,0">▶</button>
-          <button data-d="q">✕</button>
-        </span></span>`), true);
-  const scr = el.querySelector(".snake-grid");
-  const hud = el.querySelector(".snake-hud");
-  const CW = 19, CH = 12;
-  scr.style.setProperty("--cw", CW);
-  scr.style.setProperty("--ch", CH);
-  scr.innerHTML = "<i></i>".repeat(CW * CH);
-  const cells = scr.children;
-  let snake = [[9, 6], [8, 6], [7, 6]], dir = [1, 0], nextDir = dir, food = null, score = 0, over = false;
-  let best = 0, newRecord = false;
-  try { best = parseInt(localStorage.getItem("snakeBest"), 10) || 0; } catch {}
-  const rand = (n) => Math.floor(Math.random() * n);
-  const onSnake = (x, y) => snake.some((s) => s[0] === x && s[1] === y);
-  const placeFood = () => { do { food = [rand(CW), rand(CH)]; } while (onSnake(food[0], food[1])); };
-  placeFood();
-  const render = () => {
-    for (let i = 0; i < cells.length; i++) if (cells[i].className) cells[i].className = "";
-    cells[food[1] * CW + food[0]].className = "f";
-    for (let i = snake.length - 1; i >= 0; i--) {
-      cells[snake[i][1] * CW + snake[i][0]].className = i ? "b" : "h";
-    }
-    hud.textContent = over
-      ? `게임 오버! ♥ ${score}개${newRecord ? " — 🏆 신기록!" : best ? ` · 최고 기록 ${best}개` : ""} (다시: snake)`
-      : `♥ ${score}${best ? ` · 최고 ${best}` : ""}`;
-  };
-  const setDir = (nd) => { if (nd[0] !== -dir[0] || nd[1] !== -dir[1]) nextDir = nd; };
-  const step = () => {
-    dir = nextDir;
-    const h = [snake[0][0] + dir[0], snake[0][1] + dir[1]];
-    if (h[0] < 0 || h[0] >= CW || h[1] < 0 || h[1] >= CH || onSnake(h[0], h[1])) {
-      over = true;
-      if (score > best) {
-        best = score; newRecord = true;
-        try { localStorage.setItem("snakeBest", best); } catch {}
-      }
-      render(); stop(false);
-      if (score >= 1) showRankForm(el.querySelector(".snake-box"), score);
-      scrollBottom();
-      return;
-    }
-    snake.unshift(h);
-    if (h[0] === food[0] && h[1] === food[1]) { score++; placeFood(); } else snake.pop();
-    render();
-  };
-  const timer = setInterval(step, 160);
-  const keyH = (e) => {
-    const typing = document.activeElement && document.activeElement.tagName === "INPUT";
-    if (!typing && (e.key === "q" || e.key === "Q")) { stop(true); return; }
-    const m = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
-    let nd = m[e.key];
-    if (!nd && !typing) nd = { a: [-1, 0], d: [1, 0], w: [0, -1], s: [0, 1] }[e.key.toLowerCase()];
-    if (nd) { e.preventDefault(); e.stopPropagation(); setDir(nd); }
-  };
-  document.addEventListener("keydown", keyH, true);
-  let tsx = 0, tsy = 0;
-  const tS = (e) => { tsx = e.changedTouches[0].clientX; tsy = e.changedTouches[0].clientY; };
-  const tE = (e) => {
-    const dx = e.changedTouches[0].clientX - tsx, dy = e.changedTouches[0].clientY - tsy;
-    if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
-    setDir(Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)]);
-  };
-  scr.addEventListener("touchstart", tS, { passive: true });
-  scr.addEventListener("touchend", tE, { passive: true });
-  const padH = (e) => {
-    const b = e.target.closest("button[data-d]");
-    if (!b) return;
-    if (b.dataset.d === "q") { stop(true); return; }
-    setDir(b.dataset.d.split(",").map(Number));
-  };
-  el.querySelector(".snake-pad").addEventListener("click", padH);
-  function stop(byUser) {
-    clearInterval(timer);
-    document.removeEventListener("keydown", keyH, true);
-    snakeStop = null;
-    if (byUser) hud.textContent = `종료 — ♥ ${score}개 획득`;
-  }
-  snakeStop = stop;
-  render();
-  return null;
-}
 
 /* ===================================================================
    명령어 실행
@@ -1289,7 +1231,6 @@ const COMMANDS = {
   exit: outExit, logout: outExit,
   "./dday.sh": outDday,
   matrix: outMatrix, neo: outMatrix,
-  snake: outSnake, game: outSnake,
   run: outRun, mario: outRun, jump: outRun,
   rank: outRank, ranking: outRank, top: outRank,
 };
@@ -1396,7 +1337,7 @@ function startCountdowns() {
 =================================================================== */
 const CHIP_LIST = [
   ["❓", "help"], ["📖", "info"], ["📅", "dday"], ["📷", "gallery"],
-  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🏃", "run"], ["🐍", "snake"], ["🏆", "rank"], ["🔗", "share"],
+  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🏃", "run"], ["🏆", "rank"], ["🔗", "share"],
 ];
 $("chips").innerHTML = CHIP_LIST
   .map(([e, c]) => `<button class="chip" data-cmd="${c}">${e} ${c}</button>`).join("");
@@ -1515,6 +1456,25 @@ function applyGreenBgm(on) {
       + (playing ? " 재생" : ` <span class="o-dim">— ♪ 버튼을 누르면 재생됩니다</span>`), "o-dim");
   }
   return L(`♪ BGM → ${TRACKS[trackIdx].name} 으로 복귀`, "o-dim");
+}
+
+/* 게임 시작/종료 시 BGM 전환. 음악이 꺼져 있으면 강제로 켜지 않는다. */
+function gameBgm(on) {
+  if (on) {
+    if (gameBgmPrev !== null) return;
+    gameBgmPrev = audio.getAttribute("src");
+    if (audio.paused) return;                     // 꺼져 있으면 그대로 둔다
+    audio.src = GAME_TRACK.file;
+    audio.play().then(syncBgm).catch(() => {});
+  } else {
+    if (gameBgmPrev === null) return;
+    const prev = gameBgmPrev; gameBgmPrev = null;
+    if (audio.getAttribute("src") !== GAME_TRACK.file) return;
+    const playing = !audio.paused;
+    audio.src = prev;
+    if (playing) audio.play().then(syncBgm).catch(() => {});
+  }
+  syncBgm();
 }
 
 const kick = () => { if (bgmWanted) audio.play().then(syncBgm).catch(() => {}); };
