@@ -469,7 +469,7 @@ function outHelp() {
     ["share", "청첩장 링크 복사"],
     ["snake", "🐍 뱀게임 (♥ 모으기)"],
     ["rank", "🏆 뱀게임 랭킹 TOP 10"],
-    ["theme", "CRT 레트로 테마 (amber/green)"],
+    ["theme", "CRT 레트로 테마 (green은 BGM도 바뀜)"],
     ["clear", "화면 지우기"],
     ["cd ..", "다른 초대장 보러 가기"],
   ];
@@ -601,10 +601,18 @@ function outContact() {
 
 /* ---------- BGM 플레이리스트 (3곡) ---------- */
 const TRACKS = [
-  { file: "../music/dev-oneday.m4a", name: "One Day", credit: "자작곡 · 8bit hip-hop / CC0" },
+  { file: "../music/dev-oneday.m4a", name: "One Day", credit: "자작곡 · 8bit dance / CC0" },
   { file: "../music/dev.m4a", name: "Canon in D (8bit)", credit: "Pachelbel — Canon in D / Public Domain · 8bit arr." },
   { file: "../music/dev2.m4a", name: "Bridal Chorus (8bit march)", credit: "Wagner — Bridal Chorus / Public Domain · 8bit arr." },
 ];
+/* 그린 CRT 모드 전용 히든 트랙 — 테마를 켜면 이 곡으로 바뀐다 */
+const GREEN_TRACK = {
+  file: "../music/dev-canonrock.m4a",
+  name: "Canon Rock (8bit)",
+  credit: "Pachelbel — Canon in D / Public Domain · 8bit rock arr.",
+};
+let greenOn = false;
+
 let trackIdx = 0;
 try {
   const saved = localStorage.getItem("devTrack");
@@ -615,6 +623,7 @@ try {
 } catch {}
 
 function setTrack(i) {
+  greenOn = false;   // 곡을 직접 고르면 테마 전용곡 해제
   trackIdx = ((i % TRACKS.length) + TRACKS.length) % TRACKS.length;
   try { localStorage.setItem("devTrack", trackIdx); } catch {}
   $("bgm").src = TRACKS[trackIdx].file;
@@ -628,7 +637,8 @@ function outMusic(args = []) {
   const a = (args[0] || "").toLowerCase();
   if (a === "list" || a === "ls") {
     return L(`# 플레이리스트`, "o-h")
-      + TRACKS.map((t, i) => L(`${i === trackIdx ? `<span class="o-grn">▶</span>` : `&nbsp;`} ${i + 1}. ${t.name} <span class="o-dim">— ${t.credit}</span>`)).join("")
+      + (greenOn ? L(`<span class="o-grn">▶</span> ★ ${GREEN_TRACK.name} <span class="o-dim">— 그린 CRT 모드 전용</span>`) : "")
+      + TRACKS.map((t, i) => L(`${!greenOn && i === trackIdx ? `<span class="o-grn">▶</span>` : `&nbsp;`} ${i + 1}. ${t.name} <span class="o-dim">— ${t.credit}</span>`)).join("")
       + L(`곡 변경: <span class="o-cyn">music 1·2·3</span> 또는 <span class="o-cyn">music next</span>`, "o-dim");
   }
   if (/^[1-9]$/.test(a) && +a <= TRACKS.length) { setTrack(+a - 1); return nowPlayingMsg(); }
@@ -1043,6 +1053,7 @@ function execute(raw) {
       html = v === "amber" ? L(`🟠 앰버 CRT 모드 — 1980년대 모니터에 오신 것을 환영합니다`, "o-ylw")
         : v === "green" ? L(`🟢 그린 CRT 모드 — 형광 인광의 감성`, "o-grn")
         : L(`기본 테마로 돌아왔습니다.`);
+      html += applyGreenBgm(v === "green");
     } else {
       html = L(`사용법: <span class="o-cyn">theme amber</span> · <span class="o-cyn">theme green</span> · <span class="o-cyn">theme default</span>`, "o-dim");
     }
@@ -1180,6 +1191,7 @@ document.addEventListener("click", (e) => {
 try {
   const th = localStorage.getItem("devTheme");
   if (th === "amber" || th === "green") document.body.classList.add("crt-" + th);
+  if (th === "green") greenOn = true;   // 저장된 테마가 그린이면 전용 트랙으로 시작
 } catch {}
 
 /* ===================================================================
@@ -1187,7 +1199,7 @@ try {
 =================================================================== */
 const audio = $("bgm");
 const bgmBtn = $("bgmBtn");
-audio.src = TRACKS[trackIdx].file;
+audio.src = greenOn ? GREEN_TRACK.file : TRACKS[trackIdx].file;
 audio.volume = 0.5;
 let bgmWanted = true;
 const syncBgm = () => bgmBtn.classList.toggle("off", audio.paused);
@@ -1199,6 +1211,22 @@ function toggleBgm(on) {
 bgmBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleBgm(audio.paused); });
 audio.addEventListener("play", syncBgm);
 audio.addEventListener("pause", syncBgm);
+/* 그린 CRT 모드 ↔ 전용 락 트랙 전환.
+   재생 중이었다면 이어서 재생하고, 꺼져 있었다면 강제로 켜지 않는다. */
+function applyGreenBgm(on) {
+  if (on === greenOn) return "";
+  greenOn = on;
+  const playing = !audio.paused;
+  audio.src = on ? GREEN_TRACK.file : TRACKS[trackIdx].file;
+  if (playing) { bgmWanted = true; audio.play().then(syncBgm).catch(() => {}); }
+  syncBgm();
+  if (on) {
+    return L(`♪ BGM → <span class="o-grn">${GREEN_TRACK.name}</span>`
+      + (playing ? " 재생" : ` <span class="o-dim">— ♪ 버튼을 누르면 재생됩니다</span>`), "o-dim");
+  }
+  return L(`♪ BGM → ${TRACKS[trackIdx].name} 으로 복귀`, "o-dim");
+}
+
 const kick = () => { if (bgmWanted) audio.play().then(syncBgm).catch(() => {}); };
 window.addEventListener("touchend", kick, { once: true });
 window.addEventListener("click", kick, { once: true });
@@ -1306,6 +1334,7 @@ async function bootPause(ms) { if (!reduceMotion && !skipBoot) await sleep(ms); 
     L(`<span class="o-grn">✔</span> 초대장 배포 완료`),
     GAP,
     L(`# BGM: One Day (자작곡) 외 2곡 — music list · 우측 상단 ♪`, "o-dim"),
+    L(`# tip: theme green 을 켜면 BGM도 락 버전으로 바뀝니다`, "o-dim"),
   ], 140);
   await bootPause(400);
   await typeCmd("help");
