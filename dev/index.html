@@ -1150,6 +1150,7 @@ function outRun() {
   }
   raf = requestAnimationFrame(loop);
   gameBgm(true);
+  input.blur();
 
   // ---------- 조작: 원버튼 ----------
   const press = (e) => {
@@ -1170,8 +1171,9 @@ function outRun() {
     // 입력창에 뭔가 치는 중이 아니면 Q로 종료 (명령 입력 직후 포커스가 남아 있어도 동작)
     const typing = act && act.tagName === "INPUT" && act.value !== "";
     if (!typing && (e.key === "q" || e.key === "Q")) { e.preventDefault(); stop(true); return; }
-    if (e.key === " " || e.key === "ArrowUp" || e.key === "Spacebar" || e.key === "Enter") {
-      if (typing && e.key === "Enter") return;
+    // 명령어를 입력하는 중이면 스페이스는 글자로 넘겨준다 (입력창이 비어 있으면 점프)
+    if (typing) return;
+    if (e.key === " " || e.key === "ArrowUp" || e.key === "Spacebar") {
       e.preventDefault(); e.stopPropagation();
       holding = true; jump();
     }
@@ -1255,6 +1257,8 @@ let histIdx = 0;
 function execute(raw) {
   const line = raw.trim();
   if (!line) return;
+  // 게임 중에 다른 명령을 입력하면 게임을 종료하고 BGM도 원래 곡으로 되돌린다
+  if (runStop) runStop(true);
   hist.push(line);
   histIdx = hist.length;
 
