@@ -463,7 +463,8 @@ function outHelp() {
   return L(`사용 가능한 명령어`, "o-h")
     + rows.map(([c, t]) => L(`<span class="cmdrow"><b>${c}</b><span>${t}</span></span>`)).join("")
     + GAP
-    + L(`숨겨진 명령어도 있어요. <span class="o-dim">(힌트: sudo, git, matrix, npm test …)</span>`, "o-dim");
+    + L(`숨겨진 명령어도 있어요. <span class="o-dim">(힌트: sudo, git, matrix, npm test …)</span>`, "o-dim")
+    + L(`입력창에 몇 글자만 쳐보세요 — 아래에 추천 명령이 뜹니다.`, "o-dim");
 }
 
 function outInfo() {
@@ -1485,8 +1486,23 @@ const CHIP_LIST = [
   ["❓", "help"], ["📖", "info"], ["📅", "dday"], ["📷", "gallery"],
   ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🏃", "run"], ["🏆", "rank"], ["🔗", "share"],
 ];
-$("chips").innerHTML = CHIP_LIST
-  .map(([e, c]) => `<button class="chip" data-cmd="${c}">${e} ${c}</button>`).join("");
+/* 칩 = 모바일용 자동완성.
+   입력이 비어 있으면 기본 메뉴, 뭔가 입력하면 일치하는 명령을 추천으로 보여준다.
+   (모바일에는 Tab 키가 없어서 칩이 그 역할을 대신한다) */
+function renderChips(q) {
+  const cur = (q || "").trim().toLowerCase();
+  let items = null;
+  if (cur) {
+    const m = COMPLETIONS.filter((c) => c.startsWith(cur) && c !== cur).slice(0, 8);
+    if (m.length) items = m.map((c) => [`⇥ ${c}`, c]);
+  }
+  if (!items) items = CHIP_LIST.map(([e, c]) => [`${e} ${c}`, c]);
+  const box = $("chips");
+  const html = items.map(([label, cmd]) =>
+    `<button class="chip" data-cmd="${esc(cmd)}">${esc(label)}</button>`).join("");
+  if (box.dataset.html !== html) { box.dataset.html = html; box.innerHTML = html; box.scrollLeft = 0; }
+}
+renderChips("");
 
 let typingChip = false;
 async function typeAndRun(cmd) {
@@ -1503,13 +1519,23 @@ async function typeAndRun(cmd) {
     input.value = cmd;
   }
   input.value = "";
+  renderChips("");
   execute(cmd);
   typingChip = false;
 }
 $("chips").addEventListener("click", (e) => {
   const chip = e.target.closest(".chip");
-  if (chip) typeAndRun(chip.dataset.cmd);
+  if (!chip) return;
+  const cmd = chip.dataset.cmd;
+  if (chip.textContent.startsWith("⇥")) {   // 추천 칩은 곧바로 실행
+    input.value = "";
+    renderChips("");
+    execute(cmd);
+  } else typeAndRun(cmd);
 });
+
+/* 타이핑할 때마다 추천 갱신 */
+input.addEventListener("input", () => renderChips(input.value));
 
 input.addEventListener("keydown", (e) => {
   if (booting) { skipBoot = true; return; }
@@ -1517,6 +1543,7 @@ input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     const v = input.value;
     input.value = "";
+    renderChips("");
     execute(v);
   } else if (e.key === "ArrowUp") {
     e.preventDefault();
@@ -1540,11 +1567,12 @@ input.addEventListener("keydown", (e) => {
     }
     const matches = pool.filter((c) => c.startsWith(cur)).sort();
     if (!matches.length) return;
-    if (matches.length === 1) { input.value = prefix + matches[0] + " "; return; }
+    if (matches.length === 1) { input.value = prefix + matches[0] + " "; renderChips(input.value); return; }
     // bash처럼: 공통 접두사까지 채우고 후보 목록 출력
     let common = matches[0];
     for (const c of matches) while (!c.startsWith(common)) common = common.slice(0, -1);
     input.value = prefix + common;
+    renderChips(input.value);
     appendBlock(L(matches.map(esc).join("&nbsp;&nbsp;"), "o-dim"), true);
     scrollBottom();
   }
