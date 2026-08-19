@@ -238,6 +238,19 @@
   .nfail { background: #da3633; }
 
   /* ---------- 점프 액션 게임 ---------- */
+  /* 게임은 터미널 아래가 아니라 화면 한가운데 오버레이로 띄운다 */
+  .run-modal {
+    position: fixed; inset: 0; z-index: 75;
+    background: rgba(1, 4, 9, .94);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px;
+    padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+    touch-action: none; user-select: none;
+  }
+  .run-title { font-size: 13px; color: var(--grn); letter-spacing: 1px; }
+  .run-sub { font-size: 11.5px; color: var(--dim); }
+  .run-modal .run-cv { width: 100%; max-width: 420px; max-height: 52vh; }
+
   .run-box { display: block; text-align: center; margin-top: 8px; }
   .run-cv {
     width: 100%; max-width: 320px; display: block; margin: 0 auto;
@@ -1063,20 +1076,29 @@ function outRun() {
   }
   loadStage(0);
 
-  const el = appendBlock(
+  const logEl = appendBlock(
     L(`RUN TO THE ALTAR <span class="o-dim">— 전 ${STAGES.length}스테이지 · 탭해서 점프!</span>`)
-    + L(`<span class="o-dim">♥ 1점 · 스테이지 클리어 ${CLEAR_BONUS}점</span>`)
-    + L(`<span class="run-box">
-        <canvas class="run-cv" width="${W}" height="${H}"></canvas>
-        <div class="run-hud"></div>
-        <span class="run-pad">
-          <button class="jump" data-k="j">▲ 점프 (화면 탭도 가능)</button>
-          <button data-k="q">✕</button>
-        </span></span>`), true);
+    + L(`<span class="o-dim">♥ 1점 · 스테이지 클리어 ${CLEAR_BONUS}점</span>`), true);
+  scrollBottom();
 
-  const cv = el.querySelector(".run-cv");
+  const modal = document.createElement("div");
+  modal.className = "run-modal";
+  modal.innerHTML = `
+    <div class="run-title">RUN TO THE ALTAR</div>
+    <canvas class="run-cv" width="${W}" height="${H}"></canvas>
+    <div class="run-hud"></div>
+    <span class="run-pad">
+      <button class="jump" data-k="j">▲ 점프 (화면 아무 곳이나 탭)</button>
+      <button data-k="q">✕</button>
+    </span>
+    <div class="run-sub">♥ 1점 · 스테이지 클리어 ${CLEAR_BONUS}점 · 종료 Q</div>`;
+  document.body.appendChild(modal);
+  const prevOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  const cv = modal.querySelector(".run-cv");
   const ctx = cv.getContext("2d");
-  const hud = el.querySelector(".run-hud");
+  const hud = modal.querySelector(".run-hud");
   ctx.imageSmoothingEnabled = false;
 
   const inGap = (tx) => GAPS.some(([g, w]) => tx >= g && tx < g + w);
@@ -1172,6 +1194,7 @@ function outRun() {
       } else {
         allDone = true;
         SFX.allClear();
+        setTimeout(() => { if (runStop) stop(true); }, 2600);   // 팡파르 후 결과 화면으로
         const sc = banked;
         if (sc > best) { best = sc; try { localStorage.setItem("runBest", best); } catch {} }
         offerRank(sc);
@@ -1297,8 +1320,7 @@ function outRun() {
     jump();
   };
   const release = () => { holding = false; };
-  cv.addEventListener("pointerdown", press);
-  el.querySelector(".run-pad").addEventListener("pointerdown", press);
+  modal.addEventListener("pointerdown", press);
   document.addEventListener("pointerup", release);
   document.addEventListener("pointercancel", release);
 
@@ -1325,7 +1347,8 @@ function outRun() {
   function offerRank(score) {
     if (rankShown || score < 1) return;
     rankShown = true;
-    showRankForm(el.querySelector(".run-box"), score);
+    const box = appendBlock(L(`기록 <b>${score}점</b> — 스테이지 ${cleared}개 클리어`, "o-grn"), true);
+    showRankForm(box, score);
     scrollBottom();
   }
 
@@ -1336,11 +1359,13 @@ function outRun() {
     document.removeEventListener("keyup", ku, true);
     document.removeEventListener("pointerup", release);
     document.removeEventListener("pointercancel", release);
-    cv.removeEventListener("pointerdown", press);
+    modal.remove();
+    document.body.style.overflow = prevOverflow;
     runStop = null;
     if (byUser) {
       const sc = totalScore();
-      hud.textContent = `종료 — ${sc}점 (스테이지 ${cleared}개 클리어)`;
+      logEl.insertAdjacentHTML("beforeend",
+        L(`게임 종료 — ${sc}점 (스테이지 ${cleared}개 클리어)`, "o-dim"));
       offerRank(sc);
     }
   }
