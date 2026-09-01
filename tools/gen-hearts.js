@@ -7,10 +7,10 @@
  */
 const path = require("path");
 const { T, GY, PW, terrain, stepOnce } = require(path.join(__dirname, "sim-core.js"));
-const SPD = 2.3;
+const SPD_BASE = 2.3, SPD_STEP = 0.2;
 
 /* 살아남기만 하는 플레이가 지나가는 칸 */
-function survivePath(st) {
+function survivePath(st, SPD) {
   const { solid, inGap } = terrain(st);
   const p = { x: 2 * T, y: (GY - 3) * T, vy: 0, on: false, coy: 0, buf: 0 };
   let held = false;
@@ -28,9 +28,9 @@ function survivePath(st) {
   return seen;
 }
 
-function genHearts(st, opt) {
+function genHearts(st, opt, SPD) {
   const { inGap } = terrain(st);
-  const onPath = survivePath(st);
+  const onPath = survivePath(st, SPD);
   const hearts = [];
   const used = new Set();
   const add = (tx, ty) => {
@@ -75,7 +75,17 @@ function genHearts(st, opt) {
   add(st.goal - 3, 9);
   hearts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const auto = hearts.filter(([x, y]) => onPath.has(x + "," + y)).length;
-  return { hearts, auto, extra: hearts.length - auto };
+
+  // 반지 — 스테이지당 하나. 궤적에서 벗어난 발판 위라 일부러 올라가야 닿는다.
+  let ring = null;
+  for (const [bx, by, bw] of st.blocks) {
+    for (let i = 0; i < bw; i++) {
+      const tx = bx + i, ty = by - 1;
+      if (!onPath.has(tx + "," + ty) && !used.has(tx + "," + ty)) { ring = [tx, ty]; break; }
+    }
+    if (ring) break;
+  }
+  return { hearts, auto, extra: hearts.length - auto, ring };
 }
 
 /* ── 지형은 손으로 설계한다 ── */
@@ -108,15 +118,17 @@ const fmt = (hs) => {
 
 let totAuto = 0, totAll = 0;
 LAYOUT.forEach((st, i) => {
-  const { hearts, auto, extra } = genHearts(st, st.opt);
+  const { hearts, auto, extra, ring } = genHearts(st, st.opt, SPD_BASE + SPD_STEP * i);
   totAuto += auto; totAll += hearts.length;
-  console.error(`STAGE ${i + 1} ${st.name}: 하트 ${hearts.length}개 (자동 ${auto} / 일부러 ${extra})`);
+  console.error(`STAGE ${i + 1} ${st.name}: 하트 ${hearts.length}개 (자동 ${auto} / 일부러 ${extra})`
+    + ` · 반지 ${ring ? ring.join(",") : "없음 ★"}`);
   console.log(`    { // ${i + 1}. ${st.name}`);
   console.log(`      name: "${st.name}", lw: ${st.lw}, goal: ${st.goal},`);
   console.log(`      gaps: [${st.gaps.map((g) => `[${g[0]}, ${g[1]}]`).join(", ")}],`);
   console.log(`      blocks: [${st.blocks.map((b) => `[${b[0]}, ${b[1]}, ${b[2]}]`).join(", ")}],`);
   console.log(`      bugs: [${st.bugs.join(", ")}],`);
   console.log(`      hearts: [${fmt(hearts)}],`);
+  console.log(`      rings: [${ring ? `[${ring[0]}, ${ring[1]}]` : ""}],`);
   console.log(`    },`);
 });
 console.error(`\n합계: ${totAll}개 (자동 ${totAuto} / 일부러 ${totAll - totAuto})`);

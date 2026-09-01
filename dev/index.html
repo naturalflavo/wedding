@@ -1079,6 +1079,7 @@ function outRun() {
   const STOMP_CHAIN_MAX = 4;   // 착지하지 않고 연속으로 밟으면 2배씩 (5·10·20·40)
   const CLEAR_BONUS = 25;      // 스테이지 클리어
   const NOHIT_BONUS = 25;      // 그 스테이지에서 한 번도 넘어지지 않았을 때
+  const RING_BONUS = 50;       // 숨어 있는 반지 (스테이지당 하나)
 
   /* 스테이지 3종 — 낭떠러지는 2~4타일로 폭을 섞었다.
      짧게 탭하면 46px, 끝까지 누르면 94px 을 난다. 2타일은 탭으로도 넘지만
@@ -1095,38 +1096,46 @@ function outRun() {
                [60, 6], [60, 9], [70, 4], [71, 3], [80, 6], [81, 6], [86, 6],
                [88, 4], [89, 3], [93, 9], [99, 6], [104, 4], [105, 3], [112, 6],
                [113, 9]],
+      rings: [[46, 7]],
     },
     { // 2. 함께 걸은 길
       name: "함께 걸은 길", lw: 140, goal: 132,
       gaps: [[16, 3], [32, 3], [50, 4], [68, 3], [86, 4], [104, 3], [120, 4]],
       blocks: [[42, 8, 4], [78, 7, 3], [96, 8, 3]],
       bugs: [24, 40, 46, 62, 76, 94, 112, 128],
-      hearts: [[5, 9], [8, 6], [16, 4], [17, 3], [29, 9], [30, 6], [32, 5],
+      hearts: [[5, 9], [8, 6], [16, 5], [17, 3], [29, 9], [30, 6], [32, 4],
                [33, 3], [41, 6], [41, 9], [42, 7], [43, 7], [50, 4], [51, 3],
-               [63, 6], [65, 9], [68, 4], [69, 3], [74, 6], [77, 9], [78, 6],
-               [79, 6], [86, 4], [87, 3], [96, 7], [97, 7], [101, 9], [104, 4],
+               [63, 6], [65, 9], [68, 5], [69, 3], [74, 6], [77, 9], [78, 6],
+               [79, 6], [86, 5], [87, 3], [96, 7], [97, 7], [101, 9], [104, 5],
                [105, 3], [113, 9], [118, 6], [120, 4], [121, 3], [125, 9], [129, 6],
                [129, 9]],
+      rings: [[44, 7]],
     },
     { // 3. 마지막 언덕
       name: "마지막 언덕", lw: 148, goal: 140,
       gaps: [[14, 3], [28, 4], [44, 3], [58, 4], [74, 3], [88, 4], [104, 3], [118, 4], [132, 3]],
       blocks: [[22, 7, 3], [38, 8, 3], [68, 7, 3], [98, 8, 3], [126, 7, 3]],
       bugs: [20, 34, 50, 52, 66, 80, 82, 96, 110, 124, 138],
-      hearts: [[5, 9], [8, 5], [14, 4], [15, 3], [22, 6], [23, 6], [28, 4],
-               [29, 3], [38, 7], [39, 7], [44, 4], [45, 3], [57, 9], [58, 4],
-               [59, 3], [68, 6], [69, 6], [74, 4], [75, 3], [83, 9], [88, 4],
-               [89, 3], [96, 9], [98, 7], [99, 7], [104, 4], [105, 3], [109, 9],
-               [118, 4], [119, 3], [126, 6], [127, 6], [132, 4], [133, 3], [137, 9]],
+      hearts: [[5, 9], [8, 5], [14, 5], [15, 3], [18, 6], [22, 6], [23, 6],
+               [28, 5], [29, 3], [38, 7], [39, 7], [44, 5], [45, 3], [48, 6],
+               [57, 9], [58, 5], [59, 3], [68, 6], [69, 6], [74, 4], [75, 3],
+               [83, 9], [88, 5], [89, 3], [96, 9], [98, 7], [99, 7], [104, 5],
+               [105, 3], [118, 5], [119, 3], [126, 6], [127, 6], [132, 5], [133, 3],
+               [137, 9]],
+      rings: [[24, 6]],
     },
   ];
 
   let stage = 0;
-  let LW, GOAL, GAPS, BLOCKS, BUGS, HEARTS0;
+  const SPD_BASE = 2.3, SPD_STEP = 0.2;   // 스테이지가 넘어갈수록 조금씩 빨라진다
+  let SPD = SPD_BASE;
+  let LW, GOAL, GAPS, BLOCKS, BUGS, HEARTS0, RINGS0;
   function loadStage(i) {
     const st = STAGES[i];
     LW = st.lw; GOAL = st.goal;
     GAPS = st.gaps; BLOCKS = st.blocks; BUGS = st.bugs; HEARTS0 = st.hearts;
+    RINGS0 = st.rings || [];
+    SPD = SPD_BASE + SPD_STEP * i;
   }
   loadStage(0);
 
@@ -1167,6 +1176,8 @@ function outRun() {
   let hearts, foes, p, cam, dead, won, tick = 0, deaths = 0, best = 0;
   let banked = 0, cleared = 0, allDone = false;   // 이전 스테이지에서 확정된 점수
   let combo = 0, chain = 0, stagePts = 0, stageDied = 0, stomps = 0;
+  let rings, ringHere = 0, ringsGot = 0;
+  let pops = [], parts = [], shake = 0, ready = 0, readyMax = 0, wasOn = false;
   try { best = parseInt(localStorage.getItem("runBest"), 10) || 0; } catch {}
   const curHearts = () => hearts.filter((h) => h.got).length;
   const mult = () => Math.min(COMBO_MAX, 1 + Math.floor(combo / COMBO_STEP));
@@ -1178,12 +1189,34 @@ function outRun() {
     hearts = HEARTS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false, miss: false }));
     foes = BUGS.map((x) => ({ x: x * T, y: GY * T - 13, w: 13, h: 13, dead: 0, ph: x }));
     p = { x: 2 * T, y: (GY - 3) * T, w: 11, h: 14, vy: 0, on: false, coy: 0, buf: 0 };
+    rings = RINGS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
     cam = 0; dead = 0; won = 0;
     combo = 0; chain = 0; stagePts = 0;
+    pops = []; parts = []; shake = 0; wasOn = false; ringHere = 0;
+  }
+
+  /* 시작 직전 잠깐 멈춰 준다 — 명령을 치자마자 달리기 시작하면
+     화면을 알아보기도 전에 첫 낭떠러지가 온다. */
+  function startReady(frames) { ready = frames; readyMax = frames; }
+
+  /* 점수가 오르는 순간을 눈에 보이게 */
+  function pop(x, y, txt, col) {
+    if (reduceMotion) return;
+    pops.push({ x, y, txt, col, life: 44 });
+  }
+  function burst(x, y, n, col, spd = 1.6) {
+    if (reduceMotion) return;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      parts.push({ x, y, vx: Math.cos(a) * spd * (0.4 + Math.random()),
+                   vy: Math.sin(a) * spd * (0.4 + Math.random()) - 0.6,
+                   life: 22 + Math.random() * 18, col });
+    }
   }
   reset();
+  startReady(150);   // 명령을 치자마자 달리지 않도록 — 첫 낭떠러지까지 2초도 안 된다
 
-  const G = 0.46, SPD = 2.3, JMP = -9.6;   // 모바일에서 넉넉한 점프 타이밍(≈275ms)
+  const G = 0.46, JMP = -9.6;             // 모바일에서 넉넉한 점프 타이밍(≈275ms)
   let holding = false;
 
   function jump() { p.buf = 8; }
@@ -1203,12 +1236,22 @@ function outRun() {
 
   function die() {
     if (dead || won) return;
-    dead = 1; deaths++; stageDied = 1; SFX.fail();
-    setTimeout(() => { if (alive()) reset(); }, 1000);
+    dead = 1; deaths++; stageDied = 1;
+    if (!reduceMotion) shake = 16;
+    burst(p.x + p.w / 2, p.y + p.h / 2, 12, "#f85149", 2.0);
+    SFX.fail();
+    setTimeout(() => { if (alive()) { reset(); startReady(45); } }, 1000);
   }
 
   function step() {
     tick++;
+    if (shake > 0) shake--;
+    for (let i = pops.length - 1; i >= 0; i--) { pops[i].life--; pops[i].y -= 0.55; if (pops[i].life <= 0) pops.splice(i, 1); }
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const q = parts[i]; q.x += q.vx; q.y += q.vy; q.vy += 0.12; q.life--;
+      if (q.life <= 0) parts.splice(i, 1);
+    }
+    if (ready > 0) { ready--; return; }
     if (won) return;
     if (dead) { p.vy = Math.min(p.vy + G, 11); p.y += p.vy; return; }
 
@@ -1229,6 +1272,8 @@ function outRun() {
     p.vy = Math.min(p.vy + G, 11);
     moveY(p.vy);
 
+    if (p.on && !wasOn && p.y > 0) burst(p.x + p.w / 2, p.y + p.h, 3, "#8b949e", 0.9);
+    wasOn = p.on;
     if (p.on) chain = 0;              // 땅에 닿으면 연속 밟기는 끊긴다
     if (p.y > H + 40) { die(); return; }
 
@@ -1241,7 +1286,10 @@ function outRun() {
         if (p.vy > 0 && p.y + p.h - p.vy <= f.y + 7) {
           f.dead = 1; p.vy = -6.4; stomps++;
           chain = Math.min(STOMP_CHAIN_MAX, chain + 1);
-          stagePts += STOMP_BASE * Math.pow(2, chain - 1);   // 착지 없이 연달아 밟으면 5·10·20·40
+          const gain = STOMP_BASE * Math.pow(2, chain - 1);   // 착지 없이 연달아 밟으면 5·10·20·40
+          stagePts += gain;
+          pop(f.x + 6, f.y - 4, `+${gain}`, chain > 1 ? "#e3b341" : "#f0f6fc");
+          burst(f.x + 6, f.y + 6, 6, "#8b3a3a", 1.6);
           SFX.stomp();
         }
         else die();
@@ -1250,19 +1298,36 @@ function outRun() {
     for (const h of hearts) {
       if (h.got || h.miss) continue;
       if (Math.abs(h.x - (p.x + p.w / 2)) < 12 && Math.abs(h.y - (p.y + p.h / 2)) < 13) {
-        h.got = true; combo++; stagePts += HEART_BASE * mult(); SFX.coin();
+        h.got = true; combo++;
+        const gain = HEART_BASE * mult();
+        stagePts += gain;
+        pop(h.x, h.y - 6, `+${gain}`, mult() > 1 ? "#e3b341" : "#f0f6fc");
+        burst(h.x, h.y, 3, "#f85149", 1.1);
+        SFX.coin();
       } else if (h.x < p.x - 8) {
         h.miss = true; combo = 0;      // 하나라도 흘리면 배수는 처음으로
       }
     }
+    for (const r of rings) {
+      if (r.got) continue;
+      if (Math.abs(r.x - (p.x + p.w / 2)) < 13 && Math.abs(r.y - (p.y + p.h / 2)) < 14) {
+        r.got = true; ringHere = 1; stagePts += RING_BONUS;
+        pop(r.x, r.y - 8, `💍 +${RING_BONUS}`, "#e3b341");
+        burst(r.x, r.y, 14, "#e3b341", 2.2);
+        SFX.stageClear();
+      }
+    }
     if (p.x + p.w > GOAL * T) {
       won = 1;
+      for (const c of ["#f85149", "#e3b341", "#3fb950", "#ffffff", "#79c0ff"])
+        burst(p.x + p.w / 2, p.y, 7, c, 2.6);
       banked += stagePts + CLEAR_BONUS + (stageDied ? 0 : NOHIT_BONUS);
-      stagePts = 0; stageDied = 0;
+      ringsGot += ringHere;          // 스테이지를 실제로 깼을 때만 확정
+      stagePts = 0; stageDied = 0; ringHere = 0;
       cleared++;
       if (stage < STAGES.length - 1) {
         SFX.stageClear();
-        setTimeout(() => { if (alive()) { stage++; loadStage(stage); reset(); stageDied = 0; won = 0; } }, 1700);
+        setTimeout(() => { if (alive()) { stage++; loadStage(stage); reset(); startReady(150); stageDied = 0; won = 0; } }, 1700);
       } else {
         allDone = true;
         SFX.allClear();
@@ -1304,6 +1369,15 @@ function outRun() {
     px(x - 4, y - 1 + b, 8, 3, "#f85149");
     px(x - 3, y + 2 + b, 6, 1, "#f85149"); px(x - 1, y + 3 + b, 2, 1, "#f85149");
   }
+  function drawRing(x, y) {
+    const b = Math.sin(tick / 14) * 1.5;
+    const g = "#e3b341", w = "#fff8d6";
+    px(x - 1, y - 6 + b, 2, 2, w);                       // 알
+    px(x - 3, y - 3 + b, 2, 1, g); px(x + 1, y - 3 + b, 2, 1, g);
+    px(x - 4, y - 2 + b, 1, 4, g); px(x + 3, y - 2 + b, 1, 4, g);
+    px(x - 3, y + 2 + b, 2, 1, g); px(x + 1, y + 2 + b, 2, 1, g);
+  }
+
   function drawFoe(f, sx) {
     if (f.dead) { px(sx, f.y + 9, 13, 4, "#5c2b2b"); return; }
     const w = Math.floor(tick / 8) % 2;
@@ -1315,6 +1389,11 @@ function outRun() {
   }
 
   function draw() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (shake > 0) {
+      ctx.translate(Math.round((Math.random() - .5) * shake * 0.7),
+                    Math.round((Math.random() - .5) * shake * 0.7));
+    }
     const green = document.body.classList.contains("crt-green");
     const amber = document.body.classList.contains("crt-amber");
     const C = green ? { bg: "#020a03", gr: "#14401f", gt: "#5cff7d", dot: "#2f9a4c" }
@@ -1326,6 +1405,18 @@ function outRun() {
       let bx = (i * 137 - cam * 0.3) % (W + 20);
       if (bx < 0) bx += W + 20;
       px(bx, (i * 53) % 70 + 6, 1, 1, "#8b949e");
+    }
+    // 원경 — 저 멀리 식장. 카메라보다 훨씬 천천히 흘러 거리감을 만든다.
+    ctx.globalAlpha = .28;
+    const far = ((-cam * 0.08) % 240 + 240) % 240;
+    for (let k = -1; k < 2; k++) {
+      const ox = far + k * 240;
+      px(ox + 18, 108, 26, 52, C.gr); px(ox + 62, 96, 20, 64, C.gr);
+      px(ox + 96, 116, 30, 44, C.gr); px(ox + 150, 104, 22, 56, C.gr);
+      px(ox + 196, 120, 26, 40, C.gr);
+      px(ox + 118, 84, 8, 32, C.gr);           // 첨탑
+      px(ox + 120, 74, 4, 10, C.gr);
+      px(ox + 118, 78, 8, 2, C.gr);
     }
     ctx.globalAlpha = 1;
     const t0 = Math.floor(cam / T), t1 = t0 + VW + 1;
@@ -1359,18 +1450,62 @@ function outRun() {
       px(gx - 6, GY * T - 36, 3, 36, C.gt); px(gx + 17, GY * T - 36, 3, 36, C.gt);
       drawBride(gx, GY * T - 15);
     }
+    for (const r of rings) {
+      if (r.got) continue;
+      const sx = r.x - cam;
+      if (sx > -12 && sx < W + 12) drawRing(sx, r.y);
+    }
     if (!dead || Math.floor(tick / 4) % 2) drawGroom(p.x - cam, p.y);
+
+    for (const q of parts) {
+      const sx = q.x - cam;
+      if (sx < -4 || sx > W + 4) continue;
+      ctx.globalAlpha = Math.max(0, Math.min(1, q.life / 22));
+      px(sx, q.y, 2, 2, q.col);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.font = "bold 9px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    for (const q of pops) {
+      const sx = q.x - cam;
+      if (sx < -20 || sx > W + 20) continue;
+      ctx.globalAlpha = Math.max(0, Math.min(1, q.life / 26));
+      ctx.fillStyle = q.col;
+      ctx.fillText(q.txt, sx, q.y);
+    }
+    ctx.globalAlpha = 1;
+
+    // 시작 카운트다운
+    if (ready > 0) {
+      const secs = Math.ceil(ready / 60);
+      const txt = readyMax > 90 ? (secs > 1 ? String(secs - 1) : "GO!") : "GO!";
+      ctx.fillStyle = "rgba(1,4,9,.55)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = C.gt;
+      ctx.font = "bold 26px ui-monospace, monospace";
+      ctx.fillText(txt, W / 2, H / 2 + 6);
+      if (readyMax > 90) {
+        ctx.font = "bold 9px ui-monospace, monospace";
+        ctx.fillStyle = "#8b949e";
+        ctx.fillText(STAGES[stage].name, W / 2, H / 2 - 24);
+      }
+    }
+    ctx.textAlign = "left";
 
     const got = curHearts();
     const m = mult();
     const head = `STAGE ${stage + 1}/${STAGES.length} <span class="o-dim">${STAGES[stage].name}</span>`;
     hud.innerHTML = allDone
-      ? `🎉 전 스테이지 클리어! <b>${banked}점</b>${deaths ? ` · 넘어진 횟수 ${deaths}` : " · 무사고!"} — 다시: <b>run</b>`
+      ? `🎉 전 스테이지 클리어! <b>${banked}점</b>`
+        + `${ringsGot === STAGES.length ? ` · <span class="o-ylw">💍 반지 전부!</span>` : ringsGot ? ` · 💍 ${ringsGot}/${STAGES.length}` : ""}`
+        + `${deaths ? ` · 넘어진 횟수 ${deaths}` : " · 무사고!"} — 다시: <b>run</b>`
       : won ? `✅ STAGE ${stage + 1} 클리어! <b>+${CLEAR_BONUS + (stageDied ? 0 : NOHIT_BONUS)}</b>`
               + `${stageDied ? "" : ` <span class="o-grn">무사고!</span>`} · 다음 스테이지로…`
       : dead ? `💥 앗! 다시 출발합니다… <span class="o-dim">이 스테이지 점수와 배수는 초기화</span>`
       : `${head}　♥ ${got}/${hearts.length}　` +
         (m > 1 ? `<span class="o-ylw">×${m}</span>　` : `<span class="o-dim">×1</span>　`) +
+        (rings.length ? (rings[0].got ? `<span class="o-ylw">💍</span>　` : `<span class="o-dim">💍</span>　`) : "") +
         `${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%　` +
         `<b>${totalScore()}점</b>` + (best ? ` <span class="o-dim">최고 ${best}</span>` : "");
   }

@@ -30,7 +30,7 @@ function loadFromSource() {
   const num = (re, dflt) => { const m = s.match(re); return m ? parseFloat(m[1]) : dflt; };
   return {
     stages,
-    SPD:          num(/const G = [\d.]+, SPD = ([\d.]+)/, 2.3),
+    SPD:          num(/const SPD_BASE = ([\d.]+)/, 2.3),
     CLEAR_BONUS:  num(/const CLEAR_BONUS = (\d+)/, 25),
     HEART_BASE:   num(/const HEART_BASE = (\d+)/, 1),
     COMBO_STEP:   num(/const COMBO_STEP = (\d+)/, 10),
@@ -38,7 +38,7 @@ function loadFromSource() {
     STOMP_BASE:   num(/const STOMP_BASE = (\d+)/, 0),
     STOMP_CHAIN:  num(/const STOMP_CHAIN_MAX = (\d+)/, 1),
     NOHIT_BONUS:  num(/const NOHIT_BONUS = (\d+)/, 0),
-    SPD_STEP:     num(/const SPD_STEP = ([\d.]+)/, 0),
+    SPD_STEP:     num(/SPD_STEP = ([\d.]+)/, 0),
   };
 }
 
