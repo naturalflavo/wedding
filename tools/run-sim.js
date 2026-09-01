@@ -38,6 +38,7 @@ function loadFromSource() {
     STOMP_BASE:   num(/const STOMP_BASE = (\d+)/, 0),
     STOMP_CHAIN:  num(/const STOMP_CHAIN_MAX = (\d+)/, 1),
     NOHIT_BONUS:  num(/const NOHIT_BONUS = (\d+)/, 0),
+    RING_BONUS:   num(/const RING_BONUS = (\d+)/, 0),
     SPD_STEP:     num(/SPD_STEP = ([\d.]+)/, 0),
   };
 }
@@ -197,6 +198,7 @@ console.log(`점수 상수: 하트 ${C.HEART_BASE} × 배수(10개마다 ↑, �
   + ` · 밟기 ${C.STOMP_BASE} · 클리어 ${C.CLEAR_BONUS} · 무사고 ${C.NOHIT_BONUS}\n`);
 
 let allHearts = 0, bestHearts = 0, allBugs = 0, ok = true;
+const allRings = C.stages.reduce((a, st) => a + (st.rings || []).filter(Boolean).length, 0);
 let lazyPts = 0, lazyCleared = 0;
 
 C.stages.forEach((st, i) => {
@@ -225,15 +227,16 @@ C.stages.forEach((st, i) => {
 const nStage = C.stages.length;
 // 콤보는 스테이지가 바뀌면 초기화되므로 스테이지 단위로 계산한다
 const perfect = C.stages.reduce((a, st) => a + heartPoints(st.hearts.length), 0)
-              + allBugs * C.STOMP_BASE + nStage * C.CLEAR_BONUS + nStage * C.NOHIT_BONUS;
+              + allBugs * C.STOMP_BASE + nStage * C.CLEAR_BONUS + nStage * C.NOHIT_BONUS
+              + allRings * C.RING_BONUS;
 const good = C.stages.reduce((a, st) => a + heartPoints(Math.round(st.hearts.length * 0.85)), 0)
            + Math.round(allBugs * 0.4) * C.STOMP_BASE
            + nStage * C.CLEAR_BONUS + Math.floor(nStage / 2) * C.NOHIT_BONUS;
 const chainMax = C.stages.reduce((a, st) => a + heartPoints(st.hearts.length), 0)
                + allBugs * C.STOMP_BASE * Math.pow(2, C.STOMP_CHAIN - 1)
-               + nStage * C.CLEAR_BONUS + nStage * C.NOHIT_BONUS;
+               + nStage * C.CLEAR_BONUS + nStage * C.NOHIT_BONUS + allRings * C.RING_BONUS;
 
-console.log(`\n하트 합계: 최선 ${bestHearts} / 전체 ${allHearts} · 버그 ${allBugs}마리`);
+console.log(`\n하트 합계: 최선 ${bestHearts} / 전체 ${allHearts} · 버그 ${allBugs}마리 · 반지 ${allRings}개`);
 console.log("\n예상 점수 분포");
 console.log(`  살아남기만  : ${lazyPts}점   ${lazyCleared < nStage ? "(봇이 " + (nStage - lazyCleared) + "개 스테이지에서 실패해 과소평가)" : ""}`);
 console.log(`  꽤 잘함     : ${good}점`);
@@ -241,6 +244,21 @@ console.log(`  완벽        : ${perfect}점`);
 console.log(`  이론상 최대 : ${chainMax}점  (모든 버그를 최대 체인으로 밟았을 때)`);
 console.log(`                 ← Firestore 규칙의 점수 상한은 이보다 커야 한다`);
 console.log(`  편차        : ${perfect - lazyPts}점 (이전 체계는 18점)`);
-console.log(ok ? "\n✅ 모든 스테이지 클리어 가능 · 하트 전부 도달 가능"
+// ── 쉬움 모드도 같은 기준으로 검증한다 ───────────────────────────
+console.log("\n쉬움 모드 (run easy — 낭떠러지 한 타일 축소 · 속도 고정)");
+let okEasy = true;
+C.stages.forEach((st, i) => {
+  const easy = { ...st, gaps: st.gaps.map(([g, w]) => [g, Math.max(2, w - 1)]) };
+  const cl = clearable(easy, C.SPD);
+  const bad = st.hearts.filter(([hx, hy]) => !heartReachable(easy, hx * T + 8, hy * T + 8, C.SPD));
+  const lazy = lazyRun(easy, C.SPD);
+  if (!cl.ok || bad.length) okEasy = false;
+  console.log(`  STAGE ${i + 1} ${st.name}: ${cl.ok ? "클리어 가능" : "★★ 클리어 불가"}`
+    + ` · 하트 ${st.hearts.length - bad.length}/${st.hearts.length}`
+    + (bad.length ? ` ★ 닿지 않음: ${bad.map((b) => b.join(",")).join(" ")}` : "")
+    + ` · 살아남기 ${lazy.cleared ? "O" : "★ 실패"}`);
+});
+
+console.log(ok && okEasy ? "\n✅ 보통·쉬움 모두 클리어 가능 · 하트 전부 도달 가능"
               : "\n❌ 도달 불가능한 하트 또는 클리어 불가 스테이지가 있습니다");
-process.exit(ok ? 0 : 1);
+process.exit(ok && okEasy ? 0 : 1);

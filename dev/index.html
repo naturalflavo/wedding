@@ -257,7 +257,6 @@
   .run-sub { font-size: 11.5px; color: var(--dim); }
   .run-modal .run-cv { width: 100%; max-width: 420px; max-height: 52vh; }
 
-  .run-box { display: block; text-align: center; margin-top: 8px; }
   .run-cv {
     width: 100%; max-width: 320px; display: block; margin: 0 auto;
     aspect-ratio: 20 / 12; image-rendering: pixelated;
@@ -473,7 +472,7 @@ function outHelp() {
     ["contact", "신랑 · 신부에게 연락"],
     ["music", "배경음악 재생 · 곡 변경 (3곡)"],
     ["share", "청첩장 링크 복사"],
-    ["run", "🏃 예식장까지 달리기 (원버튼)"],
+    ["run", "🏃 예식장까지 달리기 (원버튼 · <b>run easy</b> 쉬움 모드)"],
     ["rank", "🏆 달리기 랭킹 TOP 10"],
     ["theme", "CRT 레트로 테마 (green은 BGM도 바뀜)"],
     ["clear", "화면 지우기"],
@@ -1060,8 +1059,11 @@ function showRankForm(box, score) {
 /* ---------- RUN TO THE ALTAR — 원버튼 오토러너 ---------- */
 let runStop = null;
 let runGen = 0;   // 게임 세대 — 앞 게임에 걸린 타이머가 새 게임을 건드리지 못하게 한다
-function outRun() {
+function outRun(args) {
   if (runStop) runStop(false);
+  /* 하객 중에는 이런 게임을 처음 해 보는 분도 있다.
+     run easy — 낭떠러지를 한 타일씩 좁히고 속도도 올리지 않는다. */
+  const EASY = Array.isArray(args) && /^easy$|^쉬움$/i.test(args[0] || "");
   const gen = ++runGen;
   const alive = () => runGen === gen;
 
@@ -1133,23 +1135,29 @@ function outRun() {
   function loadStage(i) {
     const st = STAGES[i];
     LW = st.lw; GOAL = st.goal;
-    GAPS = st.gaps; BLOCKS = st.blocks; BUGS = st.bugs; HEARTS0 = st.hearts;
+    GAPS = EASY ? st.gaps.map(([g, w]) => [g, Math.max(2, w - 1)]) : st.gaps;
+    BLOCKS = st.blocks; BUGS = st.bugs; HEARTS0 = st.hearts;
     RINGS0 = st.rings || [];
-    SPD = SPD_BASE + SPD_STEP * i;
+    SPD = EASY ? SPD_BASE : SPD_BASE + SPD_STEP * i;
   }
   loadStage(0);
 
   const logEl = appendBlock(
     L(`RUN TO THE ALTAR <span class="o-dim">— 전 ${STAGES.length}스테이지 · 탭해서 점프!</span>`)
+    + (EASY ? L(`<span class="o-ylw">쉬움 모드</span> <span class="o-dim">— 낭떠러지가 좁고 속도도 그대로입니다. 랭킹에는 올라가지 않아요.</span>`)
+            : L(`<span class="o-dim">어려우면 <span class="o-cyn">run easy</span> 로 다시 시작해 보세요.</span>`))
     + L(`<span class="o-dim">♥ ${HEART_BASE}점 · 연속으로 먹으면 배수 ↑ (최대 ×${COMBO_MAX})</span>`)
     + L(`<span class="o-dim">버그 밟기 ${STOMP_BASE}점 · 클리어 ${CLEAR_BONUS}점 · 무사고 ${NOHIT_BONUS}점</span>`), true);
   scrollBottom();
 
   const modal = document.createElement("div");
   modal.className = "run-modal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-label", "RUN TO THE ALTAR 게임");
   modal.innerHTML = `
     <div class="run-title">RUN TO THE ALTAR</div>
-    <canvas class="run-cv" width="${W}" height="${H}"></canvas>
+    <canvas class="run-cv" width="${W}" height="${H}" role="img"
+            aria-label="달리기 게임 화면. 화면을 탭하거나 스페이스바로 점프하고, Q 를 누르면 종료합니다."></canvas>
     <div class="run-hud"></div>
     <span class="run-pad">
       <button class="jump" data-k="j">▲ 점프 (화면 아무 곳이나 탭)</button>
@@ -1178,7 +1186,8 @@ function outRun() {
   let combo = 0, chain = 0, stagePts = 0, stageDied = 0, stomps = 0;
   let rings, ringHere = 0, ringsGot = 0;
   let pops = [], parts = [], shake = 0, ready = 0, readyMax = 0, wasOn = false;
-  try { best = parseInt(localStorage.getItem("runBest"), 10) || 0; } catch {}
+  const BEST_KEY = EASY ? "runBestEasy" : "runBest";
+  try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch {}
   const curHearts = () => hearts.filter((h) => h.got).length;
   const mult = () => Math.min(COMBO_MAX, 1 + Math.floor(combo / COMBO_STEP));
   const totalScore = () => banked + stagePts;
@@ -1333,7 +1342,7 @@ function outRun() {
         SFX.allClear();
         setTimeout(() => { if (alive()) stop(true); }, 2600);   // 팡파르 후 결과 화면으로
         const sc = banked;
-        if (sc > best) { best = sc; try { localStorage.setItem("runBest", best); } catch {} }
+        if (sc > best) { best = sc; try { localStorage.setItem(BEST_KEY, best); } catch {} }
         offerRank(sc);
       }
     }
@@ -1510,12 +1519,22 @@ function outRun() {
         `<b>${totalScore()}점</b>` + (best ? ` <span class="o-dim">최고 ${best}</span>` : "");
   }
 
+  /* 전화가 오거나 다른 앱으로 넘어가면 멈춘다 — 돌아왔을 때 죽어 있으면 억울하다 */
+  let paused = false;
+  const onVis = () => {
+    paused = document.hidden;
+    if (!paused) { last = performance.now(); acc = 0; }
+  };
+  document.addEventListener("visibilitychange", onVis);
+
   let raf = 0, acc = 0, last = performance.now();
   function loop(now) {
     const dt = Math.min(now - last, 60); last = now;
-    acc += dt;
-    while (acc >= 16.7) { step(); acc -= 16.7; }
-    draw();
+    if (!paused) {
+      acc += dt;
+      while (acc >= 16.7) { step(); acc -= 16.7; }
+      draw();
+    }
     raf = requestAnimationFrame(loop);
   }
   raf = requestAnimationFrame(loop);
@@ -1558,6 +1577,12 @@ function outRun() {
   function offerRank(score) {
     if (rankShown || score < 1) return;
     rankShown = true;
+    if (EASY) {
+      appendBlock(L(`쉬움 모드 기록 <b>${score}점</b> <span class="o-dim">— 랭킹에는 올라가지 않습니다.</span>`, "o-ylw")
+        + L(`<span class="o-cyn">run</span> 으로 정식 도전!`, "o-dim"), true);
+      scrollBottom();
+      return;
+    }
     const box = appendBlock(L(`기록 <b>${score}점</b> — 스테이지 ${cleared}개 클리어`
       + `${stomps ? ` · 버그 ${stomps}마리` : ""}${deaths ? ` · 넘어짐 ${deaths}회` : ""}`, "o-grn"), true);
     showRankForm(box, score);
@@ -1573,6 +1598,7 @@ function outRun() {
     document.removeEventListener("keyup", ku, true);
     document.removeEventListener("pointerup", release);
     document.removeEventListener("pointercancel", release);
+    document.removeEventListener("visibilitychange", onVis);
     modal.remove();
     document.body.style.overflow = prevOverflow;
     runStop = null;
@@ -1614,7 +1640,7 @@ const COMMANDS = {
 /* Tab 자동완성 후보 — 인자까지 포함한 전체 명령 문자열 */
 const COMPLETIONS = [...new Set(Object.keys(COMMANDS).concat([
   "clear", "cat", "cd ..", "sudo marry", "git log", "npm test",
-  "theme amber", "theme green", "theme default",
+  "run easy", "theme amber", "theme green", "theme default",
   "music list", "music next", "music 1", "music 2", "music 3",
 ]))].sort();
 
