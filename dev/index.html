@@ -1265,7 +1265,7 @@ function outRun(args) {
     if (!reduceMotion) shake = 16;
     burst(p.x + p.w / 2, p.y + p.h / 2, 12, "#f85149", 2.0);
     SFX.fail();
-    setTimeout(() => { if (alive()) { reset(); startReady(45); } }, 1000);
+    setTimeout(() => { if (alive() && !won && !allDone) { reset(); startReady(45); } }, 1000);
   }
 
   function step() {
@@ -1342,7 +1342,7 @@ function outRun(args) {
         SFX.stageClear();
       }
     }
-    if (p.x + p.w > GOAL * T) {
+    if (!dead && p.x + p.w > GOAL * T) {
       won = 1;
       for (const c of ["#f85149", "#e3b341", "#3fb950", "#ffffff", "#79c0ff"])
         burst(p.x + p.w / 2, p.y, 7, c, 2.6);
@@ -1352,7 +1352,7 @@ function outRun(args) {
       cleared++;
       if (stage < STAGES.length - 1) {
         SFX.stageClear();
-        setTimeout(() => { if (alive()) { stage++; loadStage(stage); reset(); startReady(150); stageDied = 0; won = 0; } }, 1700);
+        setTimeout(() => { if (alive() && !allDone) { stage++; loadStage(stage); reset(); startReady(150); stageDied = 0; won = 0; } }, 1700);
       } else {
         allDone = true;
         SFX.allClear();
