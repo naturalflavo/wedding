@@ -1,10 +1,19 @@
 // Firebase 콘솔 → Firestore Database → 규칙 탭에 붙여넣고 "게시"
 //
-// snakeScores: 누구나 읽고 새 기록을 남길 수 있지만,
+// snakeScores: 달리기 게임 랭킹.
+//   초기 스네이크 게임 때부터 쓰던 이름이라 지금 게임과 맞지 않지만,
+//   그간 쌓인 기록을 이어 가려고 컬렉션은 그대로 둔다.
+//
+//   누구나 읽고 새 기록을 남길 수 있지만,
 //   - 필드는 name/score/ts 세 개만 허용
 //   - 이름은 1~12자 문자열
-//   - 점수는 1~250 사이 정수 (보드 19x12 = 228칸이 이론상 최대)
+//   - 점수는 1~2000 사이 정수
 //   - 이미 등록된 기록의 수정·삭제는 불가
+//
+// ※ 점수 상한을 250 에서 2000 으로 올렸다.
+//   점수 체계를 바꾸면서 하트 배수·버그 밟기·무사고·반지가 더해져
+//   완벽한 플레이가 약 860점, 이론상 최대치가 약 1740점이 됐다.
+//   상한이 250 인 채로 두면 잘한 플레이일수록 등록이 거부된다.
 rules_version = '2';
 
 service cloud.firestore {
@@ -19,7 +28,7 @@ service cloud.firestore {
                     && request.resource.data.name.size() <= 12
                     && request.resource.data.score is int
                     && request.resource.data.score >= 1
-                    && request.resource.data.score <= 250;
+                    && request.resource.data.score <= 2000;
 
       allow update, delete: if false;
     }

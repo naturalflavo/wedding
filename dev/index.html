@@ -257,7 +257,6 @@
   .run-sub { font-size: 11.5px; color: var(--dim); }
   .run-modal .run-cv { width: 100%; max-width: 420px; max-height: 52vh; }
 
-  .run-box { display: block; text-align: center; margin-top: 8px; }
   .run-cv {
     width: 100%; max-width: 320px; display: block; margin: 0 auto;
     aspect-ratio: 20 / 12; image-rendering: pixelated;
@@ -473,7 +472,7 @@ function outHelp() {
     ["contact", "신랑 · 신부에게 연락"],
     ["music", "배경음악 재생 · 곡 변경 (3곡)"],
     ["share", "청첩장 링크 복사"],
-    ["run", "🏃 예식장까지 달리기 (원버튼)"],
+    ["run", "🏃 예식장까지 달리기 (원버튼 · <b>run easy</b> 쉬움 모드)"],
     ["rank", "🏆 달리기 랭킹 TOP 10"],
     ["theme", "CRT 레트로 테마 (green은 BGM도 바뀜)"],
     ["clear", "화면 지우기"],
@@ -916,8 +915,11 @@ function runNpmTest() {
 const FB = {
   projectId: "naturalflavo",
   apiKey: "AIzaSyDqW9Gt7z-6bojV0zMm1MGxIuTpc659tB0",
-  col: "snakeScores",   // 초기 게임에서 쓰던 이름 — 보안 규칙 재사용을 위해 유지
-  max: 250,   // 보드 19x12 = 228칸, 그 이상은 비정상 값
+  col: "snakeScores",   // 초기 스네이크 게임 때부터 쓰던 이름 — 기록을 이어 가려고 유지
+  /* 점수 체계가 바뀌었지만 컬렉션은 그대로 둔다.
+     새 체계는 완주만 해도 200점대라 옛 기록(최고 152)은 자연히 아래로 밀린다. */
+  max: 2000,  // 이론상 최대치(약 1740)보다 넉넉하게 — firestore.rules 의 상한과 맞춰야 한다
+  pool: 300,  // 이름별로 접기 전에 받아 오는 원본 기록 수
 };
 const fbUrl = (suffix) =>
   `https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents${suffix}&key=${FB.apiKey}`;
@@ -933,34 +935,58 @@ async function fbPost(url, payload, ms = 8000) {
       body: JSON.stringify(payload),
       signal: ac.signal,
     });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.json();
+    if (!res.ok) {
+      const err = new Error("HTTP " + res.status);
+      err.status = res.status;
+      throw err;
+    }
+    const data = await res.json();
+    // Firestore 는 규칙에 막혀도 200 안에 error 를 담아 주는 경우가 있다
+    const denied = Array.isArray(data) ? data.find((d) => d && d.error) : data && data.error;
+    if (denied) {
+      const err = new Error(denied.error.status || "DENIED");
+      err.status = denied.error.code || 403;
+      throw err;
+    }
+    return data;
   } finally {
     clearTimeout(timer);
   }
 }
 
+/* 넉넉히 받아 와서 이름별로 접는다 — 한 사람이 보드를 독점하지 못하도록.
+   같은 이름은 최고 기록 한 줄만, 동점이면 먼저 달성한 쪽이 위로. */
 async function rankFetch(limit = 10) {
   const rows = await fbPost(fbUrl(":runQuery?alt=json"), {
     structuredQuery: {
       from: [{ collectionId: FB.col }],
       orderBy: [{ field: { fieldPath: "score" }, direction: "DESCENDING" }],
-      limit,
+      limit: FB.pool,
     },
   });
-  return (Array.isArray(rows) ? rows : [])
-    .filter((r) => r && r.document)
-    .map((r) => ({
-      name: r.document.fields?.name?.stringValue || "익명",
-      score: parseInt(r.document.fields?.score?.integerValue || "0", 10),
-    }));
+  const best = new Map();
+  (Array.isArray(rows) ? rows : []).forEach((r) => {
+    if (!r || !r.document) return;
+    const f = r.document.fields || {};
+    const name = f.name?.stringValue || "익명";
+    const score = parseInt(f.score?.integerValue || "0", 10);
+    const ts = f.ts?.timestampValue || "";
+    const cur = best.get(name);
+    if (!cur || score > cur.score || (score === cur.score && ts && ts < cur.ts)) {
+      best.set(name, { name, score, ts });
+    }
+  });
+  const all = [...best.values()].sort((a, b) => b.score - a.score || (a.ts < b.ts ? -1 : 1));
+  return { list: all.slice(0, limit), all, total: all.length };
 }
 
 async function rankSubmit(name, score) {
+  // 규칙의 상한을 넘으면 등록 자체가 거부되므로 클라이언트에서 먼저 맞춘다
+  const safe = Math.max(1, Math.min(FB.max, Math.round(score)));
   return fbPost(fbUrl(`/${FB.col}?alt=json`), {
     fields: {
       name: { stringValue: name },
-      score: { integerValue: String(score) },
+      score: { integerValue: String(safe) },
       ts: { timestampValue: new Date().toISOString() },
     },
   });
@@ -970,7 +996,7 @@ function outRank() {
   const el = appendBlock(L(`# 🏆 RUN 랭킹 TOP 10`, "o-h") + L(`불러오는 중…`, "o-dim"), true);
   let myName = "";
   try { myName = localStorage.getItem("rankName") || ""; } catch {}
-  rankFetch(10).then((list) => {
+  rankFetch(10).then(({ list, all, total }) => {
     if (!list.length) {
       el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10`, "o-h")
         + L(`아직 등록된 기록이 없습니다. 첫 주인공이 되어보세요!`, "o-dim")
@@ -978,20 +1004,32 @@ function outRank() {
       return;
     }
     const medal = ["🥇", "🥈", "🥉"];
-    el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10`, "o-h")
+    // 보드 밖으로 밀린 사람에게도 자기 위치를 알려준다
+    const myIdx = myName ? all.findIndex((r) => r.name === myName) : -1;
+    const mine = myIdx >= 0 && myIdx >= list.length
+      ? L(`<span class="rk rk-me">
+          <span class="rk-i">${myIdx + 1}.</span>
+          <span class="rk-n">${esc(all[myIdx].name)}</span>
+          <span class="rk-s">${all[myIdx].score}점</span>
+        </span>`)
+      : "";
+    el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10 <span class="o-dim">· 참가자 ${total}명</span>`, "o-h")
       + list.map((r, i) => L(`<span class="rk${r.name === myName ? " rk-me" : ""}">
           <span class="rk-i">${medal[i] || `${i + 1}.`}</span>
           <span class="rk-n">${esc(r.name)}</span>
-          <span class="rk-s">♥ ${r.score}</span>
+          <span class="rk-s">${r.score}점</span>
         </span>`)).join("")
+      + (mine ? L(`<span class="o-dim">⋯</span>`) + mine : "")
       + GAP
       + L(`<span class="o-cyn">run</span> 으로 도전해 보세요!`, "o-dim");
     el.querySelectorAll(".tl").forEach((n, i) => n.style.setProperty("--i", i));
     scrollBottom();
-  }).catch(() => {
+  }).catch((e) => {
+    const denied = e && (e.status === 403 || e.status === 401);
     el.innerHTML = L(`# 🏆 RUN 랭킹`, "o-h")
-      + L(`랭킹 서버에 연결하지 못했습니다.`, "o-red")
-      + L(`네트워크 상태를 확인하고 다시 시도해 주세요.`, "o-dim");
+      + L(denied ? `랭킹 서버 설정이 아직 준비되지 않았습니다.` : `랭킹 서버에 연결하지 못했습니다.`, "o-red")
+      + L(denied ? `잠시 후 다시 시도해 주세요. <span class="o-dim">(관리자: firestore.rules 게시 필요)</span>`
+                 : `네트워크 상태를 확인하고 다시 시도해 주세요.`, "o-dim");
     scrollBottom();
   });
   return null;
@@ -1006,7 +1044,7 @@ function showRankForm(box, score) {
   wrap.innerHTML = `
     <input class="rank-name" maxlength="12" value="${esc(saved)}" placeholder="이름 (최대 12자)" aria-label="랭킹에 등록할 이름" />
     <button class="rank-go">🏆 랭킹 등록</button>
-    <div class="rank-msg o-dim">모은 ♥ 개수로 전체 랭킹에 도전해 보세요.</div>`;
+    <div class="rank-msg o-dim">이번 판 점수로 전체 랭킹에 도전해 보세요.</div>`;
   box.appendChild(wrap);
   const inp = wrap.querySelector(".rank-name");
   const btn = wrap.querySelector(".rank-go");
@@ -1021,9 +1059,11 @@ function showRankForm(box, score) {
       try { localStorage.setItem("rankName", nm); } catch {}
       inp.disabled = true;
       msg.innerHTML = `<span class="o-grn">등록 완료!</span> <span class="o-dim">rank 명령어로 순위를 확인하세요.</span>`;
-    } catch {
+    } catch (e) {
       btn.disabled = false;
-      msg.innerHTML = `<span class="o-red">등록 실패</span> <span class="o-dim">— 네트워크를 확인 후 다시 눌러주세요.</span>`;
+      const denied = e && (e.status === 403 || e.status === 401);
+      msg.innerHTML = `<span class="o-red">등록 실패</span> `
+        + `<span class="o-dim">— ${denied ? "랭킹 서버 설정이 아직 준비되지 않았습니다." : "네트워크를 확인 후 다시 눌러주세요."}</span>`;
     }
   };
   btn.addEventListener("click", go);
@@ -1034,70 +1074,112 @@ function showRankForm(box, score) {
 
 /* ---------- RUN TO THE ALTAR — 원버튼 오토러너 ---------- */
 let runStop = null;
-function outRun() {
+let runGen = 0;   // 게임 세대 — 앞 게임에 걸린 타이머가 새 게임을 건드리지 못하게 한다
+function outRun(args) {
   if (runStop) runStop(false);
+  /* 하객 중에는 이런 게임을 처음 해 보는 분도 있다.
+     run easy — 낭떠러지를 한 타일씩 좁히고 속도도 올리지 않는다. */
+  const EASY = Array.isArray(args) && /^easy$|^쉬움$/i.test(args[0] || "");
+  const gen = ++runGen;
+  const alive = () => runGen === gen;
 
   const T = 16, VW = 20, VH = 12;        // 타일 크기 / 화면 타일 수
   const W = VW * T, H = VH * T;          // 320 x 192 (논리 해상도)
   const GY = 10;                         // 바닥 윗면 타일 y
 
-  /* 스테이지 3종 — 뒤로 갈수록 낭떠러지·버그가 촘촘해진다.
-     점수 = 하트 1점 + 스테이지 클리어 30점 (최대 52 + 90 = 142점) */
+  /* 점수 — 쉽게 쌓이되, 잘할수록 크게 벌어지도록 설계했다.
+     하트는 연속으로 먹을수록 배수가 오르고, 하나라도 놓치거나 넘어지면 배수가 처음으로 돌아간다.
+     그래서 "끝까지 가는 것" 은 쉽고 "한 번도 안 흘리는 것" 은 어렵다. */
+  const HEART_BASE = 2;        // 하트 한 개
+  const COMBO_STEP = 10;       // 몇 개 연속마다 배수가 오르는가
+  const COMBO_MAX = 3;         // 배수 상한
+  const STOMP_BASE = 5;        // 버그를 밟았을 때
+  const STOMP_CHAIN_MAX = 4;   // 착지하지 않고 연속으로 밟으면 2배씩 (5·10·20·40)
+  const CLEAR_BONUS = 25;      // 스테이지 클리어
+  const NOHIT_BONUS = 25;      // 그 스테이지에서 한 번도 넘어지지 않았을 때
+  const RING_BONUS = 50;       // 숨어 있는 반지 (스테이지당 하나)
+
+  /* 스테이지 3종 — 낭떠러지는 2~4타일로 폭을 섞었다.
+     짧게 탭하면 46px, 끝까지 누르면 94px 을 난다. 2타일은 탭으로도 넘지만
+     3타일부터는 눌러야 하고, 4타일은 눌러도 아슬아슬하다.
+     하트는 일부러 "가지러 가야 하는" 자리에 둔다 — 살아서 지나가기만 하면 절반쯤 놓친다. */
   const STAGES = [
     { // 1. 첫 걸음
-      name: "출발", lw: 124, goal: 116,
-      gaps: [[18, 3], [38, 3], [60, 3], [82, 3], [102, 3]],
-      blocks: [[50, 8, 4]],
-      bugs: [28, 48, 70, 92, 110],
-      hearts: [[6, 9], [9, 9], [12, 9], [19, 7], [20, 7], [30, 9], [39, 7], [40, 7],
-               [51, 7], [52, 7], [61, 7], [62, 7], [83, 7], [84, 7], [103, 7], [104, 7], [113, 9]],
+      name: "첫 걸음", lw: 124, goal: 116,
+      gaps: [[18, 2], [34, 2], [52, 3], [70, 3], [88, 3], [104, 2]],
+      blocks: [[44, 8, 4], [80, 7, 3]],
+      bugs: [26, 42, 60, 76, 96, 110],
+      hearts: [[5, 9], [8, 6], [16, 9], [18, 4], [19, 3], [21, 6], [27, 9],
+               [34, 4], [35, 3], [44, 7], [45, 7], [49, 9], [52, 4], [53, 3],
+               [60, 6], [60, 9], [70, 4], [71, 3], [80, 6], [81, 6], [86, 6],
+               [88, 4], [89, 3], [93, 9], [99, 6], [104, 4], [105, 3], [112, 6],
+               [113, 9]],
+      rings: [[46, 7]],
     },
-    { // 2. 골목길
-      name: "골목길", lw: 140, goal: 132,
-      gaps: [[16, 3], [32, 3], [50, 3], [66, 3], [84, 3], [102, 3], [118, 3]],
-      blocks: [[42, 8, 4], [94, 8, 4]],
-      bugs: [24, 40, 58, 76, 78, 94, 110, 126],
-      hearts: [[6, 9], [10, 9], [17, 7], [18, 7], [33, 7], [34, 7], [43, 7], [44, 7],
-               [51, 7], [52, 7], [67, 7], [68, 7], [85, 7], [86, 7], [95, 7], [96, 7],
-               [103, 7], [104, 7], [119, 7], [120, 7], [128, 9]],
+    { // 2. 함께 걸은 길
+      name: "함께 걸은 길", lw: 140, goal: 132,
+      gaps: [[16, 3], [32, 3], [50, 4], [68, 3], [86, 4], [104, 3], [120, 4]],
+      blocks: [[42, 8, 4], [78, 7, 3], [96, 8, 3]],
+      bugs: [24, 40, 46, 62, 76, 94, 112, 128],
+      hearts: [[5, 9], [8, 6], [16, 5], [17, 3], [29, 9], [30, 6], [32, 4],
+               [33, 3], [41, 6], [41, 9], [42, 7], [43, 7], [50, 4], [51, 3],
+               [63, 6], [65, 9], [68, 5], [69, 3], [74, 6], [77, 9], [78, 6],
+               [79, 6], [86, 5], [87, 3], [96, 7], [97, 7], [101, 9], [104, 5],
+               [105, 3], [113, 9], [118, 6], [120, 4], [121, 3], [125, 9], [129, 6],
+               [129, 9]],
+      rings: [[44, 7]],
     },
     { // 3. 마지막 언덕
       name: "마지막 언덕", lw: 148, goal: 140,
-      gaps: [[14, 3], [30, 3], [46, 3], [62, 3], [78, 3], [94, 3], [110, 3], [126, 3]],
-      blocks: [[38, 8, 4], [86, 8, 4], [118, 8, 4]],
-      bugs: [22, 24, 38, 54, 70, 72, 86, 102, 118, 134],
-      hearts: [[6, 9], [15, 7], [16, 7], [31, 7], [32, 7], [39, 7], [40, 7], [47, 7], [48, 7],
-               [63, 7], [64, 7], [79, 7], [80, 7], [87, 7], [88, 7], [95, 7], [96, 7],
-               [111, 7], [112, 7], [119, 7], [120, 7], [127, 7], [128, 7], [136, 9]],
+      gaps: [[14, 3], [28, 4], [44, 3], [58, 4], [74, 3], [88, 4], [104, 3], [118, 4], [132, 3]],
+      blocks: [[22, 7, 3], [38, 8, 3], [68, 7, 3], [98, 8, 3], [126, 7, 3]],
+      bugs: [20, 34, 50, 52, 66, 80, 82, 96, 110, 124, 138],
+      hearts: [[5, 9], [8, 5], [14, 5], [15, 3], [18, 6], [22, 6], [23, 6],
+               [28, 5], [29, 3], [38, 7], [39, 7], [44, 5], [45, 3], [48, 6],
+               [57, 9], [58, 5], [59, 3], [68, 6], [69, 6], [74, 4], [75, 3],
+               [83, 9], [88, 5], [89, 3], [96, 9], [98, 7], [99, 7], [104, 5],
+               [105, 3], [118, 5], [119, 3], [126, 6], [127, 6], [132, 5], [133, 3],
+               [137, 9]],
+      rings: [[24, 6]],
     },
   ];
-  const CLEAR_BONUS = 30;
 
   let stage = 0;
-  let LW, GOAL, GAPS, BLOCKS, BUGS, HEARTS0;
+  const SPD_BASE = 2.3, SPD_STEP = 0.2;   // 스테이지가 넘어갈수록 조금씩 빨라진다
+  let SPD = SPD_BASE;
+  let LW, GOAL, GAPS, BLOCKS, BUGS, HEARTS0, RINGS0;
   function loadStage(i) {
     const st = STAGES[i];
     LW = st.lw; GOAL = st.goal;
-    GAPS = st.gaps; BLOCKS = st.blocks; BUGS = st.bugs; HEARTS0 = st.hearts;
+    GAPS = EASY ? st.gaps.map(([g, w]) => [g, Math.max(2, w - 1)]) : st.gaps;
+    BLOCKS = st.blocks; BUGS = st.bugs; HEARTS0 = st.hearts;
+    RINGS0 = st.rings || [];
+    SPD = EASY ? SPD_BASE : SPD_BASE + SPD_STEP * i;
   }
   loadStage(0);
 
   const logEl = appendBlock(
     L(`RUN TO THE ALTAR <span class="o-dim">— 전 ${STAGES.length}스테이지 · 탭해서 점프!</span>`)
-    + L(`<span class="o-dim">♥ 1점 · 스테이지 클리어 ${CLEAR_BONUS}점</span>`), true);
+    + (EASY ? L(`<span class="o-ylw">쉬움 모드</span> <span class="o-dim">— 낭떠러지가 좁고 속도도 그대로입니다. 랭킹에는 올라가지 않아요.</span>`)
+            : L(`<span class="o-dim">어려우면 <span class="o-cyn">run easy</span> 로 다시 시작해 보세요.</span>`))
+    + L(`<span class="o-dim">♥ ${HEART_BASE}점 · 연속으로 먹으면 배수 ↑ (최대 ×${COMBO_MAX})</span>`)
+    + L(`<span class="o-dim">버그 밟기 ${STOMP_BASE}점 · 클리어 ${CLEAR_BONUS}점 · 무사고 ${NOHIT_BONUS}점</span>`), true);
   scrollBottom();
 
   const modal = document.createElement("div");
   modal.className = "run-modal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-label", "RUN TO THE ALTAR 게임");
   modal.innerHTML = `
     <div class="run-title">RUN TO THE ALTAR</div>
-    <canvas class="run-cv" width="${W}" height="${H}"></canvas>
+    <canvas class="run-cv" width="${W}" height="${H}" role="img"
+            aria-label="달리기 게임 화면. 화면을 탭하거나 스페이스바로 점프하고, Q 를 누르면 종료합니다."></canvas>
     <div class="run-hud"></div>
     <span class="run-pad">
       <button class="jump" data-k="j">▲ 점프 (화면 아무 곳이나 탭)</button>
       <button data-k="q">✕</button>
     </span>
-    <div class="run-sub">♥ 1점 · 스테이지 클리어 ${CLEAR_BONUS}점 · 종료 Q</div>`;
+    <div class="run-sub">♥ 연속으로 먹을수록 배수 ↑ · 넘어지면 배수 초기화 · 종료 Q</div>`;
   document.body.appendChild(modal);
   const prevOverflow = document.body.style.overflow;
   document.body.style.overflow = "hidden";
@@ -1117,19 +1199,49 @@ function outRun() {
 
   let hearts, foes, p, cam, dead, won, tick = 0, deaths = 0, best = 0;
   let banked = 0, cleared = 0, allDone = false;   // 이전 스테이지에서 확정된 점수
-  try { best = parseInt(localStorage.getItem("runBest"), 10) || 0; } catch {}
+  let combo = 0, chain = 0, stagePts = 0, stageDied = 0, stomps = 0;
+  let rings, ringHere = 0, ringsGot = 0;
+  let pops = [], parts = [], shake = 0, ready = 0, readyMax = 0, wasOn = false;
+  const BEST_KEY = EASY ? "runBestEasy" : "runBest";
+  try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch {}
   const curHearts = () => hearts.filter((h) => h.got).length;
-  const totalScore = () => banked + (won ? 0 : curHearts());
+  const mult = () => Math.min(COMBO_MAX, 1 + Math.floor(combo / COMBO_STEP));
+  const totalScore = () => banked + stagePts;
 
+  /* 스테이지를 처음부터 다시 — 넘어졌을 때도 여기로 온다.
+     그 판에서 쌓은 점수와 배수는 사라지고, 앞 스테이지에서 확정된 banked 만 남는다. */
   function reset() {
-    hearts = HEARTS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
+    hearts = HEARTS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false, miss: false }));
     foes = BUGS.map((x) => ({ x: x * T, y: GY * T - 13, w: 13, h: 13, dead: 0, ph: x }));
     p = { x: 2 * T, y: (GY - 3) * T, w: 11, h: 14, vy: 0, on: false, coy: 0, buf: 0 };
+    rings = RINGS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
     cam = 0; dead = 0; won = 0;
+    combo = 0; chain = 0; stagePts = 0;
+    pops = []; parts = []; shake = 0; wasOn = false; ringHere = 0;
+  }
+
+  /* 시작 직전 잠깐 멈춰 준다 — 명령을 치자마자 달리기 시작하면
+     화면을 알아보기도 전에 첫 낭떠러지가 온다. */
+  function startReady(frames) { ready = frames; readyMax = frames; }
+
+  /* 점수가 오르는 순간을 눈에 보이게 */
+  function pop(x, y, txt, col) {
+    if (reduceMotion) return;
+    pops.push({ x, y, txt, col, life: 44 });
+  }
+  function burst(x, y, n, col, spd = 1.6) {
+    if (reduceMotion) return;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      parts.push({ x, y, vx: Math.cos(a) * spd * (0.4 + Math.random()),
+                   vy: Math.sin(a) * spd * (0.4 + Math.random()) - 0.6,
+                   life: 22 + Math.random() * 18, col });
+    }
   }
   reset();
+  startReady(150);   // 명령을 치자마자 달리지 않도록 — 첫 낭떠러지까지 2초도 안 된다
 
-  const G = 0.46, SPD = 2.3, JMP = -9.6;   // 모바일에서 넉넉한 점프 타이밍(≈275ms)
+  const G = 0.46, JMP = -9.6;             // 모바일에서 넉넉한 점프 타이밍(≈275ms)
   let holding = false;
 
   function jump() { p.buf = 8; }
@@ -1149,12 +1261,22 @@ function outRun() {
 
   function die() {
     if (dead || won) return;
-    dead = 1; deaths++; SFX.fail();
-    setTimeout(() => { if (runStop) reset(); }, 1000);
+    dead = 1; deaths++; stageDied = 1;
+    if (!reduceMotion) shake = 16;
+    burst(p.x + p.w / 2, p.y + p.h / 2, 12, "#f85149", 2.0);
+    SFX.fail();
+    setTimeout(() => { if (alive()) { reset(); startReady(45); } }, 1000);
   }
 
   function step() {
     tick++;
+    if (shake > 0) shake--;
+    for (let i = pops.length - 1; i >= 0; i--) { pops[i].life--; pops[i].y -= 0.55; if (pops[i].life <= 0) pops.splice(i, 1); }
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const q = parts[i]; q.x += q.vx; q.y += q.vy; q.vy += 0.12; q.life--;
+      if (q.life <= 0) parts.splice(i, 1);
+    }
+    if (ready > 0) { ready--; return; }
     if (won) return;
     if (dead) { p.vy = Math.min(p.vy + G, 11); p.y += p.vy; return; }
 
@@ -1175,6 +1297,9 @@ function outRun() {
     p.vy = Math.min(p.vy + G, 11);
     moveY(p.vy);
 
+    if (p.on && !wasOn && p.y > 0) burst(p.x + p.w / 2, p.y + p.h, 3, "#8b949e", 0.9);
+    wasOn = p.on;
+    if (p.on) chain = 0;              // 땅에 닿으면 연속 밟기는 끊긴다
     if (p.y > H + 40) { die(); return; }
 
     // 버그 — 제자리에서 좌우로 조금씩
@@ -1183,26 +1308,57 @@ function outRun() {
       f.x += Math.sin((tick + f.ph) / 34) * 0.5;
       if (p.x + p.w > f.x + 2 && p.x < f.x + f.w - 2 &&
           p.y + p.h > f.y + 2 && p.y < f.y + f.h) {
-        if (p.vy > 0 && p.y + p.h - p.vy <= f.y + 7) { f.dead = 1; p.vy = -6.4; SFX.stomp(); }
+        if (p.vy > 0 && p.y + p.h - p.vy <= f.y + 7) {
+          f.dead = 1; p.vy = -6.4; stomps++;
+          chain = Math.min(STOMP_CHAIN_MAX, chain + 1);
+          const gain = STOMP_BASE * Math.pow(2, chain - 1);   // 착지 없이 연달아 밟으면 5·10·20·40
+          stagePts += gain;
+          pop(f.x + 6, f.y - 4, `+${gain}`, chain > 1 ? "#e3b341" : "#f0f6fc");
+          burst(f.x + 6, f.y + 6, 6, "#8b3a3a", 1.6);
+          SFX.stomp();
+        }
         else die();
       }
     }
     for (const h of hearts) {
-      if (!h.got && Math.abs(h.x - (p.x + p.w / 2)) < 12 && Math.abs(h.y - (p.y + p.h / 2)) < 13) { h.got = true; SFX.coin(); }
+      if (h.got || h.miss) continue;
+      if (Math.abs(h.x - (p.x + p.w / 2)) < 12 && Math.abs(h.y - (p.y + p.h / 2)) < 13) {
+        h.got = true; combo++;
+        const gain = HEART_BASE * mult();
+        stagePts += gain;
+        pop(h.x, h.y - 6, `+${gain}`, mult() > 1 ? "#e3b341" : "#f0f6fc");
+        burst(h.x, h.y, 3, "#f85149", 1.1);
+        SFX.coin();
+      } else if (h.x < p.x - 8) {
+        h.miss = true; combo = 0;      // 하나라도 흘리면 배수는 처음으로
+      }
+    }
+    for (const r of rings) {
+      if (r.got) continue;
+      if (Math.abs(r.x - (p.x + p.w / 2)) < 13 && Math.abs(r.y - (p.y + p.h / 2)) < 14) {
+        r.got = true; ringHere = 1; stagePts += RING_BONUS;
+        pop(r.x, r.y - 8, `💍 +${RING_BONUS}`, "#e3b341");
+        burst(r.x, r.y, 14, "#e3b341", 2.2);
+        SFX.stageClear();
+      }
     }
     if (p.x + p.w > GOAL * T) {
       won = 1;
-      banked += curHearts() + CLEAR_BONUS;
+      for (const c of ["#f85149", "#e3b341", "#3fb950", "#ffffff", "#79c0ff"])
+        burst(p.x + p.w / 2, p.y, 7, c, 2.6);
+      banked += stagePts + CLEAR_BONUS + (stageDied ? 0 : NOHIT_BONUS);
+      ringsGot += ringHere;          // 스테이지를 실제로 깼을 때만 확정
+      stagePts = 0; stageDied = 0; ringHere = 0;
       cleared++;
       if (stage < STAGES.length - 1) {
         SFX.stageClear();
-        setTimeout(() => { if (runStop) { stage++; loadStage(stage); reset(); won = 0; } }, 1700);
+        setTimeout(() => { if (alive()) { stage++; loadStage(stage); reset(); startReady(150); stageDied = 0; won = 0; } }, 1700);
       } else {
         allDone = true;
         SFX.allClear();
-        setTimeout(() => { if (runStop) stop(true); }, 2600);   // 팡파르 후 결과 화면으로
+        setTimeout(() => { if (alive()) stop(true); }, 2600);   // 팡파르 후 결과 화면으로
         const sc = banked;
-        if (sc > best) { best = sc; try { localStorage.setItem("runBest", best); } catch {} }
+        if (sc > best) { best = sc; try { localStorage.setItem(BEST_KEY, best); } catch {} }
         offerRank(sc);
       }
     }
@@ -1238,6 +1394,15 @@ function outRun() {
     px(x - 4, y - 1 + b, 8, 3, "#f85149");
     px(x - 3, y + 2 + b, 6, 1, "#f85149"); px(x - 1, y + 3 + b, 2, 1, "#f85149");
   }
+  function drawRing(x, y) {
+    const b = Math.sin(tick / 14) * 1.5;
+    const g = "#e3b341", w = "#fff8d6";
+    px(x - 1, y - 6 + b, 2, 2, w);                       // 알
+    px(x - 3, y - 3 + b, 2, 1, g); px(x + 1, y - 3 + b, 2, 1, g);
+    px(x - 4, y - 2 + b, 1, 4, g); px(x + 3, y - 2 + b, 1, 4, g);
+    px(x - 3, y + 2 + b, 2, 1, g); px(x + 1, y + 2 + b, 2, 1, g);
+  }
+
   function drawFoe(f, sx) {
     if (f.dead) { px(sx, f.y + 9, 13, 4, "#5c2b2b"); return; }
     const w = Math.floor(tick / 8) % 2;
@@ -1249,6 +1414,11 @@ function outRun() {
   }
 
   function draw() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (shake > 0) {
+      ctx.translate(Math.round((Math.random() - .5) * shake * 0.7),
+                    Math.round((Math.random() - .5) * shake * 0.7));
+    }
     const green = document.body.classList.contains("crt-green");
     const amber = document.body.classList.contains("crt-amber");
     const C = green ? { bg: "#020a03", gr: "#14401f", gt: "#5cff7d", dot: "#2f9a4c" }
@@ -1260,6 +1430,18 @@ function outRun() {
       let bx = (i * 137 - cam * 0.3) % (W + 20);
       if (bx < 0) bx += W + 20;
       px(bx, (i * 53) % 70 + 6, 1, 1, "#8b949e");
+    }
+    // 원경 — 저 멀리 식장. 카메라보다 훨씬 천천히 흘러 거리감을 만든다.
+    ctx.globalAlpha = .28;
+    const far = ((-cam * 0.08) % 240 + 240) % 240;
+    for (let k = -1; k < 2; k++) {
+      const ox = far + k * 240;
+      px(ox + 18, 108, 26, 52, C.gr); px(ox + 62, 96, 20, 64, C.gr);
+      px(ox + 96, 116, 30, 44, C.gr); px(ox + 150, 104, 22, 56, C.gr);
+      px(ox + 196, 120, 26, 40, C.gr);
+      px(ox + 118, 84, 8, 32, C.gr);           // 첨탑
+      px(ox + 120, 74, 4, 10, C.gr);
+      px(ox + 118, 78, 8, 2, C.gr);
     }
     ctx.globalAlpha = 1;
     const t0 = Math.floor(cam / T), t1 = t0 + VW + 1;
@@ -1293,24 +1475,82 @@ function outRun() {
       px(gx - 6, GY * T - 36, 3, 36, C.gt); px(gx + 17, GY * T - 36, 3, 36, C.gt);
       drawBride(gx, GY * T - 15);
     }
+    for (const r of rings) {
+      if (r.got) continue;
+      const sx = r.x - cam;
+      if (sx > -12 && sx < W + 12) drawRing(sx, r.y);
+    }
     if (!dead || Math.floor(tick / 4) % 2) drawGroom(p.x - cam, p.y);
 
+    for (const q of parts) {
+      const sx = q.x - cam;
+      if (sx < -4 || sx > W + 4) continue;
+      ctx.globalAlpha = Math.max(0, Math.min(1, q.life / 22));
+      px(sx, q.y, 2, 2, q.col);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.font = "bold 9px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    for (const q of pops) {
+      const sx = q.x - cam;
+      if (sx < -20 || sx > W + 20) continue;
+      ctx.globalAlpha = Math.max(0, Math.min(1, q.life / 26));
+      ctx.fillStyle = q.col;
+      ctx.fillText(q.txt, sx, q.y);
+    }
+    ctx.globalAlpha = 1;
+
+    // 시작 카운트다운
+    if (ready > 0) {
+      const secs = Math.ceil(ready / 60);
+      const txt = readyMax > 90 ? (secs > 1 ? String(secs - 1) : "GO!") : "GO!";
+      ctx.fillStyle = "rgba(1,4,9,.55)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = C.gt;
+      ctx.font = "bold 26px ui-monospace, monospace";
+      ctx.fillText(txt, W / 2, H / 2 + 6);
+      if (readyMax > 90) {
+        ctx.font = "bold 9px ui-monospace, monospace";
+        ctx.fillStyle = "#8b949e";
+        ctx.fillText(STAGES[stage].name, W / 2, H / 2 - 24);
+      }
+    }
+    ctx.textAlign = "left";
+
     const got = curHearts();
+    const m = mult();
     const head = `STAGE ${stage + 1}/${STAGES.length} <span class="o-dim">${STAGES[stage].name}</span>`;
     hud.innerHTML = allDone
-      ? `🎉 전 스테이지 클리어! <b>${banked}점</b>${deaths ? ` · 넘어진 횟수 ${deaths}` : " · 무사고!"} — 다시: <b>run</b>`
-      : won ? `✅ STAGE ${stage + 1} 클리어! <b>+${CLEAR_BONUS}</b> · 다음 스테이지로…`
-      : dead ? `💥 앗! 다시 출발합니다…`
-      : `${head}　♥ ${got}/${hearts.length}　${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%　` +
+      ? `🎉 전 스테이지 클리어! <b>${banked}점</b>`
+        + `${ringsGot === STAGES.length ? ` · <span class="o-ylw">💍 반지 전부!</span>` : ringsGot ? ` · 💍 ${ringsGot}/${STAGES.length}` : ""}`
+        + `${deaths ? ` · 넘어진 횟수 ${deaths}` : " · 무사고!"} — 다시: <b>run</b>`
+      : won ? `✅ STAGE ${stage + 1} 클리어! <b>+${CLEAR_BONUS + (stageDied ? 0 : NOHIT_BONUS)}</b>`
+              + `${stageDied ? "" : ` <span class="o-grn">무사고!</span>`} · 다음 스테이지로…`
+      : dead ? `💥 앗! 다시 출발합니다… <span class="o-dim">이 스테이지 점수와 배수는 초기화</span>`
+      : `${head}　♥ ${got}/${hearts.length}　` +
+        (m > 1 ? `<span class="o-ylw">×${m}</span>　` : `<span class="o-dim">×1</span>　`) +
+        (rings.length ? (rings[0].got ? `<span class="o-ylw">💍</span>　` : `<span class="o-dim">💍</span>　`) : "") +
+        `${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%　` +
         `<b>${totalScore()}점</b>` + (best ? ` <span class="o-dim">최고 ${best}</span>` : "");
   }
+
+  /* 전화가 오거나 다른 앱으로 넘어가면 멈춘다 — 돌아왔을 때 죽어 있으면 억울하다 */
+  let paused = false;
+  const onVis = () => {
+    paused = document.hidden;
+    if (!paused) { last = performance.now(); acc = 0; }
+  };
+  document.addEventListener("visibilitychange", onVis);
 
   let raf = 0, acc = 0, last = performance.now();
   function loop(now) {
     const dt = Math.min(now - last, 60); last = now;
-    acc += dt;
-    while (acc >= 16.7) { step(); acc -= 16.7; }
-    draw();
+    if (!paused) {
+      acc += dt;
+      while (acc >= 16.7) { step(); acc -= 16.7; }
+      draw();
+    }
     raf = requestAnimationFrame(loop);
   }
   raf = requestAnimationFrame(loop);
@@ -1353,18 +1593,28 @@ function outRun() {
   function offerRank(score) {
     if (rankShown || score < 1) return;
     rankShown = true;
-    const box = appendBlock(L(`기록 <b>${score}점</b> — 스테이지 ${cleared}개 클리어`, "o-grn"), true);
+    if (EASY) {
+      appendBlock(L(`쉬움 모드 기록 <b>${score}점</b> <span class="o-dim">— 랭킹에는 올라가지 않습니다.</span>`, "o-ylw")
+        + L(`<span class="o-cyn">run</span> 으로 정식 도전!`, "o-dim"), true);
+      scrollBottom();
+      return;
+    }
+    const box = appendBlock(L(`기록 <b>${score}점</b> — 스테이지 ${cleared}개 클리어`
+      + `${stomps ? ` · 버그 ${stomps}마리` : ""}${deaths ? ` · 넘어짐 ${deaths}회` : ""}`, "o-grn"), true);
     showRankForm(box, score);
     scrollBottom();
   }
 
   function stop(byUser) {
+    if (!alive()) return;   // 이미 다음 판이 시작됐다면 이 판의 뒷정리는 끝난 것
+    runGen++;               // 이 판에 걸린 타이머를 전부 무효화
     cancelAnimationFrame(raf);
     gameBgm(false);
     document.removeEventListener("keydown", kd, true);
     document.removeEventListener("keyup", ku, true);
     document.removeEventListener("pointerup", release);
     document.removeEventListener("pointercancel", release);
+    document.removeEventListener("visibilitychange", onVis);
     modal.remove();
     document.body.style.overflow = prevOverflow;
     runStop = null;
@@ -1406,7 +1656,7 @@ const COMMANDS = {
 /* Tab 자동완성 후보 — 인자까지 포함한 전체 명령 문자열 */
 const COMPLETIONS = [...new Set(Object.keys(COMMANDS).concat([
   "clear", "cat", "cd ..", "sudo marry", "git log", "npm test",
-  "theme amber", "theme green", "theme default",
+  "run easy", "theme amber", "theme green", "theme default",
   "music list", "music next", "music 1", "music 2", "music 3",
 ]))].sort();
 
