@@ -935,8 +935,20 @@ async function fbPost(url, payload, ms = 8000) {
       body: JSON.stringify(payload),
       signal: ac.signal,
     });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.json();
+    if (!res.ok) {
+      const err = new Error("HTTP " + res.status);
+      err.status = res.status;
+      throw err;
+    }
+    const data = await res.json();
+    // Firestore 는 규칙에 막혀도 200 안에 error 를 담아 주는 경우가 있다
+    const denied = Array.isArray(data) ? data.find((d) => d && d.error) : data && data.error;
+    if (denied) {
+      const err = new Error(denied.error.status || "DENIED");
+      err.status = denied.error.code || 403;
+      throw err;
+    }
+    return data;
   } finally {
     clearTimeout(timer);
   }
@@ -1012,10 +1024,12 @@ function outRank() {
       + L(`<span class="o-cyn">run</span> 으로 도전해 보세요!`, "o-dim");
     el.querySelectorAll(".tl").forEach((n, i) => n.style.setProperty("--i", i));
     scrollBottom();
-  }).catch(() => {
+  }).catch((e) => {
+    const denied = e && (e.status === 403 || e.status === 401);
     el.innerHTML = L(`# 🏆 RUN 랭킹`, "o-h")
-      + L(`랭킹 서버에 연결하지 못했습니다.`, "o-red")
-      + L(`네트워크 상태를 확인하고 다시 시도해 주세요.`, "o-dim");
+      + L(denied ? `랭킹 서버 설정이 아직 준비되지 않았습니다.` : `랭킹 서버에 연결하지 못했습니다.`, "o-red")
+      + L(denied ? `잠시 후 다시 시도해 주세요. <span class="o-dim">(관리자: firestore.rules 게시 필요)</span>`
+                 : `네트워크 상태를 확인하고 다시 시도해 주세요.`, "o-dim");
     scrollBottom();
   });
   return null;
@@ -1045,9 +1059,11 @@ function showRankForm(box, score) {
       try { localStorage.setItem("rankName", nm); } catch {}
       inp.disabled = true;
       msg.innerHTML = `<span class="o-grn">등록 완료!</span> <span class="o-dim">rank 명령어로 순위를 확인하세요.</span>`;
-    } catch {
+    } catch (e) {
       btn.disabled = false;
-      msg.innerHTML = `<span class="o-red">등록 실패</span> <span class="o-dim">— 네트워크를 확인 후 다시 눌러주세요.</span>`;
+      const denied = e && (e.status === 403 || e.status === 401);
+      msg.innerHTML = `<span class="o-red">등록 실패</span> `
+        + `<span class="o-dim">— ${denied ? "랭킹 서버 설정이 아직 준비되지 않았습니다." : "네트워크를 확인 후 다시 눌러주세요."}</span>`;
     }
   };
   btn.addEventListener("click", go);
