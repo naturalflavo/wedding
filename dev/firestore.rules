@@ -1,16 +1,23 @@
 // Firebase 콘솔 → Firestore Database → 규칙 탭에 붙여넣고 "게시"
 //
-// snakeScores: 누구나 읽고 새 기록을 남길 수 있지만,
+// runScores: 달리기 게임 랭킹. 누구나 읽고 새 기록을 남길 수 있지만,
 //   - 필드는 name/score/ts 세 개만 허용
 //   - 이름은 1~12자 문자열
-//   - 점수는 1~250 사이 정수 (보드 19x12 = 228칸이 이론상 최대)
+//   - 점수는 1~2000 사이 정수
+//       하트(연속 배수) + 버그 밟기 + 클리어 + 무사고 를 합산한 값이다.
+//       완벽하게 플레이하면 약 700점, 모든 버그를 최대 체인으로 밟는
+//       이론상 최대치가 약 1580점이라 상한을 2000 으로 잡았다.
 //   - 이미 등록된 기록의 수정·삭제는 불가
+//
+// snakeScores: 점수 체계를 바꾸기 전의 옛 기록.
+//   "하트 1점" 시절 점수라 지금 점수와 비교할 수 없어 보드에서는 빠졌다.
+//   읽기만 남겨 두고 새 기록은 받지 않는다.
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /snakeScores/{doc} {
+    match /runScores/{doc} {
       allow read: if true;
 
       allow create: if request.resource.data.keys().hasOnly(['name', 'score', 'ts'])
@@ -19,9 +26,15 @@ service cloud.firestore {
                     && request.resource.data.name.size() <= 12
                     && request.resource.data.score is int
                     && request.resource.data.score >= 1
-                    && request.resource.data.score <= 250;
+                    && request.resource.data.score <= 2000;
 
       allow update, delete: if false;
+    }
+
+    // 옛 기록 — 보존용. 읽기만 가능하고 더 이상 쓰지 않는다.
+    match /snakeScores/{doc} {
+      allow read: if true;
+      allow write: if false;
     }
 
     // 그 외 모든 경로는 차단

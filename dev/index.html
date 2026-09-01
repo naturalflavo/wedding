@@ -916,8 +916,10 @@ function runNpmTest() {
 const FB = {
   projectId: "naturalflavo",
   apiKey: "AIzaSyDqW9Gt7z-6bojV0zMm1MGxIuTpc659tB0",
-  col: "snakeScores",   // 초기 게임에서 쓰던 이름 — 보안 규칙 재사용을 위해 유지
-  max: 250,   // 보드 19x12 = 228칸, 그 이상은 비정상 값
+  /* 점수 체계를 바꾸면서 컬렉션을 새로 팠다. 옛 기록(snakeScores)은
+     "하트 1점" 시절 점수라 지금과 비교할 수 없어 보드에서 뺐다. */
+  col: "runScores",
+  max: 2000,  // 이론상 최대치(약 1580)보다 넉넉하게 — firestore.rules 의 상한과 맞춰야 한다
   pool: 300,  // 이름별로 접기 전에 받아 오는 원본 기록 수
 };
 const fbUrl = (suffix) =>
@@ -968,10 +970,12 @@ async function rankFetch(limit = 10) {
 }
 
 async function rankSubmit(name, score) {
+  // 규칙의 상한을 넘으면 등록 자체가 거부되므로 클라이언트에서 먼저 맞춘다
+  const safe = Math.max(1, Math.min(FB.max, Math.round(score)));
   return fbPost(fbUrl(`/${FB.col}?alt=json`), {
     fields: {
       name: { stringValue: name },
-      score: { integerValue: String(score) },
+      score: { integerValue: String(safe) },
       ts: { timestampValue: new Date().toISOString() },
     },
   });
@@ -1027,7 +1031,7 @@ function showRankForm(box, score) {
   wrap.innerHTML = `
     <input class="rank-name" maxlength="12" value="${esc(saved)}" placeholder="이름 (최대 12자)" aria-label="랭킹에 등록할 이름" />
     <button class="rank-go">🏆 랭킹 등록</button>
-    <div class="rank-msg o-dim">모은 ♥ 개수로 전체 랭킹에 도전해 보세요.</div>`;
+    <div class="rank-msg o-dim">이번 판 점수로 전체 랭킹에 도전해 보세요.</div>`;
   box.appendChild(wrap);
   const inp = wrap.querySelector(".rank-name");
   const btn = wrap.querySelector(".rank-go");
@@ -1065,37 +1069,57 @@ function outRun() {
   const W = VW * T, H = VH * T;          // 320 x 192 (논리 해상도)
   const GY = 10;                         // 바닥 윗면 타일 y
 
-  /* 스테이지 3종 — 뒤로 갈수록 낭떠러지·버그가 촘촘해진다.
-     점수 = 하트 1점 + 스테이지 클리어 30점 (최대 52 + 90 = 142점) */
+  /* 점수 — 쉽게 쌓이되, 잘할수록 크게 벌어지도록 설계했다.
+     하트는 연속으로 먹을수록 배수가 오르고, 하나라도 놓치거나 넘어지면 배수가 처음으로 돌아간다.
+     그래서 "끝까지 가는 것" 은 쉽고 "한 번도 안 흘리는 것" 은 어렵다. */
+  const HEART_BASE = 2;        // 하트 한 개
+  const COMBO_STEP = 10;       // 몇 개 연속마다 배수가 오르는가
+  const COMBO_MAX = 3;         // 배수 상한
+  const STOMP_BASE = 5;        // 버그를 밟았을 때
+  const STOMP_CHAIN_MAX = 4;   // 착지하지 않고 연속으로 밟으면 2배씩 (5·10·20·40)
+  const CLEAR_BONUS = 25;      // 스테이지 클리어
+  const NOHIT_BONUS = 25;      // 그 스테이지에서 한 번도 넘어지지 않았을 때
+
+  /* 스테이지 3종 — 낭떠러지는 2~4타일로 폭을 섞었다.
+     짧게 탭하면 46px, 끝까지 누르면 94px 을 난다. 2타일은 탭으로도 넘지만
+     3타일부터는 눌러야 하고, 4타일은 눌러도 아슬아슬하다.
+     하트는 일부러 "가지러 가야 하는" 자리에 둔다 — 살아서 지나가기만 하면 절반쯤 놓친다. */
   const STAGES = [
     { // 1. 첫 걸음
-      name: "출발", lw: 124, goal: 116,
-      gaps: [[18, 3], [38, 3], [60, 3], [82, 3], [102, 3]],
-      blocks: [[50, 8, 4]],
-      bugs: [28, 48, 70, 92, 110],
-      hearts: [[6, 9], [9, 9], [12, 9], [19, 7], [20, 7], [30, 9], [39, 7], [40, 7],
-               [51, 7], [52, 7], [61, 7], [62, 7], [83, 7], [84, 7], [103, 7], [104, 7], [113, 9]],
+      name: "첫 걸음", lw: 124, goal: 116,
+      gaps: [[18, 2], [34, 2], [52, 3], [70, 3], [88, 3], [104, 2]],
+      blocks: [[44, 8, 4], [80, 7, 3]],
+      bugs: [26, 42, 60, 76, 96, 110],
+      hearts: [[5, 9], [8, 6], [16, 9], [18, 4], [19, 3], [21, 6], [27, 9],
+               [34, 4], [35, 3], [44, 7], [45, 7], [49, 9], [52, 4], [53, 3],
+               [60, 6], [60, 9], [70, 4], [71, 3], [80, 6], [81, 6], [86, 6],
+               [88, 4], [89, 3], [93, 9], [99, 6], [104, 4], [105, 3], [112, 6],
+               [113, 9]],
     },
-    { // 2. 골목길
-      name: "골목길", lw: 140, goal: 132,
-      gaps: [[16, 3], [32, 3], [50, 3], [66, 3], [84, 3], [102, 3], [118, 3]],
-      blocks: [[42, 8, 4], [94, 8, 4]],
-      bugs: [24, 40, 58, 76, 78, 94, 110, 126],
-      hearts: [[6, 9], [10, 9], [17, 7], [18, 7], [33, 7], [34, 7], [43, 7], [44, 7],
-               [51, 7], [52, 7], [67, 7], [68, 7], [85, 7], [86, 7], [95, 7], [96, 7],
-               [103, 7], [104, 7], [119, 7], [120, 7], [128, 9]],
+    { // 2. 함께 걸은 길
+      name: "함께 걸은 길", lw: 140, goal: 132,
+      gaps: [[16, 3], [32, 3], [50, 4], [68, 3], [86, 4], [104, 3], [120, 4]],
+      blocks: [[42, 8, 4], [78, 7, 3], [96, 8, 3]],
+      bugs: [24, 40, 46, 62, 76, 94, 112, 128],
+      hearts: [[5, 9], [8, 6], [16, 4], [17, 3], [29, 9], [30, 6], [32, 5],
+               [33, 3], [41, 6], [41, 9], [42, 7], [43, 7], [50, 4], [51, 3],
+               [63, 6], [65, 9], [68, 4], [69, 3], [74, 6], [77, 9], [78, 6],
+               [79, 6], [86, 4], [87, 3], [96, 7], [97, 7], [101, 9], [104, 4],
+               [105, 3], [113, 9], [118, 6], [120, 4], [121, 3], [125, 9], [129, 6],
+               [129, 9]],
     },
     { // 3. 마지막 언덕
       name: "마지막 언덕", lw: 148, goal: 140,
-      gaps: [[14, 3], [30, 3], [46, 3], [62, 3], [78, 3], [94, 3], [110, 3], [126, 3]],
-      blocks: [[38, 8, 4], [86, 8, 4], [118, 8, 4]],
-      bugs: [22, 24, 38, 54, 70, 72, 86, 102, 118, 134],
-      hearts: [[6, 9], [15, 7], [16, 7], [31, 7], [32, 7], [39, 7], [40, 7], [47, 7], [48, 7],
-               [63, 7], [64, 7], [79, 7], [80, 7], [87, 7], [88, 7], [95, 7], [96, 7],
-               [111, 7], [112, 7], [119, 7], [120, 7], [127, 7], [128, 7], [136, 9]],
+      gaps: [[14, 3], [28, 4], [44, 3], [58, 4], [74, 3], [88, 4], [104, 3], [118, 4], [132, 3]],
+      blocks: [[22, 7, 3], [38, 8, 3], [68, 7, 3], [98, 8, 3], [126, 7, 3]],
+      bugs: [20, 34, 50, 52, 66, 80, 82, 96, 110, 124, 138],
+      hearts: [[5, 9], [8, 5], [14, 4], [15, 3], [22, 6], [23, 6], [28, 4],
+               [29, 3], [38, 7], [39, 7], [44, 4], [45, 3], [57, 9], [58, 4],
+               [59, 3], [68, 6], [69, 6], [74, 4], [75, 3], [83, 9], [88, 4],
+               [89, 3], [96, 9], [98, 7], [99, 7], [104, 4], [105, 3], [109, 9],
+               [118, 4], [119, 3], [126, 6], [127, 6], [132, 4], [133, 3], [137, 9]],
     },
   ];
-  const CLEAR_BONUS = 30;
 
   let stage = 0;
   let LW, GOAL, GAPS, BLOCKS, BUGS, HEARTS0;
@@ -1108,7 +1132,8 @@ function outRun() {
 
   const logEl = appendBlock(
     L(`RUN TO THE ALTAR <span class="o-dim">— 전 ${STAGES.length}스테이지 · 탭해서 점프!</span>`)
-    + L(`<span class="o-dim">♥ 1점 · 스테이지 클리어 ${CLEAR_BONUS}점</span>`), true);
+    + L(`<span class="o-dim">♥ ${HEART_BASE}점 · 연속으로 먹으면 배수 ↑ (최대 ×${COMBO_MAX})</span>`)
+    + L(`<span class="o-dim">버그 밟기 ${STOMP_BASE}점 · 클리어 ${CLEAR_BONUS}점 · 무사고 ${NOHIT_BONUS}점</span>`), true);
   scrollBottom();
 
   const modal = document.createElement("div");
@@ -1121,7 +1146,7 @@ function outRun() {
       <button class="jump" data-k="j">▲ 점프 (화면 아무 곳이나 탭)</button>
       <button data-k="q">✕</button>
     </span>
-    <div class="run-sub">♥ 1점 · 스테이지 클리어 ${CLEAR_BONUS}점 · 종료 Q</div>`;
+    <div class="run-sub">♥ 연속으로 먹을수록 배수 ↑ · 넘어지면 배수 초기화 · 종료 Q</div>`;
   document.body.appendChild(modal);
   const prevOverflow = document.body.style.overflow;
   document.body.style.overflow = "hidden";
@@ -1141,15 +1166,20 @@ function outRun() {
 
   let hearts, foes, p, cam, dead, won, tick = 0, deaths = 0, best = 0;
   let banked = 0, cleared = 0, allDone = false;   // 이전 스테이지에서 확정된 점수
+  let combo = 0, chain = 0, stagePts = 0, stageDied = 0, stomps = 0;
   try { best = parseInt(localStorage.getItem("runBest"), 10) || 0; } catch {}
   const curHearts = () => hearts.filter((h) => h.got).length;
-  const totalScore = () => banked + (won ? 0 : curHearts());
+  const mult = () => Math.min(COMBO_MAX, 1 + Math.floor(combo / COMBO_STEP));
+  const totalScore = () => banked + stagePts;
 
+  /* 스테이지를 처음부터 다시 — 넘어졌을 때도 여기로 온다.
+     그 판에서 쌓은 점수와 배수는 사라지고, 앞 스테이지에서 확정된 banked 만 남는다. */
   function reset() {
-    hearts = HEARTS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
+    hearts = HEARTS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false, miss: false }));
     foes = BUGS.map((x) => ({ x: x * T, y: GY * T - 13, w: 13, h: 13, dead: 0, ph: x }));
     p = { x: 2 * T, y: (GY - 3) * T, w: 11, h: 14, vy: 0, on: false, coy: 0, buf: 0 };
     cam = 0; dead = 0; won = 0;
+    combo = 0; chain = 0; stagePts = 0;
   }
   reset();
 
@@ -1173,7 +1203,7 @@ function outRun() {
 
   function die() {
     if (dead || won) return;
-    dead = 1; deaths++; SFX.fail();
+    dead = 1; deaths++; stageDied = 1; SFX.fail();
     setTimeout(() => { if (alive()) reset(); }, 1000);
   }
 
@@ -1199,6 +1229,7 @@ function outRun() {
     p.vy = Math.min(p.vy + G, 11);
     moveY(p.vy);
 
+    if (p.on) chain = 0;              // 땅에 닿으면 연속 밟기는 끊긴다
     if (p.y > H + 40) { die(); return; }
 
     // 버그 — 제자리에서 좌우로 조금씩
@@ -1207,20 +1238,31 @@ function outRun() {
       f.x += Math.sin((tick + f.ph) / 34) * 0.5;
       if (p.x + p.w > f.x + 2 && p.x < f.x + f.w - 2 &&
           p.y + p.h > f.y + 2 && p.y < f.y + f.h) {
-        if (p.vy > 0 && p.y + p.h - p.vy <= f.y + 7) { f.dead = 1; p.vy = -6.4; SFX.stomp(); }
+        if (p.vy > 0 && p.y + p.h - p.vy <= f.y + 7) {
+          f.dead = 1; p.vy = -6.4; stomps++;
+          chain = Math.min(STOMP_CHAIN_MAX, chain + 1);
+          stagePts += STOMP_BASE * Math.pow(2, chain - 1);   // 착지 없이 연달아 밟으면 5·10·20·40
+          SFX.stomp();
+        }
         else die();
       }
     }
     for (const h of hearts) {
-      if (!h.got && Math.abs(h.x - (p.x + p.w / 2)) < 12 && Math.abs(h.y - (p.y + p.h / 2)) < 13) { h.got = true; SFX.coin(); }
+      if (h.got || h.miss) continue;
+      if (Math.abs(h.x - (p.x + p.w / 2)) < 12 && Math.abs(h.y - (p.y + p.h / 2)) < 13) {
+        h.got = true; combo++; stagePts += HEART_BASE * mult(); SFX.coin();
+      } else if (h.x < p.x - 8) {
+        h.miss = true; combo = 0;      // 하나라도 흘리면 배수는 처음으로
+      }
     }
     if (p.x + p.w > GOAL * T) {
       won = 1;
-      banked += curHearts() + CLEAR_BONUS;
+      banked += stagePts + CLEAR_BONUS + (stageDied ? 0 : NOHIT_BONUS);
+      stagePts = 0; stageDied = 0;
       cleared++;
       if (stage < STAGES.length - 1) {
         SFX.stageClear();
-        setTimeout(() => { if (alive()) { stage++; loadStage(stage); reset(); won = 0; } }, 1700);
+        setTimeout(() => { if (alive()) { stage++; loadStage(stage); reset(); stageDied = 0; won = 0; } }, 1700);
       } else {
         allDone = true;
         SFX.allClear();
@@ -1320,12 +1362,16 @@ function outRun() {
     if (!dead || Math.floor(tick / 4) % 2) drawGroom(p.x - cam, p.y);
 
     const got = curHearts();
+    const m = mult();
     const head = `STAGE ${stage + 1}/${STAGES.length} <span class="o-dim">${STAGES[stage].name}</span>`;
     hud.innerHTML = allDone
       ? `🎉 전 스테이지 클리어! <b>${banked}점</b>${deaths ? ` · 넘어진 횟수 ${deaths}` : " · 무사고!"} — 다시: <b>run</b>`
-      : won ? `✅ STAGE ${stage + 1} 클리어! <b>+${CLEAR_BONUS}</b> · 다음 스테이지로…`
-      : dead ? `💥 앗! 다시 출발합니다…`
-      : `${head}　♥ ${got}/${hearts.length}　${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%　` +
+      : won ? `✅ STAGE ${stage + 1} 클리어! <b>+${CLEAR_BONUS + (stageDied ? 0 : NOHIT_BONUS)}</b>`
+              + `${stageDied ? "" : ` <span class="o-grn">무사고!</span>`} · 다음 스테이지로…`
+      : dead ? `💥 앗! 다시 출발합니다… <span class="o-dim">이 스테이지 점수와 배수는 초기화</span>`
+      : `${head}　♥ ${got}/${hearts.length}　` +
+        (m > 1 ? `<span class="o-ylw">×${m}</span>　` : `<span class="o-dim">×1</span>　`) +
+        `${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%　` +
         `<b>${totalScore()}점</b>` + (best ? ` <span class="o-dim">최고 ${best}</span>` : "");
   }
 
@@ -1377,7 +1423,8 @@ function outRun() {
   function offerRank(score) {
     if (rankShown || score < 1) return;
     rankShown = true;
-    const box = appendBlock(L(`기록 <b>${score}점</b> — 스테이지 ${cleared}개 클리어`, "o-grn"), true);
+    const box = appendBlock(L(`기록 <b>${score}점</b> — 스테이지 ${cleared}개 클리어`
+      + `${stomps ? ` · 버그 ${stomps}마리` : ""}${deaths ? ` · 넘어짐 ${deaths}회` : ""}`, "o-grn"), true);
     showRankForm(box, score);
     scrollBottom();
   }
