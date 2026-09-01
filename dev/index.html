@@ -918,6 +918,7 @@ const FB = {
   apiKey: "AIzaSyDqW9Gt7z-6bojV0zMm1MGxIuTpc659tB0",
   col: "snakeScores",   // 초기 게임에서 쓰던 이름 — 보안 규칙 재사용을 위해 유지
   max: 250,   // 보드 19x12 = 228칸, 그 이상은 비정상 값
+  pool: 300,  // 이름별로 접기 전에 받아 오는 원본 기록 수
 };
 const fbUrl = (suffix) =>
   `https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents${suffix}&key=${FB.apiKey}`;
@@ -940,20 +941,30 @@ async function fbPost(url, payload, ms = 8000) {
   }
 }
 
+/* 넉넉히 받아 와서 이름별로 접는다 — 한 사람이 보드를 독점하지 못하도록.
+   같은 이름은 최고 기록 한 줄만, 동점이면 먼저 달성한 쪽이 위로. */
 async function rankFetch(limit = 10) {
   const rows = await fbPost(fbUrl(":runQuery?alt=json"), {
     structuredQuery: {
       from: [{ collectionId: FB.col }],
       orderBy: [{ field: { fieldPath: "score" }, direction: "DESCENDING" }],
-      limit,
+      limit: FB.pool,
     },
   });
-  return (Array.isArray(rows) ? rows : [])
-    .filter((r) => r && r.document)
-    .map((r) => ({
-      name: r.document.fields?.name?.stringValue || "익명",
-      score: parseInt(r.document.fields?.score?.integerValue || "0", 10),
-    }));
+  const best = new Map();
+  (Array.isArray(rows) ? rows : []).forEach((r) => {
+    if (!r || !r.document) return;
+    const f = r.document.fields || {};
+    const name = f.name?.stringValue || "익명";
+    const score = parseInt(f.score?.integerValue || "0", 10);
+    const ts = f.ts?.timestampValue || "";
+    const cur = best.get(name);
+    if (!cur || score > cur.score || (score === cur.score && ts && ts < cur.ts)) {
+      best.set(name, { name, score, ts });
+    }
+  });
+  const all = [...best.values()].sort((a, b) => b.score - a.score || (a.ts < b.ts ? -1 : 1));
+  return { list: all.slice(0, limit), all, total: all.length };
 }
 
 async function rankSubmit(name, score) {
@@ -970,7 +981,7 @@ function outRank() {
   const el = appendBlock(L(`# 🏆 RUN 랭킹 TOP 10`, "o-h") + L(`불러오는 중…`, "o-dim"), true);
   let myName = "";
   try { myName = localStorage.getItem("rankName") || ""; } catch {}
-  rankFetch(10).then((list) => {
+  rankFetch(10).then(({ list, all, total }) => {
     if (!list.length) {
       el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10`, "o-h")
         + L(`아직 등록된 기록이 없습니다. 첫 주인공이 되어보세요!`, "o-dim")
@@ -978,12 +989,22 @@ function outRank() {
       return;
     }
     const medal = ["🥇", "🥈", "🥉"];
-    el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10`, "o-h")
+    // 보드 밖으로 밀린 사람에게도 자기 위치를 알려준다
+    const myIdx = myName ? all.findIndex((r) => r.name === myName) : -1;
+    const mine = myIdx >= 0 && myIdx >= list.length
+      ? L(`<span class="rk rk-me">
+          <span class="rk-i">${myIdx + 1}.</span>
+          <span class="rk-n">${esc(all[myIdx].name)}</span>
+          <span class="rk-s">${all[myIdx].score}점</span>
+        </span>`)
+      : "";
+    el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10 <span class="o-dim">· 참가자 ${total}명</span>`, "o-h")
       + list.map((r, i) => L(`<span class="rk${r.name === myName ? " rk-me" : ""}">
           <span class="rk-i">${medal[i] || `${i + 1}.`}</span>
           <span class="rk-n">${esc(r.name)}</span>
-          <span class="rk-s">♥ ${r.score}</span>
+          <span class="rk-s">${r.score}점</span>
         </span>`)).join("")
+      + (mine ? L(`<span class="o-dim">⋯</span>`) + mine : "")
       + GAP
       + L(`<span class="o-cyn">run</span> 으로 도전해 보세요!`, "o-dim");
     el.querySelectorAll(".tl").forEach((n, i) => n.style.setProperty("--i", i));
@@ -1034,8 +1055,11 @@ function showRankForm(box, score) {
 
 /* ---------- RUN TO THE ALTAR — 원버튼 오토러너 ---------- */
 let runStop = null;
+let runGen = 0;   // 게임 세대 — 앞 게임에 걸린 타이머가 새 게임을 건드리지 못하게 한다
 function outRun() {
   if (runStop) runStop(false);
+  const gen = ++runGen;
+  const alive = () => runGen === gen;
 
   const T = 16, VW = 20, VH = 12;        // 타일 크기 / 화면 타일 수
   const W = VW * T, H = VH * T;          // 320 x 192 (논리 해상도)
@@ -1150,7 +1174,7 @@ function outRun() {
   function die() {
     if (dead || won) return;
     dead = 1; deaths++; SFX.fail();
-    setTimeout(() => { if (runStop) reset(); }, 1000);
+    setTimeout(() => { if (alive()) reset(); }, 1000);
   }
 
   function step() {
@@ -1196,11 +1220,11 @@ function outRun() {
       cleared++;
       if (stage < STAGES.length - 1) {
         SFX.stageClear();
-        setTimeout(() => { if (runStop) { stage++; loadStage(stage); reset(); won = 0; } }, 1700);
+        setTimeout(() => { if (alive()) { stage++; loadStage(stage); reset(); won = 0; } }, 1700);
       } else {
         allDone = true;
         SFX.allClear();
-        setTimeout(() => { if (runStop) stop(true); }, 2600);   // 팡파르 후 결과 화면으로
+        setTimeout(() => { if (alive()) stop(true); }, 2600);   // 팡파르 후 결과 화면으로
         const sc = banked;
         if (sc > best) { best = sc; try { localStorage.setItem("runBest", best); } catch {} }
         offerRank(sc);
@@ -1359,6 +1383,8 @@ function outRun() {
   }
 
   function stop(byUser) {
+    if (!alive()) return;   // 이미 다음 판이 시작됐다면 이 판의 뒷정리는 끝난 것
+    runGen++;               // 이 판에 걸린 타이머를 전부 무효화
     cancelAnimationFrame(raf);
     gameBgm(false);
     document.removeEventListener("keydown", kd, true);
