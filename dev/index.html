@@ -915,10 +915,10 @@ function runNpmTest() {
 const FB = {
   projectId: "naturalflavo",
   apiKey: "AIzaSyDqW9Gt7z-6bojV0zMm1MGxIuTpc659tB0",
-  /* 점수 체계를 바꾸면서 컬렉션을 새로 팠다. 옛 기록(snakeScores)은
-     "하트 1점" 시절 점수라 지금과 비교할 수 없어 보드에서 뺐다. */
-  col: "runScores",
-  max: 2000,  // 이론상 최대치(약 1580)보다 넉넉하게 — firestore.rules 의 상한과 맞춰야 한다
+  col: "snakeScores",   // 초기 스네이크 게임 때부터 쓰던 이름 — 기록을 이어 가려고 유지
+  /* 점수 체계가 바뀌었지만 컬렉션은 그대로 둔다.
+     새 체계는 완주만 해도 200점대라 옛 기록(최고 152)은 자연히 아래로 밀린다. */
+  max: 2000,  // 이론상 최대치(약 1740)보다 넉넉하게 — firestore.rules 의 상한과 맞춰야 한다
   pool: 300,  // 이름별로 접기 전에 받아 오는 원본 기록 수
 };
 const fbUrl = (suffix) =>
