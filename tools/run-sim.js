@@ -35,6 +35,7 @@ function loadFromSource() {
     HEART_BASE:   num(/const HEART_BASE = (\d+)/, 1),
     COMBO_STEP:   num(/const COMBO_STEP = (\d+)/, 10),
     COMBO_MAX:    num(/const COMBO_MAX = (\d+)/, 1),
+    COMBO_DROP:   num(/const COMBO_DROP = (\d+)/, 0),
     STOMP_BASE:   num(/const STOMP_BASE = (\d+)/, 0),
     STOMP_CHAIN:  num(/const STOMP_CHAIN_MAX = (\d+)/, 1),
     NOHIT_BONUS:  num(/const NOHIT_BONUS = (\d+)/, 0),
@@ -174,7 +175,7 @@ function lazyRun(st, spd) {
       if (Math.abs(h.x - cx) < 12 && Math.abs(h.y - cy) < 13) {
         h.got = true; got++; combo++;
         pts += HEART_BASE_C * Math.min(COMBO_MAX_C, 1 + Math.floor(combo / COMBO_STEP_C));
-      } else if (h.x < p.x - 8) { h.miss = true; missed++; combo = 0; }
+      } else if (h.x < p.x - 8) { h.miss = true; missed++; combo = Math.max(0, combo - COMBO_DROP_C); }
     }
     if (p.x + PW > goalX) return { got, pts, cleared: true };
   }
@@ -182,7 +183,7 @@ function lazyRun(st, spd) {
 }
 
 /* ---------- 점수 ---------- */
-let HEART_BASE_C = 2, COMBO_STEP_C = 10, COMBO_MAX_C = 3;
+let HEART_BASE_C = 2, COMBO_STEP_C = 10, COMBO_MAX_C = 3, COMBO_DROP_C = 0;
 function heartPoints(n) {                 // 하트 n 개를 한 번도 안 놓치고 먹었을 때
   let pts = 0;
   for (let i = 1; i <= n; i++) pts += HEART_BASE_C * Math.min(COMBO_MAX_C, 1 + Math.floor(i / COMBO_STEP_C));
@@ -192,6 +193,7 @@ function heartPoints(n) {                 // 하트 n 개를 한 번도 안 놓�
 /* ---------- 실행 ---------- */
 const C = loadFromSource();
 HEART_BASE_C = C.HEART_BASE; COMBO_STEP_C = C.COMBO_STEP; COMBO_MAX_C = C.COMBO_MAX;
+COMBO_DROP_C = C.COMBO_DROP;
 
 console.log("스테이지 검증 — dev/index.html\n");
 console.log(`점수 상수: 하트 ${C.HEART_BASE} × 배수(10개마다 ↑, 최대 ×${C.COMBO_MAX})`
