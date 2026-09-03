@@ -918,7 +918,9 @@ const FB = {
   col: "snakeScores",   // 초기 스네이크 게임 때부터 쓰던 이름 — 기록을 이어 가려고 유지
   /* 점수 체계가 바뀌었지만 컬렉션은 그대로 둔다.
      새 체계는 완주만 해도 200점대라 옛 기록(최고 152)은 자연히 아래로 밀린다. */
-  max: 2000,  // 이론상 최대치(약 1740)보다 넉넉하게 — firestore.rules 의 상한과 맞춰야 한다
+  /* 규칙(firestore.rules)의 상한과 같은 값. 완벽한 플레이가 약 1200점이라
+     충분하지만, 넘더라도 rankSubmit 에서 잘라 보내므로 등록이 거부되지는 않는다. */
+  max: 2000,
   pool: 300,  // 이름별로 접기 전에 받아 오는 원본 기록 수
 };
 const fbUrl = (suffix) =>
@@ -1091,8 +1093,9 @@ function outRun(args) {
      하트는 연속으로 먹을수록 배수가 오르고, 하나라도 놓치거나 넘어지면 배수가 처음으로 돌아간다.
      그래서 "끝까지 가는 것" 은 쉽고 "한 번도 안 흘리는 것" 은 어렵다. */
   const HEART_BASE = 2;        // 하트 한 개
-  const COMBO_STEP = 10;       // 몇 개 연속마다 배수가 오르는가
-  const COMBO_MAX = 3;         // 배수 상한
+  const COMBO_STEP = 4;        // 몇 개 연속마다 배수가 오르는가
+  const COMBO_MAX = 5;         // 배수 상한
+  const COMBO_DROP = 2;        // 하나 흘렸을 때 깎이는 양 (0 으로 초기화하지 않는다)
   const STOMP_BASE = 5;        // 버그를 밟았을 때
   const STOMP_CHAIN_MAX = 4;   // 착지하지 않고 연속으로 밟으면 2배씩 (5·10·20·40)
   const CLEAR_BONUS = 25;      // 스테이지 클리어
@@ -1162,7 +1165,7 @@ function outRun(args) {
     L(`RUN TO THE ALTAR <span class="o-dim">— 전 ${STAGES.length}스테이지 · 탭해서 점프!</span>`)
     + (EASY ? L(`<span class="o-ylw">쉬움 모드</span> <span class="o-dim">— 낭떠러지가 좁고 속도도 그대로입니다. 랭킹에는 올라가지 않아요.</span>`)
             : L(`<span class="o-dim">어려우면 <span class="o-cyn">run easy</span> 로 다시 시작해 보세요.</span>`))
-    + L(`<span class="o-dim">♥ ${HEART_BASE}점 · 연속으로 먹으면 배수 ↑ (최대 ×${COMBO_MAX})</span>`)
+    + L(`<span class="o-dim">♥ ${HEART_BASE}점 · ${COMBO_STEP}개 연속마다 배수 ↑ (최대 ×${COMBO_MAX})</span>`)
     + L(`<span class="o-dim">버그 밟기 ${STOMP_BASE}점 · 클리어 ${CLEAR_BONUS}점 · 무사고 ${NOHIT_BONUS}점</span>`), true);
   scrollBottom();
 
@@ -1179,7 +1182,7 @@ function outRun(args) {
       <button class="jump" data-k="j">▲ 점프 (화면 아무 곳이나 탭)</button>
       <button data-k="q">✕</button>
     </span>
-    <div class="run-sub">♥ 연속으로 먹을수록 배수 ↑ · 넘어지면 배수 초기화 · 종료 Q</div>`;
+    <div class="run-sub">♥ ${COMBO_STEP}개 연속마다 배수 ↑ · 흘리면 조금 내려감 · 넘어지면 초기화 · 종료 Q</div>`;
   document.body.appendChild(modal);
   const prevOverflow = document.body.style.overflow;
   document.body.style.overflow = "hidden";
@@ -1330,7 +1333,9 @@ function outRun(args) {
         burst(h.x, h.y, 3, "#f85149", 1.1);
         SFX.coin();
       } else if (h.x < p.x - 8) {
-        h.miss = true; combo = 0;      // 하나라도 흘리면 배수는 처음으로
+        // 하나 흘릴 때마다 0 으로 되돌리면, 하트가 촘촘한 이 레벨에서는
+        // 배수가 영영 안 붙는다. 조금씩만 깎아서 실수 한 번은 만회할 수 있게 한다.
+        h.miss = true; combo = Math.max(0, combo - COMBO_DROP);
       }
     }
     for (const r of rings) {
