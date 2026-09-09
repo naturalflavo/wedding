@@ -763,6 +763,9 @@ const SFX = {
   stageClear() { const s = sfxOut(); if (!s) return; const t = s.ac.currentTime;
     [523, 659, 784, 1047].forEach((f, i) =>
       beep(s, t + i * 0.09, f, 0.1, { vol: 0.2, decay: 0.17 })); },
+  power() { const s = sfxOut(); if (!s) return; const t = s.ac.currentTime;
+    [659, 784, 988, 1319, 1568].forEach((f, i) =>
+      beep(s, t + i * 0.055, f, 0.09, { vol: 0.18, decay: 0.14 })); },
   allClear() { const s = sfxOut(); if (!s) return; const t = s.ac.currentTime;
     [[523, 0], [659, .11], [784, .22], [1047, .33], [784, .5], [1047, .61], [1319, .72]]
       .forEach(([f, d]) => beep(s, t + d, f, 0.14, { vol: 0.2, decay: 0.3 })); },
@@ -1101,6 +1104,9 @@ function outRun(args) {
   const CLEAR_BONUS = 25;      // 스테이지 클리어
   const NOHIT_BONUS = 25;      // 그 스테이지에서 한 번도 넘어지지 않았을 때
   const RING_BONUS = 50;       // 숨어 있는 반지 (스테이지당 하나)
+  const POWER_FRAMES = 270;    // 부케를 먹으면 이만큼 무적 (약 4.5초)
+  const PLOW_BONUS = 3;        // 무적 상태로 버그를 들이받았을 때 — 밟기(5)보다는 적게
+  const STAR_COLS = ["#ffd166", "#ffffff", "#7ee8fa", "#ff7eb6"];   // 무적일 때 번쩍이는 색
 
   /* 스테이지 3종 — 낭떠러지는 2~4타일로 폭을 섞었다.
      짧게 탭하면 46px, 끝까지 누르면 94px 을 난다. 2타일은 탭으로도 넘지만
@@ -1118,6 +1124,7 @@ function outRun(args) {
                [88, 4], [89, 3], [93, 9], [99, 6], [104, 4], [105, 3], [112, 6],
                [113, 9]],
       rings: [[46, 7]],
+      powers: [[56, 9]],
     },
     { // 2. 함께 걸은 길
       name: "함께 걸은 길", lw: 140, goal: 132,
@@ -1131,6 +1138,7 @@ function outRun(args) {
                [105, 3], [113, 9], [118, 6], [120, 4], [121, 3], [125, 9], [129, 6],
                [129, 9]],
       rings: [[44, 7]],
+      powers: [[56, 9]],
     },
     { // 3. 마지막 언덕
       name: "마지막 언덕", lw: 148, goal: 140,
@@ -1144,19 +1152,21 @@ function outRun(args) {
                [105, 3], [118, 5], [119, 3], [126, 6], [127, 6], [132, 5], [133, 3],
                [137, 9]],
       rings: [[24, 6]],
+      powers: [[48, 9]],
     },
   ];
 
   let stage = 0;
   const SPD_BASE = 2.3, SPD_STEP = 0.2;   // 스테이지가 넘어갈수록 조금씩 빨라진다
   let SPD = SPD_BASE;
-  let LW, GOAL, GAPS, BLOCKS, BUGS, HEARTS0, RINGS0;
+  let LW, GOAL, GAPS, BLOCKS, BUGS, HEARTS0, RINGS0, POWERS0;
   function loadStage(i) {
     const st = STAGES[i];
     LW = st.lw; GOAL = st.goal;
     GAPS = EASY ? st.gaps.map(([g, w]) => [g, Math.max(2, w - 1)]) : st.gaps;
     BLOCKS = st.blocks; BUGS = st.bugs; HEARTS0 = st.hearts;
     RINGS0 = st.rings || [];
+    POWERS0 = st.powers || [];
     SPD = EASY ? SPD_BASE : SPD_BASE + SPD_STEP * i;
   }
   loadStage(0);
@@ -1166,7 +1176,8 @@ function outRun(args) {
     + (EASY ? L(`<span class="o-ylw">쉬움 모드</span> <span class="o-dim">— 낭떠러지가 좁고 속도도 그대로입니다. 랭킹에는 올라가지 않아요.</span>`)
             : L(`<span class="o-dim">어려우면 <span class="o-cyn">run easy</span> 로 다시 시작해 보세요.</span>`))
     + L(`<span class="o-dim">♥ ${HEART_BASE}점 · ${COMBO_STEP}개 연속마다 배수 ↑ (최대 ×${COMBO_MAX})</span>`)
-    + L(`<span class="o-dim">버그 밟기 ${STOMP_BASE}점 · 클리어 ${CLEAR_BONUS}점 · 무사고 ${NOHIT_BONUS}점</span>`), true);
+    + L(`<span class="o-dim">버그 밟기 ${STOMP_BASE}점 · 클리어 ${CLEAR_BONUS}점 · 무사고 ${NOHIT_BONUS}점</span>`)
+    + L(`<span class="o-dim">💐 부케를 먹으면 잠깐 무적 — 버그에 닿아도 안 넘어져요 (낭떠러지는 조심!)</span>`), true);
   scrollBottom();
 
   const modal = document.createElement("div");
@@ -1204,6 +1215,7 @@ function outRun(args) {
   let banked = 0, cleared = 0, allDone = false;   // 이전 스테이지에서 확정된 점수
   let combo = 0, chain = 0, stagePts = 0, stageDied = 0, stomps = 0;
   let rings, ringHere = 0, ringsGot = 0;
+  let powers, star = 0;        // 무적 남은 프레임
   let pops = [], parts = [], shake = 0, ready = 0, readyMax = 0, wasOn = false;
   const BEST_KEY = EASY ? "runBestEasy" : "runBest";
   try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch {}
@@ -1218,6 +1230,8 @@ function outRun(args) {
     foes = BUGS.map((x) => ({ x: x * T, y: GY * T - 13, w: 13, h: 13, dead: 0, ph: x }));
     p = { x: 2 * T, y: (GY - 3) * T, w: 11, h: 14, vy: 0, on: false, coy: 0, buf: 0 };
     rings = RINGS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
+    powers = POWERS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
+    star = 0;
     cam = 0; dead = 0; won = 0;
     combo = 0; chain = 0; stagePts = 0;
     pops = []; parts = []; shake = 0; wasOn = false; ringHere = 0;
@@ -1283,6 +1297,15 @@ function outRun(args) {
     if (won) return;
     if (dead) { p.vy = Math.min(p.vy + G, 11); p.y += p.vy; return; }
 
+    if (star > 0) {
+      star--;
+      if (!reduceMotion && tick % 2 === 0) {         // 몸에서 반짝이가 흩날린다
+        parts.push({ x: p.x + Math.random() * p.w, y: p.y + Math.random() * p.h,
+                     vx: -0.6 - Math.random() * 0.8, vy: -0.3 - Math.random() * 0.6,
+                     life: 12 + Math.random() * 10, col: STAR_COLS[Math.floor(Math.random() * STAR_COLS.length)] });
+      }
+    }
+
     // 자동 전진 — 벽(단의 옆면)에 막히면 밀어 올리지 않고 그대로 통과시키지 않는다
     const nx = p.x + SPD;
     const tCol = Math.floor((nx + p.w - 1) / T);
@@ -1320,6 +1343,14 @@ function outRun(args) {
           burst(f.x + 6, f.y + 6, 6, "#8b3a3a", 1.6);
           SFX.stomp();
         }
+        else if (star > 0) {
+          // 무적 — 들이받으면 버그가 터진다. 밟기보다는 적게 줘서 밟는 쪽이 여전히 이득이다
+          f.dead = 1; stomps++;
+          stagePts += PLOW_BONUS;
+          pop(f.x + 6, f.y - 4, `+${PLOW_BONUS}`, "#ff7eb6");
+          burst(f.x + 6, f.y + 6, 8, "#ff7eb6", 2.0);
+          SFX.stomp();
+        }
         else die();
       }
     }
@@ -1336,6 +1367,15 @@ function outRun(args) {
         // 하나 흘릴 때마다 0 으로 되돌리면, 하트가 촘촘한 이 레벨에서는
         // 배수가 영영 안 붙는다. 조금씩만 깎아서 실수 한 번은 만회할 수 있게 한다.
         h.miss = true; combo = Math.max(0, combo - COMBO_DROP);
+      }
+    }
+    for (const q of powers) {
+      if (q.got) continue;
+      if (Math.abs(q.x - (p.x + p.w / 2)) < 13 && Math.abs(q.y - (p.y + p.h / 2)) < 14) {
+        q.got = true; star = POWER_FRAMES;
+        pop(q.x, q.y - 8, "무적!", "#ff7eb6");
+        burst(q.x, q.y, 16, "#ff7eb6", 2.4);
+        SFX.power();
       }
     }
     for (const r of rings) {
@@ -1375,12 +1415,16 @@ function outRun(args) {
 
   function drawGroom(x, y) {
     const run = p.on ? Math.floor(tick / 5) % 2 : 0;
+    // 무적이면 옷 색이 계속 바뀌고, 끝나기 1초 전부터는 깜빡여서 곧 풀린다고 알려준다
+    const glow = star > 0 && !(star < 60 && Math.floor(tick / 4) % 2);
+    const sc = glow ? STAR_COLS[Math.floor(tick / 3) % STAR_COLS.length] : null;
+    if (glow) { ctx.globalAlpha = .28; px(x - 2, y - 2, 15, 18, sc); ctx.globalAlpha = 1; }
     px(x + 2, y, 7, 4, "#2b2118");
     px(x + 2, y + 3, 7, 4, "#e8b98c");
     px(x + 6, y + 4, 2, 2, "#1b1b1b");
-    px(x + 1, y + 7, 9, 6, "#20262e");
+    px(x + 1, y + 7, 9, 6, sc || "#20262e");
     px(x + 4, y + 7, 3, 5, "#eef2f7");
-    px(x + 5, y + 7, 1, 4, "#c0392b");
+    px(x + 5, y + 7, 1, 4, glow ? "#ffffff" : "#c0392b");
     if (p.on) { px(x + 1 + run * 2, y + 13, 3, 2, "#15181d"); px(x + 7 - run * 2, y + 13, 3, 2, "#15181d"); }
     else { px(x, y + 12, 3, 2, "#15181d"); px(x + 8, y + 12, 3, 2, "#15181d"); }
   }
@@ -1399,6 +1443,20 @@ function outRun(args) {
     px(x - 4, y - 1 + b, 8, 3, "#f85149");
     px(x - 3, y + 2 + b, 6, 1, "#f85149"); px(x - 1, y + 3 + b, 2, 1, "#f85149");
   }
+  function drawPower(x, y) {
+    const b = Math.sin(tick / 12) * 1.5;
+    const pk = "#ff7eb6", pl = "#ff9ccb", w = "#ffffff", g = "#3fb950";
+    ctx.globalAlpha = .18 + Math.sin(tick / 6) * .08;      // 은은한 후광
+    px(x - 6, y - 8 + b, 13, 14, pl);
+    ctx.globalAlpha = 1;
+    px(x - 3, y - 6 + b, 2, 2, pk); px(x + 1, y - 6 + b, 2, 2, pk);   // 꽃송이
+    px(x - 1, y - 7 + b, 2, 2, w);
+    px(x - 4, y - 4 + b, 8, 3, pl);
+    px(x - 2, y - 3 + b, 2, 1, w); px(x + 1, y - 2 + b, 1, 1, w);
+    px(x - 1, y - 1 + b, 2, 5, g);                                       // 줄기
+    px(x - 3, y + 1 + b, 2, 1, g); px(x + 1, y + 2 + b, 2, 1, g);
+  }
+
   function drawRing(x, y) {
     const b = Math.sin(tick / 14) * 1.5;
     const g = "#e3b341", w = "#fff8d6";
@@ -1480,6 +1538,11 @@ function outRun(args) {
       px(gx - 6, GY * T - 36, 3, 36, C.gt); px(gx + 17, GY * T - 36, 3, 36, C.gt);
       drawBride(gx, GY * T - 15);
     }
+    for (const q of powers) {
+      if (q.got) continue;
+      const sx = q.x - cam;
+      if (sx > -14 && sx < W + 14) drawPower(sx, q.y);
+    }
     for (const r of rings) {
       if (r.got) continue;
       const sx = r.x - cam;
@@ -1536,6 +1599,7 @@ function outRun(args) {
       : `${head}　♥ ${got}/${hearts.length}　` +
         (m > 1 ? `<span class="o-ylw">×${m}</span>　` : `<span class="o-dim">×1</span>　`) +
         (rings.length ? (rings[0].got ? `<span class="o-ylw">💍</span>　` : `<span class="o-dim">💍</span>　`) : "") +
+        (star > 0 ? `<span class="o-ylw">💐 무적 ${Math.ceil(star / 60)}s</span>　` : "") +
         `${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%　` +
         `<b>${totalScore()}점</b>` + (best ? ` <span class="o-dim">최고 ${best}</span>` : "");
   }
