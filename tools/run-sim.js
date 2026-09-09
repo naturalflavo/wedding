@@ -211,16 +211,22 @@ C.stages.forEach((st, i) => {
   st.hearts.forEach(([hx, hy]) => {
     if (!heartReachable(st, hx * T + 8, hy * T + 8, spd)) bad.push(`${hx},${hy}`);
   });
+  // 부케·반지도 같은 판정 — 닿지 않는 자리에 두면 무적/반지 점수가 영영 불가능해진다
+  const badItem = [];
+  [...(st.powers || []).map((q) => ["부케", q]), ...(st.rings || []).map((r) => ["반지", r])]
+    .forEach(([nm, [ix, iy]]) => { if (!heartReachable(st, ix * T + 8, iy * T + 8, spd)) badItem.push(`${nm} ${ix},${iy}`); });
   allHearts += st.hearts.length; allBugs += st.bugs.length;
   bestHearts += st.hearts.length - bad.length;
   if (lazy.cleared) { lazyPts += lazy.pts + C.CLEAR_BONUS; lazyCleared++; }
-  if (!cl.ok || bad.length) ok = false;
+  if (!cl.ok || bad.length || badItem.length) ok = false;
   const gapW = [...new Set(st.gaps.map((g) => g[1]))].sort();
   console.log(
     `STAGE ${i + 1} ${st.name}  (속도 ${spd.toFixed(2)} · 갭폭 ${gapW.join("/")}타일 · 버그 ${st.bugs.length})\n` +
     `  클리어   : ${cl.ok ? `가능 (최단 ${(cl.frames / 60).toFixed(1)}초)` : "★★ 불가능"}\n` +
     `  하트     : ${st.hearts.length - bad.length}/${st.hearts.length} 도달 가능` +
-      (bad.length ? `  ★ 닿지 않는 자리: ${bad.join(" ")}` : "") + `\n` +
+      (bad.length ? `  ★ 닿지 않는 자리: ${bad.join(" ")}` : "") +
+      (badItem.length ? `  ★ 닿지 않는 아이템: ${badItem.join(" · ")}` : "") + `\n` +
+    `  아이템   : 부케 ${(st.powers || []).map((q) => q.join(",")).join(" ") || "없음"} · 반지 ${(st.rings || []).map((r) => r.join(",")).join(" ") || "없음"}\n` +
     `  살아남기 : ${lazy.cleared ? `클리어 O · 하트 ${lazy.got}/${st.hearts.length} · ${lazy.pts + C.CLEAR_BONUS}점` : "★ 낭떠러지에 빠짐"}`
   );
 });

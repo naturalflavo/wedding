@@ -33,6 +33,7 @@ function genHearts(st, opt, SPD) {
   const onPath = survivePath(st, SPD);
   const hearts = [];
   const used = new Set();
+  if (st.power != null) used.add(st.power + ",9");
   const add = (tx, ty) => {
     const k = tx + "," + ty;
     if (used.has(k) || tx < 4 || tx > st.goal - 2) return;
@@ -94,18 +95,21 @@ const LAYOUT = [
     gaps: [[18, 2], [34, 2], [52, 3], [70, 3], [88, 3], [104, 2]],
     blocks: [[44, 8, 4], [80, 7, 3]],
     bugs: [26, 42, 60, 76, 96, 110],
+    power: 56,      // 낭떠러지 넘은 직후 바닥 — 뒤에 버그 60·76
     opt: { groundEvery: 11, airEvery: 13, airTy: [6, 5] } },
 
   { name: "함께 걸은 길", lw: 140, goal: 132,
     gaps: [[16, 3], [32, 3], [50, 4], [68, 3], [86, 4], [104, 3], [120, 4]],
     blocks: [[42, 8, 4], [78, 7, 3], [96, 8, 3]],
     bugs: [24, 40, 46, 62, 76, 94, 112, 128],
+    power: 56,      // 뒤에 버그 62·76·94
     opt: { groundEvery: 12, airEvery: 11, airTy: [6, 5] } },
 
   { name: "마지막 언덕", lw: 148, goal: 140,
     gaps: [[14, 3], [28, 4], [44, 3], [58, 4], [74, 3], [88, 4], [104, 3], [118, 4], [132, 3]],
     blocks: [[22, 7, 3], [38, 8, 3], [68, 7, 3], [98, 8, 3], [126, 7, 3]],
     bugs: [20, 34, 50, 52, 66, 80, 82, 96, 110, 124, 138],
+    power: 48,      // 버그 두 쌍(50·52, 80·82) 직전
     opt: { groundEvery: 13, airEvery: 10, airTy: [5, 6] } },
 ];
 
@@ -129,6 +133,7 @@ LAYOUT.forEach((st, i) => {
   console.log(`      bugs: [${st.bugs.join(", ")}],`);
   console.log(`      hearts: [${fmt(hearts)}],`);
   console.log(`      rings: [${ring ? `[${ring[0]}, ${ring[1]}]` : ""}],`);
+  console.log(`      powers: [${st.power != null ? `[${st.power}, 9]` : ""}],`);
   console.log(`    },`);
 });
 console.error(`\n합계: ${totAll}개 (자동 ${totAuto} / 일부러 ${totAll - totAuto})`);
