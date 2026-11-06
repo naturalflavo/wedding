@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+<meta name="color-scheme" content="dark" />
+<title>상연 ♥ 예은 결혼합니다</title>
+<meta property="og:title" content="상연 ♥ 예은 결혼합니다" />
+<meta property="og:description" content="2026년 10월 17일 토요일 오전 11시, 더화이트베일 W홀" />
+<meta property="og:image" content="https://naturalflavo.github.io/wedding/photos/og-dev.png" />
+<meta property="og:url" content="https://naturalflavo.github.io/wedding/dev/" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Nanum+Gothic+Coding:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root { color-scheme: dark; }
+  :root {
+    --bg: #010409;
+    --term: #0d1117;
+    --card: #161b22;
+    --line: #30363d;
+    --txt: #c9d1d9;
+    --dim: #8b949e;
+    --grn: #3fb950;
+    --cyn: #79c0ff;
+    --ylw: #e3b341;
+    --red: #f85149;
+    --mag: #d2a8ff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  /* 페이지를 뷰포트에 고정한다.
+     카카오톡 등 인앱 웹뷰에서는 100svh 가 실제 화면과 어긋나 body 가 넘치고,
+     그 결과 터미널이 통째로 밀리거나 튀는 현상이 생긴다.
+     position:fixed + inset:0 으로 고정하면 안쪽 #screen 만 스크롤된다. */
+  body {
+    position: fixed; inset: 0;
+    font-family: "JetBrains Mono", "Nanum Gothic Coding", ui-monospace, Menlo, Consolas, monospace;
+    background: var(--bg);
+    color: var(--txt);
+    display: flex; justify-content: center;
+    padding: 10px;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  ::selection { background: rgba(63, 185, 80, .35); }
+
+  /* ---------- 터미널 창 ---------- */
+  .term {
+    position: relative;
+    width: 100%; max-width: 520px; height: 100%;
+    display: flex; flex-direction: column;
+    background: var(--term);
+    border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, .6);
+    overflow: hidden;
+  }
+  /* 은은한 스캔라인 */
+  .term::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+    background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .022) 0 1px, transparent 1px 3px);
+  }
+  .term-bar {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border-bottom: 1px solid var(--line);
+    background: var(--card);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex: 0 0 auto; }
+  .dot.r { background: #ff5f56; } .dot.y { background: #ffbd2e; } .dot.g { background: #27c93f; }
+  .term-title {
+    flex: 1; text-align: center; font-size: 12px; color: var(--dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bgm-btn {
+    position: relative; flex: 0 0 auto;
+    width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line);
+    background: var(--term); color: var(--txt); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .bgm-btn.off { opacity: .55; }
+  .bgm-btn.off::after {
+    content: ""; position: absolute; width: 16px; height: 1.5px; background: var(--txt);
+    transform: rotate(-45deg); border-radius: 2px;
+  }
+
+  /* ---------- 출력 영역 ---------- */
+  #screen {
+    position: relative;
+    flex: 1; overflow-y: auto; overscroll-behavior: contain;
+    padding: 14px 14px 20px;
+    font-size: 13.5px; line-height: 1.75;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  }
+  #screen::-webkit-scrollbar { width: 5px; }
+  #screen::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+  .echo { margin-top: 14px; word-break: break-all; }
+  .echo:first-child { margin-top: 0; }
+  .p-user { color: var(--grn); font-weight: 700; }
+  .p-path { color: var(--cyn); }
+  .p-dollar { color: var(--dim); }
+  .echo b { color: var(--txt); font-weight: 400; }
+
+  .out { margin-top: 2px; }
+  .tl { opacity: 0; animation: tin .22s ease forwards; animation-delay: calc(min(var(--i, 0), 26) * 46ms); }
+  @keyframes tin { from { opacity: 0; } to { opacity: 1; } }
+  .noanim .tl { animation: none; opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .tl { animation: none; opacity: 1; } }
+
+  .o-dim { color: var(--dim); }
+  .o-grn { color: var(--grn); }
+  .o-cyn { color: var(--cyn); }
+  .o-ylw { color: var(--ylw); }
+  .o-red { color: var(--red); }
+  .o-mag { color: var(--mag); }
+  .o-h { color: var(--grn); font-weight: 700; margin-top: 10px; }
+  .o-gap { height: 10px; }
+  .cursor { display: inline-block; width: 8px; height: 15px; background: var(--grn); vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  pre.ascii {
+    font-family: inherit; font-size: 10px; line-height: 1.35;
+    color: var(--grn); text-shadow: 0 0 12px rgba(63, 185, 80, .45);
+    overflow-x: auto; margin: 8px 0 2px;
+  }
+  pre.cal {
+    font-family: inherit; font-size: 13.5px; line-height: 1.9;
+    display: inline-block; text-align: left; margin-top: 4px;
+  }
+  pre.cal .sun { color: var(--red); }
+  pre.cal .dd { background: var(--grn); color: #04120a; font-weight: 700; border-radius: 3px; }
+
+  .cmdrow { display: flex; gap: 14px; }
+  .cmdrow b { flex: 0 0 88px; color: var(--cyn); font-weight: 400; }
+
+  /* 진행바/카운트다운 */
+  .cd-line b { color: var(--grn); font-weight: 700; }
+
+  /* 갤러리 */
+  .g-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 8px; }
+  .g-grid img {
+    width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
+    border-radius: 4px; border: 1px solid var(--line); cursor: pointer;
+    transition: opacity .2s;
+  }
+  .g-grid img:active { opacity: .65; }
+
+  /* 지도 */
+  .map-embed {
+    width: 100%; aspect-ratio: 4 / 3; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--card); display: block; margin: 10px 0 2px;
+    filter: saturate(.85) brightness(.92);
+  }
+
+  /* 터미널풍 버튼/링크 */
+  .t-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 2px; }
+  .t-btn {
+    font-family: inherit; font-size: 12.5px; text-decoration: none; cursor: pointer;
+    color: var(--cyn); background: var(--card); border: 1px solid var(--line);
+    padding: 8px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .t-btn:active { background: #1c2431; }
+
+  /* 계좌 */
+  .acc-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px dashed #21262d; text-align: left;
+  }
+  .acc-row .info { font-size: 13px; word-break: keep-all; }
+  .acc-row .info small { display: block; color: var(--dim); font-size: 11.5px; }
+  .cp {
+    flex: 0 0 auto; font-family: inherit; font-size: 12px; cursor: pointer;
+    color: var(--ylw); background: transparent; border: 1px dashed var(--line);
+    padding: 5px 10px; border-radius: 6px;
+  }
+
+  /* 연락처 */
+  .ct-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .ct-row .who { color: var(--dim); font-size: 12.5px; }
+  .ct-row .nm { flex: 1; text-align: left; }
+
+  /* ---------- 명령어 칩 ---------- */
+  .chips {
+    flex: 0 0 auto; display: none; gap: 8px; align-items: center;
+    padding: 9px 12px; border-top: 1px solid var(--line);
+    overflow-x: auto; overscroll-behavior: contain;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    background: rgba(22, 27, 34, .6);
+  }
+  .chips.on { display: flex; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto; font-family: inherit; font-size: 12.5px; cursor: pointer;
+    color: var(--cyn); background: var(--card); border: 1px solid var(--line);
+    padding: 7px 13px; border-radius: 999px; line-height: 1; white-space: nowrap;
+  }
+  .chip:active { border-color: var(--grn); color: var(--grn); }
+
+  /* ---------- 입력줄 ---------- */
+  .in-line {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 9px;
+    padding: 11px 14px calc(11px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line); background: var(--term);
+  }
+  .in-line .arrow { color: var(--grn); font-weight: 700; font-size: 16px; }
+  #cmd {
+    flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+    color: var(--txt); font-family: inherit; font-size: 16px;
+    caret-color: var(--grn);
+  }
+  #cmd::placeholder { color: #484f58; }
+
+  /* ---------- CRT 레트로 테마 ---------- */
+  body.crt-green {
+    --term: #020a03; --card: #07140a; --line: #14401f;
+    --txt: #5cff7d; --dim: #2f9a4c; --grn: #8dffab; --cyn: #4de07a;
+    --ylw: #c8ff5c; --red: #ff7d5c; --mag: #9dffb8;
+  }
+  body.crt-amber {
+    --term: #0a0500; --card: #160c00; --line: #4a3000;
+    --txt: #ffb757; --dim: #b07c2e; --grn: #ffd25c; --cyn: #ffc880;
+    --ylw: #ffe08a; --red: #ff9257; --mag: #ffd9a3;
+  }
+  body.crt-green #screen, body.crt-amber #screen { text-shadow: 0 0 7px currentColor; }
+  body.crt-green .term::after, body.crt-amber .term::after {
+    background: repeating-linear-gradient(180deg, rgba(0, 0, 0, .22) 0 1px, transparent 1px 3px);
+  }
+
+  /* ---------- matrix 이스터에그 ---------- */
+  #mtx {
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    z-index: 70; pointer-events: none; opacity: 0; transition: opacity .7s;
+  }
+  #mtx.on { opacity: 1; }
+
+  /* ---------- npm test ---------- */
+  .npass, .nfail {
+    color: #fff; padding: 1px 7px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; margin-right: 8px;
+  }
+  .npass { background: #238636; }
+  .nfail { background: #da3633; }
+
+  /* ---------- 점프 액션 게임 ---------- */
+  /* 게임은 터미널 아래가 아니라 화면 한가운데 오버레이로 띄운다 */
+  .run-modal {
+    position: fixed; inset: 0; z-index: 75;
+    background: rgba(1, 4, 9, .94);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px;
+    padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+    touch-action: none; user-select: none;
+  }
+  .run-title { font-size: 13px; color: var(--grn); letter-spacing: 1px; }
+  .run-sub { font-size: 11.5px; color: var(--dim); }
+  .run-modal .run-cv { width: 100%; max-width: 420px; max-height: 52vh; }
+
+  .run-cv {
+    width: 100%; max-width: 320px; display: block; margin: 0 auto;
+    aspect-ratio: 20 / 12; image-rendering: pixelated;
+    background: #070c13; border: 1px solid var(--line); border-radius: 6px;
+    touch-action: manipulation; user-select: none; cursor: pointer;
+  }
+  .run-hud { font-size: 12.5px; color: var(--dim); margin-top: 6px; }
+  .run-pad { display: flex; gap: 8px; margin-top: 8px; justify-content: center; }
+  .run-pad button {
+    font-family: inherit; font-size: 14px; cursor: pointer; padding: 11px 16px;
+    background: var(--card); color: var(--txt); border: 1px solid var(--line); border-radius: 8px;
+    touch-action: manipulation; user-select: none;
+  }
+  .run-pad button.jump { flex: 1; max-width: 232px; color: var(--grn); font-weight: 700; }
+
+  /* ---------- 랭킹 ---------- */
+  .rank-form {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    align-items: center; justify-content: center; margin-top: 10px;
+  }
+  .rank-name {
+    font-family: inherit; font-size: 15px; width: 132px;
+    background: #070c13; color: var(--txt); border: 1px solid var(--line);
+    border-radius: 6px; padding: 7px 10px; outline: none;
+  }
+  .rank-name:focus { border-color: var(--grn); }
+  .rank-name:disabled { opacity: .6; }
+  .rank-go {
+    font-family: inherit; font-size: 12.5px; cursor: pointer;
+    color: var(--ylw); background: var(--card); border: 1px solid var(--line);
+    padding: 8px 13px; border-radius: 6px;
+  }
+  .rank-go:disabled { opacity: .5; cursor: default; }
+  .rank-msg { flex-basis: 100%; font-size: 12px; }
+  .rk { display: flex; gap: 10px; text-align: left; }
+  .rk .rk-i { flex: 0 0 38px; }
+  .rk .rk-n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rk .rk-s { flex: 0 0 auto; color: var(--grn); }
+  .rk.rk-me .rk-n { color: var(--ylw); }
+
+  /* ---------- 라이트박스 ---------- */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 80; background: rgba(1, 4, 9, .96);
+    display: none; align-items: center; justify-content: center;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 94vw; max-height: 84vh; object-fit: contain;
+    border-radius: 6px; user-select: none;
+  }
+  .lb-close, .lb-prev, .lb-next {
+    position: absolute; border: 1px solid var(--line); cursor: pointer; color: #fff;
+    background: rgba(22, 27, 34, .8); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .lb-close {
+    top: calc(16px + env(safe-area-inset-top)); right: 16px;
+    width: 38px; height: 38px; border-radius: 50%; font-size: 18px;
+  }
+  .lb-prev, .lb-next {
+    top: 50%; transform: translateY(-50%);
+    width: 42px; height: 42px; border-radius: 50%; font-size: 22px;
+  }
+  .lb-prev { left: 12px; }
+  .lb-next { right: 12px; }
+  .lb-count {
+    position: absolute; bottom: calc(22px + env(safe-area-inset-bottom));
+    left: 0; right: 0; text-align: center; color: #fff; font-size: 13px; opacity: .8;
+  }
+
+  /* ---------- 토스트 ---------- */
+  #toast {
+    position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%) translateY(14px);
+    background: var(--card); border: 1px solid var(--grn); color: var(--grn);
+    font-size: 12.5px; padding: 10px 20px; border-radius: 8px;
+    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+    white-space: nowrap; z-index: 99;
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<audio id="bgm" src="../music/dev.m4a" loop preload="none"></audio>
+
+<div class="term">
+  <div class="term-bar">
+    <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="term-title">guest@wedding: ~ — ssh</span>
+    <button class="bgm-btn off" id="bgmBtn" aria-label="배경음악 켜기/끄기">♪</button>
+  </div>
+
+  <div id="screen" aria-live="polite"></div>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="in-line">
+    <span class="arrow">❯</span>
+    <input id="cmd" type="text" enterkeyhint="go" autocomplete="off" autocapitalize="off"
+           autocorrect="off" spellcheck="false" placeholder="명령어 입력… (help)" aria-label="명령어 입력" />
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose" aria-label="닫기">✕</button>
+  <button class="lb-prev" id="lbPrev" aria-label="이전 사진">‹</button>
+  <img id="lbImg" src="" alt="" />
+  <button class="lb-next" id="lbNext" aria-label="다음 사진">›</button>
+  <p class="lb-count" id="lbCount"></p>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ===================================================================
+   ★ 여기만 수정하면 됩니다 ★
+=================================================================== */
+const CONFIG = {
+  groom: { name: "우상연", father: "우경진", mother: "주현옥", order: "장남", phone: "010-3050-2397" },
+  bride: { name: "강예은", father: "강성철", mother: "김태순", order: "차녀", phone: "010-2769-5738" },
+
+  // 예식 일시 (년, 월, 일, 시, 분)
+  date: new Date(2026, 9, 17, 11, 0),   // ※ 월은 0부터: 9 = 10월
+
+  venue: {
+    name: "더화이트베일 4층 W홀",
+    addr: "서울특별시 서초구 서초중앙로 14",
+    mapQuery: "더화이트베일",           // 지도 앱 검색어
+  },
+
+  accounts: {
+    groom: [
+      { bank: "우리은행", num: "1002-550-793919", holder: "우상연" },
+      { bank: "우리은행", num: "1002-649-735193", holder: "우경진 (부)" },
+      { bank: "농협", num: "544-12-190062", holder: "주현옥 (모)" },
+    ],
+    bride: [
+      { bank: "새마을금고", num: "9003-2573-83150", holder: "강예은" },
+      { bank: "국민은행", num: "821-05-0003-200", holder: "강성철 (부)" },
+      { bank: "국민은행", num: "048-21-0582-310", holder: "김태순 (모)" },
+    ],
+  },
+
+  photoCount: 19,   // photos/gallery/p01~p19.webp
+};
+/* =================================================================== */
+
+const $ = (id) => document.getElementById(id);
+const screenEl = $("screen");
+const input = $("cmd");
+const d = CONFIG.date;
+const week = ["일", "월", "화", "수", "목", "금", "토"];
+const monthEn = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const pad = (n) => String(n).padStart(2, "0");
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const hour12 = d.getHours() > 12 ? d.getHours() - 12 : d.getHours();
+const ampm = d.getHours() >= 12 ? "오후" : "오전";
+const dateKo = `${d.getFullYear()}. ${pad(d.getMonth() + 1)}. ${pad(d.getDate())}. (${week[d.getDay()]}) ${ampm} ${hour12}:${pad(d.getMinutes())}`;
+
+/* ---------- 출력 헬퍼 ---------- */
+const L = (html, cls = "") => `<div class="tl ${cls}">${html}</div>`;
+const GAP = L("", "o-gap");
+
+function appendBlock(html, noanim = false) {
+  const el = document.createElement("div");
+  el.className = "out" + (noanim ? " noanim" : "");
+  el.innerHTML = html;
+  el.querySelectorAll(".tl").forEach((n, i) => n.style.setProperty("--i", i));
+  screenEl.appendChild(el);
+  return el;
+}
+function appendEcho(cmdText) {
+  const el = document.createElement("div");
+  el.className = "echo";
+  el.innerHTML = `<span class="p-user">guest@wedding</span><span class="p-dollar">:</span><span class="p-path">~</span><span class="p-dollar">$ </span><b>${esc(cmdText)}</b>`;
+  screenEl.appendChild(el);
+  return el;
+}
+const scrollBottom = () => { screenEl.scrollTop = screenEl.scrollHeight; };
+const scrollToEl = (el) => { screenEl.scrollTo({ top: Math.max(0, el.offsetTop - 8), behavior: reduceMotion ? "auto" : "smooth" }); };
+
+/* ---------- 토스트 & 복사 ---------- */
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = "✓ " + msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 2000);
+}
+async function copyText(text, msg) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); ta.remove();
+  }
+  toast(msg);
+}
+
+/* ===================================================================
+   명령어 출력 내용
+=================================================================== */
+function outHelp() {
+  const rows = [
+    ["info", "모시는 글"],
+    ["dday", "예식 일시 · D-DAY"],
+    ["gallery", "우리의 순간들 (사진)"],
+    ["location", "오시는 길"],
+    ["account", "마음 전하실 곳"],
+    ["contact", "신랑 · 신부에게 연락"],
+    ["music", "배경음악 재생 · 곡 변경 (3곡)"],
+    ["share", "청첩장 링크 복사"],
+    ["run", "🏃 예식장까지 달리기 (원버튼 · <b>run easy</b> 쉬움 모드)"],
+    ["rank", "🏆 달리기 랭킹 TOP 10"],
+    ["theme", "CRT 레트로 테마 (green은 BGM도 바뀜)"],
+    ["clear", "화면 지우기"],
+    ["cd ..", "다른 초대장 보러 가기"],
+  ];
+  return L(`사용 가능한 명령어`, "o-h")
+    + rows.map(([c, t]) => L(`<span class="cmdrow"><b>${c}</b><span>${t}</span></span>`)).join("")
+    + GAP
+    + L(`숨겨진 명령어도 있어요. <span class="o-dim">(힌트: sudo, git, matrix, npm test …)</span>`, "o-dim")
+    + L(`입력창에 몇 글자만 쳐보세요 — 아래에 추천 명령이 뜹니다.`, "o-dim");
+}
+
+function outInfo() {
+  const g = CONFIG.groom, b = CONFIG.bride;
+  return L(`# cat invitation.txt`, "o-h")
+    + GAP
+    + L(`서로 다른 두 사람이 만나`)
+    + L(`수많은 시행착오를 거치며 알게 되었습니다.`)
+    + GAP
+    + L(`함께일 때 가장 편안하고`)
+    + L(`가장 단단하다는 것을요.`)
+    + GAP
+    + L(`이제 둘이서 하나의 팀이 되어`)
+    + L(`평생을 함께 만들어 가려 합니다.`)
+    + GAP
+    + L(`저희의 첫 배포 날, 소중한 분들을 초대합니다.`)
+    + GAP
+    + L(`<span class="o-cyn">${dateKo}</span>`)
+    + L(`<span class="o-cyn">${CONFIG.venue.name}</span>`)
+    + GAP
+    + L(`${g.father} · ${g.mother} <span class="o-dim">의 ${g.order}</span> <span class="o-grn">${g.name.slice(1)}</span>`)
+    + L(`${b.father} · ${b.mother} <span class="o-dim">의 ${b.order}</span> <span class="o-grn">${b.name.slice(1)}</span>`);
+}
+
+function buildCalendar() {
+  const first = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  const title = `${monthEn[d.getMonth()]} ${d.getFullYear()}`;
+  const padTitle = " ".repeat(Math.max(0, Math.floor((20 - title.length) / 2)));
+  let s = padTitle + title + "\n";
+  s += `<span class="sun">Su</span> Mo Tu We Th Fr Sa\n`;
+  let cell = 0, line = "";
+  for (let i = 0; i < first; i++) { line += "   "; cell++; }
+  for (let day = 1; day <= last; day++) {
+    let txt = String(day).padStart(2, " ");
+    if (day === d.getDate()) txt = `<span class="dd">${txt}</span>`;
+    else if (cell % 7 === 0) txt = `<span class="sun">${txt}</span>`;
+    line += txt + (cell % 7 === 6 ? "" : " ");
+    cell++;
+    if (cell % 7 === 0) { s += line + "\n"; line = ""; }
+  }
+  if (line) s += line + "\n";
+  return s.replace(/\n$/, "");
+}
+
+function outDday() {
+  const fmtZ = (dt) => dt.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const dtEnd = new Date(d.getTime() + 2 * 36e5);
+  const gcal = `https://calendar.google.com/calendar/render?action=TEMPLATE`
+    + `&text=${encodeURIComponent(`${CONFIG.groom.name} ♥ ${CONFIG.bride.name} 결혼식`)}`
+    + `&dates=${fmtZ(d)}/${fmtZ(dtEnd)}`
+    + `&location=${encodeURIComponent(`${CONFIG.venue.name} (${CONFIG.venue.addr})`)}`
+    + `&details=${encodeURIComponent(dateKo)}`;
+  return L(`# ${dateKo}`, "o-h")
+    + L(`<pre class="cal">${buildCalendar()}</pre>`)
+    + GAP
+    + L(`<span class="cd-line" data-cd>계산 중…</span>`)
+    + L(`<span class="o-dim" data-cd-sub></span>`)
+    + L(`<span class="t-btns">
+        <a class="t-btn" href="wedding.ics" download="wedding.ics">📅 캘린더에 추가</a>
+        <a class="t-btn" target="_blank" rel="noopener" href="${esc(gcal)}">🗓 Google 캘린더</a>
+      </span>`);
+}
+
+function outGallery() {
+  const imgs = Array.from({ length: CONFIG.photoCount }, (_, i) =>
+    `<img src="../photos/gallery/p${pad(i + 1)}.webp" alt="갤러리 사진 ${i + 1}" loading="lazy" data-i="${i}" />`).join("");
+  return L(`# ls gallery/  <span class="o-dim">(${CONFIG.photoCount} photos)</span>`, "o-h")
+    + L(`<div class="g-grid">${imgs}</div>`)
+    + L(`사진을 누르면 크게 볼 수 있어요.`, "o-dim");
+}
+
+function outLocation() {
+  const q = encodeURIComponent(CONFIG.venue.mapQuery);
+  return L(`# cat location.md`, "o-h")
+    + GAP
+    + L(`<span class="o-cyn">${CONFIG.venue.name}</span>`)
+    + L(`${CONFIG.venue.addr}`, "o-dim")
+    + L(`<iframe class="map-embed" title="${CONFIG.venue.mapQuery} 지도" src="https://maps.google.com/maps?q=${q}&hl=ko&z=16&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`)
+    + L(`<span class="t-btns">
+        <a class="t-btn" target="_blank" rel="noopener" href="https://map.kakao.com/link/search/${q}">카카오맵</a>
+        <a class="t-btn" target="_blank" rel="noopener" href="https://map.naver.com/v5/search/${q}">네이버지도</a>
+        <a class="t-btn" target="_blank" rel="noopener" href="https://tmap.life/route?goalname=${q}">티맵</a>
+      </span>`)
+    + GAP
+    + L(`## 지하철`, "o-grn")
+    + L(`3호선 남부터미널역 4-1번 출구 바로 앞`)
+    + L(`## 버스`, "o-grn")
+    + L(`지선 4319 · 간선 461, 641 · 공항 5300-1, 8501`)
+    + L(`남부터미널 하차`, "o-dim")
+    + L(`## 자가용 · 주차`, "o-grn")
+    + L(`경부고속도로 서초 I.C에서 500m`)
+    + L(`맞은편 전용 주차타워 이용 (서초중앙로2길 10)`, "o-dim");
+}
+
+function outAccount() {
+  const group = (title, cls, list) =>
+    L(`[${title}]`, cls)
+    + list.map((a) => L(`<span class="acc-row">
+        <span class="info">${a.bank} ${a.num}<small>${a.holder}</small></span>
+        <button class="cp" data-copy="${a.bank} ${a.num} ${a.holder}">복사</button>
+      </span>`)).join("");
+  return L(`# cat account.json`, "o-h")
+    + L(`참석이 어려우신 분들을 위해 계좌번호를 기재하였습니다.`, "o-dim")
+    + L(`너그러운 마음으로 양해 부탁드립니다.`, "o-dim")
+    + GAP
+    + group("신랑측", "o-grn", CONFIG.accounts.groom)
+    + GAP
+    + group("신부측", "o-cyn", CONFIG.accounts.bride);
+}
+
+function outContact() {
+  const row = (who, p) => L(`<span class="ct-row">
+      <span class="who">[${who}]</span><span class="nm">${p.name}</span>
+      <a class="t-btn" href="tel:${p.phone}">📞 전화</a>
+      <a class="t-btn" href="sms:${p.phone}">✉ 문자</a>
+    </span>`);
+  return L(`# cat contact.vcf`, "o-h")
+    + row("신랑", CONFIG.groom)
+    + row("신부", CONFIG.bride);
+}
+
+/* ---------- BGM 플레이리스트 (3곡) ---------- */
+const TRACKS = [
+  { file: "../music/dev.m4a", name: "Canon in D (8bit)", credit: "Pachelbel — Canon in D / Public Domain · 8bit arr." },
+  { file: "../music/dev2.m4a", name: "Bridal Chorus (8bit march)", credit: "Wagner — Bridal Chorus / Public Domain · 8bit arr." },
+  { file: "../music/dev-oneday.m4a", name: "One Day", credit: "자작곡 · 8bit dance / CC0" },
+];
+/* 그린 CRT 모드 전용 히든 트랙 — 테마를 켜면 이 곡으로 바뀐다 */
+const GREEN_TRACK = {
+  file: "../music/dev-canonrock.m4a",
+  name: "Canon Rock (8bit)",
+  credit: "Pachelbel — Canon in D / Public Domain · 8bit rock arr.",
+};
+let greenOn = false;
+
+/* 달리기 게임 전용 BGM — 게임 중에만 재생하고 끝나면 원래 곡으로 */
+const GAME_TRACK = { file: "../music/dev-journey.m4a", name: "Journey (8bit)" };
+let gameBgmPrev = null;
+
+let trackIdx = 0;
+try {
+  const saved = localStorage.getItem("devTrack");
+  const v = parseInt(saved, 10);
+  // 곡 목록이 바뀌었으므로 이전 버전의 선택은 무시하고 새 곡부터 재생
+  if (localStorage.getItem("devTrackVer") === "3" && v >= 0 && v < TRACKS.length) trackIdx = v;
+  localStorage.setItem("devTrackVer", "3");
+} catch {}
+
+function setTrack(i) {
+  greenOn = false;   // 곡을 직접 고르면 테마 전용곡 해제
+  trackIdx = ((i % TRACKS.length) + TRACKS.length) % TRACKS.length;
+  try { localStorage.setItem("devTrack", trackIdx); } catch {}
+  $("bgm").src = TRACKS[trackIdx].file;
+  toggleBgm(true);
+}
+const nowPlayingMsg = () =>
+  L(`♪ ${TRACKS[trackIdx].name} 재생`, "o-grn") + L(TRACKS[trackIdx].credit, "o-dim");
+
+function outMusic(args = []) {
+  const audio = $("bgm");
+  const a = (args[0] || "").toLowerCase();
+  if (a === "list" || a === "ls") {
+    return L(`# 플레이리스트`, "o-h")
+      + (greenOn ? L(`<span class="o-grn">▶</span> ★ ${GREEN_TRACK.name} <span class="o-dim">— 그린 CRT 모드 전용</span>`) : "")
+      + TRACKS.map((t, i) => L(`${!greenOn && i === trackIdx ? `<span class="o-grn">▶</span>` : `&nbsp;`} ${i + 1}. ${t.name} <span class="o-dim">— ${t.credit}</span>`)).join("")
+      + L(`곡 변경: <span class="o-cyn">music 1·2·3</span> 또는 <span class="o-cyn">music next</span>`, "o-dim");
+  }
+  if (/^[1-9]$/.test(a) && +a <= TRACKS.length) { setTrack(+a - 1); return nowPlayingMsg(); }
+  if (a === "next") { setTrack(trackIdx + 1); return nowPlayingMsg(); }
+  const playing = !audio.paused;
+  toggleBgm(!playing);
+  return (playing ? L(`⏸ 배경음악을 정지했습니다.`, "o-ylw") : nowPlayingMsg())
+    + L(`곡 목록: <span class="o-cyn">music list</span>`, "o-dim");
+}
+
+function outShare() {
+  copyText(location.href, "청첩장 링크가 복사되었습니다");
+  return L(`청첩장 링크가 클립보드에 복사되었습니다.`, "o-grn")
+    + L(esc(location.href), "o-dim");
+}
+
+/* ---------- 이스터에그 ---------- */
+const outWhoami = () => L(`소중한 하객님 <span class="o-dim">(권한: VIP)</span>`, "o-grn");
+const outLs = () => L(`invitation.txt  <span class="o-grn">dday.sh*</span>  <span class="o-cyn">gallery/</span>  location.md  account.json  contact.vcf`)
+  + L(`cat 명령어로 열어볼 수 있어요. (예: cat invitation.txt)`, "o-dim");
+const outLove = () => L(`love: 실행 중… 종료 조건을 찾을 수 없습니다.`, "o-mag")
+  + L(`(무한 루프 — 의도된 동작입니다 ❤)`, "o-dim");
+const outVim = () => L(`vim: 종료 방법을 아신다면 진정한 개발자십니다.`, "o-ylw")
+  + L(`(힌트: :q! …하지만 이 초대장에서는 나가지 마세요)`, "o-dim");
+const outSudoMarry = () => L(`[sudo] password for guest: ********`, "o-dim")
+  + L(`혼인이 승인되었습니다. 💍`, "o-grn")
+  + L(`평생 유효한 권한이 부여됩니다. (만료일: 없음)`);
+const outGitLog = () => [
+    ["a1b2c3d", `<span class="o-ylw">(HEAD -&gt; main, tag: v1.0.0)</span> feat: 결혼식 — 2026-10-17 예정`],
+    ["9f8e7d6", `feat: 프러포즈, 평생을 머지하기로 결정 💍`],
+    ["5c4d3e2", `fix: 서로 달랐던 두 브랜치의 충돌 해결`],
+    ["2b1a0f9", `feat: 첫 데이트`],
+    ["d0c9b8a", `init: 첫 만남`],
+  ].map(([h, m]) => L(`<span class="o-cyn">${h}</span> ${m}`)).join("");
+const outRm = () => L(`rm: '우리의 사랑' 을(를) 삭제할 수 없습니다: Permission denied ❤`, "o-red");
+const outExit = () => L(`logout`, "o-dim")
+  + L(`Connection to our-wedding.dev closed.`, "o-dim")
+  + L(`…라고 할 뻔했지만, 연결은 계속 유지됩니다 :)`)
+  + L(`${d.getMonth() + 1}월 ${d.getDate()}일에 꼭 만나요!`, "o-grn");
+
+/* ---------- 효과음 (Web Audio — 파일 없이 즉석 합성) ---------- */
+let actx = null;
+function audioCtx() {
+  try {
+    if (!actx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      actx = new AC();
+    }
+    if (actx.state === "suspended") actx.resume().catch(() => {});
+    return actx;
+  } catch { return null; }
+}
+
+/* 효과음 공용 출력단 — 한 번만 만들어 재사용 */
+let sfxBus = null;
+function sfxOut() {
+  const ac = audioCtx();
+  if (!ac) return null;
+  if (!sfxBus || sfxBus.context !== ac) {
+    sfxBus = ac.createGain();
+    sfxBus.gain.value = 1.0;
+    sfxBus.connect(ac.destination);
+  }
+  return { ac, out: sfxBus };
+}
+
+/* 짧은 8bit 톤 하나 */
+function beep(s, t, freq, dur, opt = {}) {
+  const { type = "square", vol = 0.15, to = null, decay = null } = opt;
+  const d = decay || dur;
+  const o = s.ac.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  const g = s.ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(g); g.connect(s.out);
+  o.start(t); o.stop(t + d + 0.02);
+}
+
+/* 짧은 노이즈 (밟는 소리용) */
+function noiseHit(s, t, dur, vol, fc) {
+  const n = Math.floor(s.ac.sampleRate * dur);
+  const buf = s.ac.createBuffer(1, n, s.ac.sampleRate);
+  const ch = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const src = s.ac.createBufferSource();
+  src.buffer = buf;
+  const bp = s.ac.createBiquadFilter();
+  bp.type = "lowpass"; bp.frequency.value = fc;
+  const g = s.ac.createGain(); g.gain.value = vol;
+  src.connect(bp); bp.connect(g); g.connect(s.out);
+  src.start(t);
+}
+
+/* 게임 효과음 — 짧고 가볍게, BGM 을 덮지 않도록 */
+const SFX = {
+  jump() { const s = sfxOut(); if (!s) return;
+    beep(s, s.ac.currentTime, 300, 0.09, { to: 720, vol: 0.16, decay: 0.13 }); },
+  coin() { const s = sfxOut(); if (!s) return; const t = s.ac.currentTime;
+    beep(s, t, 988, 0.05, { vol: 0.15, decay: 0.05 });
+    beep(s, t + 0.055, 1319, 0.13, { vol: 0.15, decay: 0.14 }); },
+  stomp() { const s = sfxOut(); if (!s) return; const t = s.ac.currentTime;
+    beep(s, t, 420, 0.12, { to: 70, vol: 0.2, decay: 0.14 });
+    noiseHit(s, t, 0.09, 0.14, 1600); },
+  fail() { const s = sfxOut(); if (!s) return; const t = s.ac.currentTime;
+    beep(s, t, 520, 0.45, { to: 70, vol: 0.24, decay: 0.5 });
+    beep(s, t + 0.02, 260, 0.45, { to: 55, vol: 0.1, type: "triangle", decay: 0.5 }); },
+  stageClear() { const s = sfxOut(); if (!s) return; const t = s.ac.currentTime;
+    [523, 659, 784, 1047].forEach((f, i) =>
+      beep(s, t + i * 0.09, f, 0.1, { vol: 0.2, decay: 0.17 })); },
+  power() { const s = sfxOut(); if (!s) return; const t = s.ac.currentTime;
+    [659, 784, 988, 1319, 1568].forEach((f, i) =>
+      beep(s, t + i * 0.055, f, 0.09, { vol: 0.18, decay: 0.14 })); },
+  allClear() { const s = sfxOut(); if (!s) return; const t = s.ac.currentTime;
+    [[523, 0], [659, .11], [784, .22], [1047, .33], [784, .5], [1047, .61], [1319, .72]]
+      .forEach(([f, d]) => beep(s, t + d, f, 0.14, { vol: 0.2, decay: 0.3 })); },
+};
+
+/* 매트릭스 접속음: 떨어지는 스윕 + 흩뿌려지는 디지털 블립 + 낮은 드론 */
+function matrixSfx() {
+  const ac = audioCtx();
+  if (!ac) return;
+  const t0 = ac.currentTime;
+  const master = ac.createGain();
+  master.gain.value = 0.5;
+  master.connect(ac.destination);
+
+  const sweep = ac.createOscillator();
+  sweep.type = "sawtooth";
+  sweep.frequency.setValueAtTime(760, t0);
+  sweep.frequency.exponentialRampToValueAtTime(58, t0 + 1.3);
+  const lp = ac.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.setValueAtTime(2600, t0);
+  lp.frequency.exponentialRampToValueAtTime(320, t0 + 1.3);
+  const sg = ac.createGain();
+  sg.gain.setValueAtTime(0.0001, t0);
+  sg.gain.exponentialRampToValueAtTime(0.5, t0 + 0.06);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.5);
+  sweep.connect(lp); lp.connect(sg); sg.connect(master);
+  sweep.start(t0); sweep.stop(t0 + 1.6);
+
+  for (let i = 0; i < 26; i++) {
+    const t = t0 + 0.15 + Math.random() * 2.6;
+    const o = ac.createOscillator();
+    o.type = "square";
+    o.frequency.value = 380 + Math.random() * 2000;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05 + Math.random() * 0.05);
+    o.connect(g);
+    if (ac.createStereoPanner) {
+      const pan = ac.createStereoPanner();
+      pan.pan.value = Math.random() * 2 - 1;
+      g.connect(pan); pan.connect(master);
+    } else g.connect(master);
+    o.start(t); o.stop(t + 0.14);
+  }
+
+  const drone = ac.createOscillator();
+  drone.type = "triangle";
+  drone.frequency.value = 55;
+  const dg = ac.createGain();
+  dg.gain.setValueAtTime(0.0001, t0);
+  dg.gain.exponentialRampToValueAtTime(0.28, t0 + 0.4);
+  dg.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.4);
+  drone.connect(dg); dg.connect(master);
+  drone.start(t0); drone.stop(t0 + 3.5);
+}
+
+/* ---------- matrix 이스터에그 ---------- */
+let mtxRaf = null, mtxEnd = 0;
+function outMatrix() {
+  let cv = document.getElementById("mtx");
+  if (!cv) { cv = document.createElement("canvas"); cv.id = "mtx"; document.body.appendChild(cv); }
+  const ctx = cv.getContext("2d");
+  const glyphs = "アイウエオカキクケコサシスセソ0123456789ABCDEF<>{}/;=+우상연강예은♥";
+  const fs = 16;
+  let W = 0, H = 0, cols = 0, drops = [];
+
+  /* 화면을 꽉 채우도록 실제 레이아웃 크기(CSS px)를 재서 버퍼를 맞춘다.
+     innerHeight 를 쓰면 모바일 키보드가 올라온 순간 절반 크기로 굳어버린다. */
+  const fit = () => {
+    const w = cv.clientWidth || innerWidth;
+    const h = cv.clientHeight || innerHeight;
+    if (w === W && h === H) return;
+    W = w; H = h;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const next = Math.ceil(W / fs);
+    for (let i = cols; i < next; i++) drops[i] = Math.random() * -40;
+    drops.length = next;
+    cols = next;
+  };
+
+  fit();
+  ctx.clearRect(0, 0, W, H);
+  cv.classList.add("on");
+  matrixSfx();
+  mtxEnd = performance.now() + 8000;
+  cancelAnimationFrame(mtxRaf);
+  addEventListener("resize", fit);
+  const draw = () => {
+    ctx.fillStyle = "rgba(1, 4, 9, .08)"; ctx.fillRect(0, 0, W, H);
+    ctx.font = fs + "px monospace";
+    for (let i = 0; i < cols; i++) {
+      ctx.fillStyle = Math.random() < .06 ? "#d2ffd9" : "#3fb950";
+      ctx.fillText(glyphs[Math.floor(Math.random() * glyphs.length)], i * fs, drops[i] * fs);
+      if (drops[i] * fs > H && Math.random() > .975) drops[i] = 0;
+      drops[i]++;
+    }
+    if (performance.now() < mtxEnd) mtxRaf = requestAnimationFrame(draw);
+    else {
+      removeEventListener("resize", fit);
+      cv.classList.remove("on");
+      setTimeout(() => ctx.clearRect(0, 0, W, H), 800);
+    }
+  };
+  draw();
+  return L(`Wake up, Neo…`, "o-grn")
+    + L(`매트릭스가 두 사람을 연결했습니다. 💊`, "o-dim")
+    + L(`${d.getMonth() + 1}월 ${d.getDate()}일, 매트릭스 밖에서 만나요.`);
+}
+
+/* ---------- npm test ---------- */
+function runNpmTest() {
+  const el = appendBlock("", true);
+  const lines = [
+    `<div class="o-dim">&gt; wedding@1.0.0 test</div>`,
+    `<div class="o-dim">&gt; jest --ci</div>`,
+    `<div class="o-gap"></div>`,
+    `<div><span class="npass">PASS</span> src/venue.test.js</div>`,
+    `<div><span class="npass">PASS</span> src/schedule.test.js</div>`,
+    `<div><span class="npass">PASS</span> src/guests.test.js</div>`,
+    `<div><span class="nfail">FAIL</span> src/groom.test.js</div>`,
+    `<div class="o-gap"></div>`,
+    `<div class="o-red">  ● 신랑 › 신부 입장 › 울지 않는다</div>`,
+    `<div class="o-gap"></div>`,
+    `<div class="o-dim">    expect(received).toBe(expected)</div>`,
+    `<div class="o-dim">    Expected: false</div>`,
+    `<div class="o-dim">    Received: true</div>`,
+    `<div class="o-gap"></div>`,
+    `<div>Tests: <span class="o-red">1 failed</span>, <span class="o-grn">3 passed</span>, 4 total</div>`,
+    `<div class="o-dim">Time:  10.17 s</div>`,
+    `<div class="o-gap"></div>`,
+    `<div class="o-dim">// known issue · 수정 계획 없음</div>`,
+  ];
+  if (reduceMotion) { el.innerHTML = lines.join(""); scrollBottom(); return; }
+  let i = 0;
+  const t = setInterval(() => {
+    if (i >= lines.length) { clearInterval(t); return; }
+    el.insertAdjacentHTML("beforeend", lines[i++]);
+    scrollBottom();
+  }, 190);
+}
+
+/* ===================================================================
+   랭킹 — Firestore REST API (SDK 없이 fetch 만 사용)
+=================================================================== */
+const FB = {
+  projectId: "naturalflavo",
+  apiKey: "AIzaSyDqW9Gt7z-6bojV0zMm1MGxIuTpc659tB0",
+  col: "snakeScores",   // 초기 스네이크 게임 때부터 쓰던 이름 — 기록을 이어 가려고 유지
+  /* 점수 체계가 바뀌었지만 컬렉션은 그대로 둔다.
+     새 체계는 완주만 해도 200점대라 옛 기록(최고 152)은 자연히 아래로 밀린다. */
+  /* 규칙(firestore.rules)의 상한과 같은 값. 완벽한 플레이가 약 1200점이라
+     충분하지만, 넘더라도 rankSubmit 에서 잘라 보내므로 등록이 거부되지는 않는다. */
+  max: 2000,
+  pool: 300,  // 이름별로 접기 전에 받아 오는 원본 기록 수
+};
+const fbUrl = (suffix) =>
+  `https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents${suffix}&key=${FB.apiKey}`;
+
+/* 응답이 없어도 무한 대기하지 않도록 8초 타임아웃 */
+async function fbPost(url, payload, ms = 8000) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ms);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: ac.signal,
+    });
+    if (!res.ok) {
+      const err = new Error("HTTP " + res.status);
+      err.status = res.status;
+      throw err;
+    }
+    const data = await res.json();
+    // Firestore 는 규칙에 막혀도 200 안에 error 를 담아 주는 경우가 있다
+    const denied = Array.isArray(data) ? data.find((d) => d && d.error) : data && data.error;
+    if (denied) {
+      const err = new Error(denied.error.status || "DENIED");
+      err.status = denied.error.code || 403;
+      throw err;
+    }
+    return data;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* 넉넉히 받아 와서 이름별로 접는다 — 한 사람이 보드를 독점하지 못하도록.
+   같은 이름은 최고 기록 한 줄만, 동점이면 먼저 달성한 쪽이 위로. */
+async function rankFetch(limit = 10) {
+  const rows = await fbPost(fbUrl(":runQuery?alt=json"), {
+    structuredQuery: {
+      from: [{ collectionId: FB.col }],
+      orderBy: [{ field: { fieldPath: "score" }, direction: "DESCENDING" }],
+      limit: FB.pool,
+    },
+  });
+  const best = new Map();
+  (Array.isArray(rows) ? rows : []).forEach((r) => {
+    if (!r || !r.document) return;
+    const f = r.document.fields || {};
+    const name = f.name?.stringValue || "익명";
+    const score = parseInt(f.score?.integerValue || "0", 10);
+    const ts = f.ts?.timestampValue || "";
+    const cur = best.get(name);
+    if (!cur || score > cur.score || (score === cur.score && ts && ts < cur.ts)) {
+      best.set(name, { name, score, ts });
+    }
+  });
+  const all = [...best.values()].sort((a, b) => b.score - a.score || (a.ts < b.ts ? -1 : 1));
+  return { list: all.slice(0, limit), all, total: all.length };
+}
+
+async function rankSubmit(name, score) {
+  // 규칙의 상한을 넘으면 등록 자체가 거부되므로 클라이언트에서 먼저 맞춘다
+  const safe = Math.max(1, Math.min(FB.max, Math.round(score)));
+  return fbPost(fbUrl(`/${FB.col}?alt=json`), {
+    fields: {
+      name: { stringValue: name },
+      score: { integerValue: String(safe) },
+      ts: { timestampValue: new Date().toISOString() },
+    },
+  });
+}
+
+function outRank() {
+  const el = appendBlock(L(`# 🏆 RUN 랭킹 TOP 10`, "o-h") + L(`불러오는 중…`, "o-dim"), true);
+  let myName = "";
+  try { myName = localStorage.getItem("rankName") || ""; } catch {}
+  rankFetch(10).then(({ list, all, total }) => {
+    if (!list.length) {
+      el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10`, "o-h")
+        + L(`아직 등록된 기록이 없습니다. 첫 주인공이 되어보세요!`, "o-dim")
+        + L(`<span class="o-cyn">run</span> 으로 게임 시작`, "o-dim");
+      return;
+    }
+    const medal = ["🥇", "🥈", "🥉"];
+    // 보드 밖으로 밀린 사람에게도 자기 위치를 알려준다
+    const myIdx = myName ? all.findIndex((r) => r.name === myName) : -1;
+    const mine = myIdx >= 0 && myIdx >= list.length
+      ? L(`<span class="rk rk-me">
+          <span class="rk-i">${myIdx + 1}.</span>
+          <span class="rk-n">${esc(all[myIdx].name)}</span>
+          <span class="rk-s">${all[myIdx].score}점</span>
+        </span>`)
+      : "";
+    el.innerHTML = L(`# 🏆 RUN 랭킹 TOP 10 <span class="o-dim">· 참가자 ${total}명</span>`, "o-h")
+      + list.map((r, i) => L(`<span class="rk${r.name === myName ? " rk-me" : ""}">
+          <span class="rk-i">${medal[i] || `${i + 1}.`}</span>
+          <span class="rk-n">${esc(r.name)}</span>
+          <span class="rk-s">${r.score}점</span>
+        </span>`)).join("")
+      + (mine ? L(`<span class="o-dim">⋯</span>`) + mine : "")
+      + GAP
+      + L(`<span class="o-cyn">run</span> 으로 도전해 보세요!`, "o-dim");
+    el.querySelectorAll(".tl").forEach((n, i) => n.style.setProperty("--i", i));
+    scrollBottom();
+  }).catch((e) => {
+    const denied = e && (e.status === 403 || e.status === 401);
+    el.innerHTML = L(`# 🏆 RUN 랭킹`, "o-h")
+      + L(denied ? `랭킹 서버 설정이 아직 준비되지 않았습니다.` : `랭킹 서버에 연결하지 못했습니다.`, "o-red")
+      + L(denied ? `잠시 후 다시 시도해 주세요. <span class="o-dim">(관리자: firestore.rules 게시 필요)</span>`
+                 : `네트워크 상태를 확인하고 다시 시도해 주세요.`, "o-dim");
+    scrollBottom();
+  });
+  return null;
+}
+
+/* 게임 오버 후 랭킹 등록 폼 */
+function showRankForm(box, score) {
+  let saved = "";
+  try { saved = localStorage.getItem("rankName") || ""; } catch {}
+  const wrap = document.createElement("div");
+  wrap.className = "rank-form";
+  wrap.innerHTML = `
+    <input class="rank-name" maxlength="12" value="${esc(saved)}" placeholder="이름 (최대 12자)" aria-label="랭킹에 등록할 이름" />
+    <button class="rank-go">🏆 랭킹 등록</button>
+    <div class="rank-msg o-dim">이번 판 점수로 전체 랭킹에 도전해 보세요.</div>`;
+  box.appendChild(wrap);
+  const inp = wrap.querySelector(".rank-name");
+  const btn = wrap.querySelector(".rank-go");
+  const msg = wrap.querySelector(".rank-msg");
+  const go = async () => {
+    const nm = inp.value.trim().slice(0, 12);
+    if (!nm) { msg.innerHTML = `<span class="o-ylw">이름을 입력해 주세요.</span>`; inp.focus(); return; }
+    btn.disabled = true;
+    msg.textContent = "등록 중…";
+    try {
+      await rankSubmit(nm, score);
+      try { localStorage.setItem("rankName", nm); } catch {}
+      inp.disabled = true;
+      msg.innerHTML = `<span class="o-grn">등록 완료!</span> <span class="o-dim">rank 명령어로 순위를 확인하세요.</span>`;
+    } catch (e) {
+      btn.disabled = false;
+      const denied = e && (e.status === 403 || e.status === 401);
+      msg.innerHTML = `<span class="o-red">등록 실패</span> `
+        + `<span class="o-dim">— ${denied ? "랭킹 서버 설정이 아직 준비되지 않았습니다." : "네트워크를 확인 후 다시 눌러주세요."}</span>`;
+    }
+  };
+  btn.addEventListener("click", go);
+  inp.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); go(); }
+  });
+}
+
+/* ---------- RUN TO THE ALTAR — 원버튼 오토러너 ---------- */
+let runStop = null;
+let runGen = 0;   // 게임 세대 — 앞 게임에 걸린 타이머가 새 게임을 건드리지 못하게 한다
+function outRun(args) {
+  if (runStop) runStop(false);
+  /* 하객 중에는 이런 게임을 처음 해 보는 분도 있다.
+     run easy — 낭떠러지를 한 타일씩 좁히고 속도도 올리지 않는다. */
+  const EASY = Array.isArray(args) && /^easy$|^쉬움$/i.test(args[0] || "");
+  const gen = ++runGen;
+  const alive = () => runGen === gen;
+
+  const T = 16, VW = 20, VH = 12;        // 타일 크기 / 화면 타일 수
+  const W = VW * T, H = VH * T;          // 320 x 192 (논리 해상도)
+  const GY = 10;                         // 바닥 윗면 타일 y
+
+  /* 점수 — 쉽게 쌓이되, 잘할수록 크게 벌어지도록 설계했다.
+     하트는 연속으로 먹을수록 배수가 오르고, 하나라도 놓치거나 넘어지면 배수가 처음으로 돌아간다.
+     그래서 "끝까지 가는 것" 은 쉽고 "한 번도 안 흘리는 것" 은 어렵다. */
+  const HEART_BASE = 2;        // 하트 한 개
+  const COMBO_STEP = 4;        // 몇 개 연속마다 배수가 오르는가
+  const COMBO_MAX = 5;         // 배수 상한
+  const COMBO_DROP = 2;        // 하나 흘렸을 때 깎이는 양 (0 으로 초기화하지 않는다)
+  const STOMP_BASE = 5;        // 버그를 밟았을 때
+  const STOMP_CHAIN_MAX = 4;   // 착지하지 않고 연속으로 밟으면 2배씩 (5·10·20·40)
+  const CLEAR_BONUS = 25;      // 스테이지 클리어
+  const NOHIT_BONUS = 25;      // 그 스테이지에서 한 번도 넘어지지 않았을 때
+  const RING_BONUS = 50;       // 숨어 있는 반지 (스테이지당 하나)
+  const POWER_FRAMES = 270;    // 부케를 먹으면 이만큼 무적 (약 4.5초)
+  const PLOW_BONUS = 3;        // 무적 상태로 버그를 들이받았을 때 — 밟기(5)보다는 적게
+  const STAR_COLS = ["#ffd166", "#ffffff", "#7ee8fa", "#ff7eb6"];   // 무적일 때 번쩍이는 색
+
+  /* 스테이지 3종 — 낭떠러지는 2~4타일로 폭을 섞었다.
+     짧게 탭하면 46px, 끝까지 누르면 94px 을 난다. 2타일은 탭으로도 넘지만
+     3타일부터는 눌러야 하고, 4타일은 눌러도 아슬아슬하다.
+     하트는 일부러 "가지러 가야 하는" 자리에 둔다 — 살아서 지나가기만 하면 절반쯤 놓친다. */
+  const STAGES = [
+    { // 1. 첫 걸음
+      name: "첫 걸음", lw: 124, goal: 116,
+      gaps: [[18, 2], [34, 2], [52, 3], [70, 3], [88, 3], [104, 2]],
+      blocks: [[44, 8, 4], [80, 7, 3]],
+      bugs: [26, 42, 60, 76, 96, 110],
+      hearts: [[5, 9], [8, 6], [16, 9], [18, 4], [19, 3], [21, 6], [27, 9],
+               [34, 4], [35, 3], [44, 7], [45, 7], [49, 9], [52, 4], [53, 3],
+               [60, 6], [60, 9], [70, 4], [71, 3], [80, 6], [81, 6], [86, 6],
+               [88, 4], [89, 3], [93, 9], [99, 6], [104, 4], [105, 3], [112, 6],
+               [113, 9]],
+      rings: [[46, 7]],
+      powers: [[56, 9]],
+    },
+    { // 2. 함께 걸은 길
+      name: "함께 걸은 길", lw: 140, goal: 132,
+      gaps: [[16, 3], [32, 3], [50, 4], [68, 3], [86, 4], [104, 3], [120, 4]],
+      blocks: [[42, 8, 4], [78, 7, 3], [96, 8, 3]],
+      bugs: [24, 40, 46, 62, 76, 94, 112, 128],
+      hearts: [[5, 9], [8, 6], [16, 5], [17, 3], [29, 9], [30, 6], [32, 4],
+               [33, 3], [41, 6], [41, 9], [42, 7], [43, 7], [50, 4], [51, 3],
+               [63, 6], [65, 9], [68, 5], [69, 3], [74, 6], [77, 9], [78, 6],
+               [79, 6], [86, 5], [87, 3], [96, 7], [97, 7], [101, 9], [104, 5],
+               [105, 3], [113, 9], [118, 6], [120, 4], [121, 3], [125, 9], [129, 6],
+               [129, 9]],
+      rings: [[44, 7]],
+      powers: [[56, 9]],
+    },
+    { // 3. 마지막 언덕
+      name: "마지막 언덕", lw: 148, goal: 140,
+      gaps: [[14, 3], [28, 4], [44, 3], [58, 4], [74, 3], [88, 4], [104, 3], [118, 4], [132, 3]],
+      blocks: [[22, 7, 3], [38, 8, 3], [68, 7, 3], [98, 8, 3], [126, 7, 3]],
+      bugs: [20, 34, 50, 52, 66, 80, 82, 96, 110, 124, 138],
+      hearts: [[5, 9], [8, 5], [14, 5], [15, 3], [18, 6], [22, 6], [23, 6],
+               [28, 5], [29, 3], [38, 7], [39, 7], [44, 5], [45, 3], [48, 6],
+               [57, 9], [58, 5], [59, 3], [68, 6], [69, 6], [74, 4], [75, 3],
+               [83, 9], [88, 5], [89, 3], [96, 9], [98, 7], [99, 7], [104, 5],
+               [105, 3], [118, 5], [119, 3], [126, 6], [127, 6], [132, 5], [133, 3],
+               [137, 9]],
+      rings: [[24, 6]],
+      powers: [[48, 9]],
+    },
+  ];
+
+  let stage = 0;
+  const SPD_BASE = 2.3, SPD_STEP = 0.2;   // 스테이지가 넘어갈수록 조금씩 빨라진다
+  let SPD = SPD_BASE;
+  let LW, GOAL, GAPS, BLOCKS, BUGS, HEARTS0, RINGS0, POWERS0;
+  function loadStage(i) {
+    const st = STAGES[i];
+    LW = st.lw; GOAL = st.goal;
+    GAPS = EASY ? st.gaps.map(([g, w]) => [g, Math.max(2, w - 1)]) : st.gaps;
+    BLOCKS = st.blocks; BUGS = st.bugs; HEARTS0 = st.hearts;
+    RINGS0 = st.rings || [];
+    POWERS0 = st.powers || [];
+    SPD = EASY ? SPD_BASE : SPD_BASE + SPD_STEP * i;
+  }
+  loadStage(0);
+
+  const logEl = appendBlock(
+    L(`RUN TO THE ALTAR <span class="o-dim">— 전 ${STAGES.length}스테이지 · 탭해서 점프!</span>`)
+    + (EASY ? L(`<span class="o-ylw">쉬움 모드</span> <span class="o-dim">— 낭떠러지가 좁고 속도도 그대로입니다. 랭킹에는 올라가지 않아요.</span>`)
+            : L(`<span class="o-dim">어려우면 <span class="o-cyn">run easy</span> 로 다시 시작해 보세요.</span>`))
+    + L(`<span class="o-dim">♥ ${HEART_BASE}점 · ${COMBO_STEP}개 연속마다 배수 ↑ (최대 ×${COMBO_MAX})</span>`)
+    + L(`<span class="o-dim">버그 밟기 ${STOMP_BASE}점 · 클리어 ${CLEAR_BONUS}점 · 무사고 ${NOHIT_BONUS}점</span>`)
+    + L(`<span class="o-dim">💐 부케를 먹으면 잠깐 무적 — 버그에 닿아도 안 넘어져요 (낭떠러지는 조심!)</span>`), true);
+  scrollBottom();
+
+  const modal = document.createElement("div");
+  modal.className = "run-modal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-label", "RUN TO THE ALTAR 게임");
+  modal.innerHTML = `
+    <div class="run-title">RUN TO THE ALTAR</div>
+    <canvas class="run-cv" width="${W}" height="${H}" role="img"
+            aria-label="달리기 게임 화면. 화면을 탭하거나 스페이스바로 점프하고, Q 를 누르면 종료합니다."></canvas>
+    <div class="run-hud"></div>
+    <span class="run-pad">
+      <button class="jump" data-k="j">▲ 점프 (화면 아무 곳이나 탭)</button>
+      <button data-k="q">✕</button>
+    </span>
+    <div class="run-sub">♥ ${COMBO_STEP}개 연속마다 배수 ↑ · 흘리면 조금 내려감 · 넘어지면 초기화 · 종료 Q</div>`;
+  document.body.appendChild(modal);
+  const prevOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  const cv = modal.querySelector(".run-cv");
+  const ctx = cv.getContext("2d");
+  const hud = modal.querySelector(".run-hud");
+  ctx.imageSmoothingEnabled = false;
+
+  const inGap = (tx) => GAPS.some(([g, w]) => tx >= g && tx < g + w);
+  const solid = (tx, ty) => {
+    if (tx < 0) return true;
+    if (tx >= LW) return false;
+    if (ty >= GY && ty < VH) return !inGap(tx);
+    return BLOCKS.some((b) => ty === b[1] && tx >= b[0] && tx < b[0] + b[2]);
+  };
+
+  let hearts, foes, p, cam, dead, won, tick = 0, deaths = 0, best = 0;
+  let banked = 0, cleared = 0, allDone = false;   // 이전 스테이지에서 확정된 점수
+  let combo = 0, chain = 0, stagePts = 0, stageDied = 0, stomps = 0;
+  let rings, ringHere = 0, ringsGot = 0;
+  let powers, star = 0;        // 무적 남은 프레임
+  let pops = [], parts = [], shake = 0, ready = 0, readyMax = 0, wasOn = false;
+  const BEST_KEY = EASY ? "runBestEasy" : "runBest";
+  try { best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch {}
+  const curHearts = () => hearts.filter((h) => h.got).length;
+  const mult = () => Math.min(COMBO_MAX, 1 + Math.floor(combo / COMBO_STEP));
+  const totalScore = () => banked + stagePts;
+
+  /* 스테이지를 처음부터 다시 — 넘어졌을 때도 여기로 온다.
+     그 판에서 쌓은 점수와 배수는 사라지고, 앞 스테이지에서 확정된 banked 만 남는다. */
+  function reset() {
+    hearts = HEARTS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false, miss: false }));
+    foes = BUGS.map((x) => ({ x: x * T, y: GY * T - 13, w: 13, h: 13, dead: 0, ph: x }));
+    p = { x: 2 * T, y: (GY - 3) * T, w: 11, h: 14, vy: 0, on: false, coy: 0, buf: 0 };
+    rings = RINGS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
+    powers = POWERS0.map(([x, y]) => ({ x: x * T + 8, y: y * T + 8, got: false }));
+    star = 0;
+    cam = 0; dead = 0; won = 0;
+    combo = 0; chain = 0; stagePts = 0;
+    pops = []; parts = []; shake = 0; wasOn = false; ringHere = 0;
+  }
+
+  /* 시작 직전 잠깐 멈춰 준다 — 명령을 치자마자 달리기 시작하면
+     화면을 알아보기도 전에 첫 낭떠러지가 온다. */
+  function startReady(frames) { ready = frames; readyMax = frames; }
+
+  /* 점수가 오르는 순간을 눈에 보이게 */
+  function pop(x, y, txt, col) {
+    if (reduceMotion) return;
+    pops.push({ x, y, txt, col, life: 44 });
+  }
+  function burst(x, y, n, col, spd = 1.6) {
+    if (reduceMotion) return;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      parts.push({ x, y, vx: Math.cos(a) * spd * (0.4 + Math.random()),
+                   vy: Math.sin(a) * spd * (0.4 + Math.random()) - 0.6,
+                   life: 22 + Math.random() * 18, col });
+    }
+  }
+  reset();
+  startReady(150);   // 명령을 치자마자 달리지 않도록 — 첫 낭떠러지까지 2초도 안 된다
+
+  const G = 0.46, JMP = -9.6;             // 모바일에서 넉넉한 점프 타이밍(≈275ms)
+  let holding = false;
+
+  function jump() { p.buf = 8; }
+
+  function moveY(dy) {
+    p.y += dy;
+    p.on = false;
+    const c0 = Math.floor(p.x / T), c1 = Math.floor((p.x + p.w - 1) / T);
+    if (dy > 0) {
+      const r = Math.floor((p.y + p.h - 1) / T);
+      for (let tx = c0; tx <= c1; tx++) if (solid(tx, r)) { p.y = r * T - p.h; p.vy = 0; p.on = true; break; }
+    } else if (dy < 0) {
+      const r = Math.floor(p.y / T);
+      for (let tx = c0; tx <= c1; tx++) if (solid(tx, r)) { p.y = (r + 1) * T; p.vy = 0; break; }
+    }
+  }
+
+  function die() {
+    if (dead || won) return;
+    dead = 1; deaths++; stageDied = 1;
+    if (!reduceMotion) shake = 16;
+    burst(p.x + p.w / 2, p.y + p.h / 2, 12, "#f85149", 2.0);
+    SFX.fail();
+    setTimeout(() => { if (alive() && !won && !allDone) { reset(); startReady(45); } }, 1000);
+  }
+
+  function step() {
+    tick++;
+    if (shake > 0) shake--;
+    for (let i = pops.length - 1; i >= 0; i--) { pops[i].life--; pops[i].y -= 0.55; if (pops[i].life <= 0) pops.splice(i, 1); }
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const q = parts[i]; q.x += q.vx; q.y += q.vy; q.vy += 0.12; q.life--;
+      if (q.life <= 0) parts.splice(i, 1);
+    }
+    if (ready > 0) { ready--; return; }
+    if (won) return;
+    if (dead) { p.vy = Math.min(p.vy + G, 11); p.y += p.vy; return; }
+
+    if (star > 0) {
+      star--;
+      if (!reduceMotion && tick % 2 === 0) {         // 몸에서 반짝이가 흩날린다
+        parts.push({ x: p.x + Math.random() * p.w, y: p.y + Math.random() * p.h,
+                     vx: -0.6 - Math.random() * 0.8, vy: -0.3 - Math.random() * 0.6,
+                     life: 12 + Math.random() * 10, col: STAR_COLS[Math.floor(Math.random() * STAR_COLS.length)] });
+      }
+    }
+
+    // 자동 전진 — 벽(단의 옆면)에 막히면 밀어 올리지 않고 그대로 통과시키지 않는다
+    const nx = p.x + SPD;
+    const tCol = Math.floor((nx + p.w - 1) / T);
+    let blocked = false;
+    for (let ty = Math.floor(p.y / T); ty <= Math.floor((p.y + p.h - 1) / T); ty++) {
+      if (solid(tCol, ty)) { blocked = true; break; }
+    }
+    p.x = blocked ? tCol * T - p.w : nx;
+
+    // 점프 (코요테 타임 + 입력 버퍼)
+    p.coy = p.on ? 7 : Math.max(0, p.coy - 1);
+    p.buf = Math.max(0, p.buf - 1);
+    if (p.buf && p.coy) { p.vy = JMP; p.on = false; p.coy = 0; p.buf = 0; SFX.jump(); }
+    if (p.vy < 0 && !holding) p.vy *= 0.86;      // 짧게 탭하면 낮게 점프
+    p.vy = Math.min(p.vy + G, 11);
+    moveY(p.vy);
+
+    if (p.on && !wasOn && p.y > 0) burst(p.x + p.w / 2, p.y + p.h, 3, "#8b949e", 0.9);
+    wasOn = p.on;
+    if (p.on) chain = 0;              // 땅에 닿으면 연속 밟기는 끊긴다
+    if (p.y > H + 40) { die(); return; }
+
+    // 버그 — 제자리에서 좌우로 조금씩
+    for (const f of foes) {
+      if (f.dead) { f.dead++; continue; }
+      f.x += Math.sin((tick + f.ph) / 34) * 0.5;
+      if (p.x + p.w > f.x + 2 && p.x < f.x + f.w - 2 &&
+          p.y + p.h > f.y + 2 && p.y < f.y + f.h) {
+        if (p.vy > 0 && p.y + p.h - p.vy <= f.y + 7) {
+          f.dead = 1; p.vy = -6.4; stomps++;
+          chain = Math.min(STOMP_CHAIN_MAX, chain + 1);
+          const gain = STOMP_BASE * Math.pow(2, chain - 1);   // 착지 없이 연달아 밟으면 5·10·20·40
+          stagePts += gain;
+          pop(f.x + 6, f.y - 4, `+${gain}`, chain > 1 ? "#e3b341" : "#f0f6fc");
+          burst(f.x + 6, f.y + 6, 6, "#8b3a3a", 1.6);
+          SFX.stomp();
+        }
+        else if (star > 0) {
+          // 무적 — 들이받으면 버그가 터진다. 밟기보다는 적게 줘서 밟는 쪽이 여전히 이득이다
+          f.dead = 1; stomps++;
+          stagePts += PLOW_BONUS;
+          pop(f.x + 6, f.y - 4, `+${PLOW_BONUS}`, "#ff7eb6");
+          burst(f.x + 6, f.y + 6, 8, "#ff7eb6", 2.0);
+          SFX.stomp();
+        }
+        else die();
+      }
+    }
+    for (const h of hearts) {
+      if (h.got || h.miss) continue;
+      if (Math.abs(h.x - (p.x + p.w / 2)) < 12 && Math.abs(h.y - (p.y + p.h / 2)) < 13) {
+        h.got = true; combo++;
+        const gain = HEART_BASE * mult();
+        stagePts += gain;
+        pop(h.x, h.y - 6, `+${gain}`, mult() > 1 ? "#e3b341" : "#f0f6fc");
+        burst(h.x, h.y, 3, "#f85149", 1.1);
+        SFX.coin();
+      } else if (h.x < p.x - 8) {
+        // 하나 흘릴 때마다 0 으로 되돌리면, 하트가 촘촘한 이 레벨에서는
+        // 배수가 영영 안 붙는다. 조금씩만 깎아서 실수 한 번은 만회할 수 있게 한다.
+        h.miss = true; combo = Math.max(0, combo - COMBO_DROP);
+      }
+    }
+    for (const q of powers) {
+      if (q.got) continue;
+      if (Math.abs(q.x - (p.x + p.w / 2)) < 13 && Math.abs(q.y - (p.y + p.h / 2)) < 14) {
+        q.got = true; star = POWER_FRAMES;
+        pop(q.x, q.y - 8, "무적!", "#ff7eb6");
+        burst(q.x, q.y, 16, "#ff7eb6", 2.4);
+        SFX.power();
+      }
+    }
+    for (const r of rings) {
+      if (r.got) continue;
+      if (Math.abs(r.x - (p.x + p.w / 2)) < 13 && Math.abs(r.y - (p.y + p.h / 2)) < 14) {
+        r.got = true; ringHere = 1; stagePts += RING_BONUS;
+        pop(r.x, r.y - 8, `💍 +${RING_BONUS}`, "#e3b341");
+        burst(r.x, r.y, 14, "#e3b341", 2.2);
+        SFX.stageClear();
+      }
+    }
+    if (!dead && p.x + p.w > GOAL * T) {
+      won = 1;
+      for (const c of ["#f85149", "#e3b341", "#3fb950", "#ffffff", "#79c0ff"])
+        burst(p.x + p.w / 2, p.y, 7, c, 2.6);
+      banked += stagePts + CLEAR_BONUS + (stageDied ? 0 : NOHIT_BONUS);
+      ringsGot += ringHere;          // 스테이지를 실제로 깼을 때만 확정
+      stagePts = 0; stageDied = 0; ringHere = 0;
+      cleared++;
+      if (stage < STAGES.length - 1) {
+        SFX.stageClear();
+        setTimeout(() => { if (alive() && !allDone) { stage++; loadStage(stage); reset(); startReady(150); stageDied = 0; won = 0; } }, 1700);
+      } else {
+        allDone = true;
+        SFX.allClear();
+        setTimeout(() => { if (alive()) stop(true); }, 2600);   // 팡파르 후 결과 화면으로
+        const sc = banked;
+        if (sc > best) { best = sc; try { localStorage.setItem(BEST_KEY, best); } catch {} }
+        offerRank(sc);
+      }
+    }
+    cam = Math.max(0, Math.min(p.x - 110, LW * T - W));
+  }
+
+  // ---------- 그리기 ----------
+  const px = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+
+  function drawGroom(x, y) {
+    const run = p.on ? Math.floor(tick / 5) % 2 : 0;
+    // 무적이면 옷 색이 계속 바뀌고, 끝나기 1초 전부터는 깜빡여서 곧 풀린다고 알려준다
+    const glow = star > 0 && !(star < 60 && Math.floor(tick / 4) % 2);
+    const sc = glow ? STAR_COLS[Math.floor(tick / 3) % STAR_COLS.length] : null;
+    if (glow) { ctx.globalAlpha = .28; px(x - 2, y - 2, 15, 18, sc); ctx.globalAlpha = 1; }
+    px(x + 2, y, 7, 4, "#2b2118");
+    px(x + 2, y + 3, 7, 4, "#e8b98c");
+    px(x + 6, y + 4, 2, 2, "#1b1b1b");
+    px(x + 1, y + 7, 9, 6, sc || "#20262e");
+    px(x + 4, y + 7, 3, 5, "#eef2f7");
+    px(x + 5, y + 7, 1, 4, glow ? "#ffffff" : "#c0392b");
+    if (p.on) { px(x + 1 + run * 2, y + 13, 3, 2, "#15181d"); px(x + 7 - run * 2, y + 13, 3, 2, "#15181d"); }
+    else { px(x, y + 12, 3, 2, "#15181d"); px(x + 8, y + 12, 3, 2, "#15181d"); }
+  }
+  function drawBride(x, y) {
+    const s = Math.sin(tick / 22) * 1.2;
+    px(x + 2, y - 2 + s, 10, 2, "#ffffff");
+    px(x + 3, y - 1 + s, 8, 4, "#3a2a1e");
+    px(x + 3, y + 2 + s, 8, 4, "#f0c39a");
+    px(x + 4, y + 3 + s, 2, 2, "#1b1b1b"); px(x + 8, y + 3 + s, 2, 2, "#1b1b1b");
+    px(x + 2, y + 6 + s, 10, 5, "#ffffff");
+    px(x, y + 10 + s, 14, 5, "#f4f6fa");
+  }
+  function drawHeart(x, y) {
+    const b = Math.sin(tick / 9) > 0 ? 0 : 1;
+    px(x - 3, y - 3 + b, 2, 2, "#f85149"); px(x + 1, y - 3 + b, 2, 2, "#f85149");
+    px(x - 4, y - 1 + b, 8, 3, "#f85149");
+    px(x - 3, y + 2 + b, 6, 1, "#f85149"); px(x - 1, y + 3 + b, 2, 1, "#f85149");
+  }
+  function drawPower(x, y) {
+    const b = Math.sin(tick / 12) * 1.5;
+    const pk = "#ff7eb6", pl = "#ff9ccb", w = "#ffffff", g = "#3fb950";
+    ctx.globalAlpha = .18 + Math.sin(tick / 6) * .08;      // 은은한 후광
+    px(x - 6, y - 8 + b, 13, 14, pl);
+    ctx.globalAlpha = 1;
+    px(x - 3, y - 6 + b, 2, 2, pk); px(x + 1, y - 6 + b, 2, 2, pk);   // 꽃송이
+    px(x - 1, y - 7 + b, 2, 2, w);
+    px(x - 4, y - 4 + b, 8, 3, pl);
+    px(x - 2, y - 3 + b, 2, 1, w); px(x + 1, y - 2 + b, 1, 1, w);
+    px(x - 1, y - 1 + b, 2, 5, g);                                       // 줄기
+    px(x - 3, y + 1 + b, 2, 1, g); px(x + 1, y + 2 + b, 2, 1, g);
+  }
+
+  function drawRing(x, y) {
+    const b = Math.sin(tick / 14) * 1.5;
+    const g = "#e3b341", w = "#fff8d6";
+    px(x - 1, y - 6 + b, 2, 2, w);                       // 알
+    px(x - 3, y - 3 + b, 2, 1, g); px(x + 1, y - 3 + b, 2, 1, g);
+    px(x - 4, y - 2 + b, 1, 4, g); px(x + 3, y - 2 + b, 1, 4, g);
+    px(x - 3, y + 2 + b, 2, 1, g); px(x + 1, y + 2 + b, 2, 1, g);
+  }
+
+  function drawFoe(f, sx) {
+    if (f.dead) { px(sx, f.y + 9, 13, 4, "#5c2b2b"); return; }
+    const w = Math.floor(tick / 8) % 2;
+    px(sx + 1, f.y + 2, 11, 9, "#8b3a3a");
+    px(sx + 3, f.y + 4, 2, 2, "#ffe08a"); px(sx + 8, f.y + 4, 2, 2, "#ffe08a");
+    px(sx + 2, f.y, 2, 2, "#8b3a3a"); px(sx + 9, f.y, 2, 2, "#8b3a3a");
+    px(sx + (w ? 0 : 1), f.y + 11, 3, 2, "#5c2b2b");
+    px(sx + (w ? 10 : 9), f.y + 11, 3, 2, "#5c2b2b");
+  }
+
+  function draw() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (shake > 0) {
+      ctx.translate(Math.round((Math.random() - .5) * shake * 0.7),
+                    Math.round((Math.random() - .5) * shake * 0.7));
+    }
+    const green = document.body.classList.contains("crt-green");
+    const amber = document.body.classList.contains("crt-amber");
+    const C = green ? { bg: "#020a03", gr: "#14401f", gt: "#5cff7d", dot: "#2f9a4c" }
+          : amber ? { bg: "#0a0500", gr: "#4a3000", gt: "#ffb757", dot: "#b07c2e" }
+          : { bg: "#070c13", gr: "#1d2a3a", gt: "#3fb950", dot: "#2b6cb0" };
+    px(0, 0, W, H, C.bg);
+    ctx.globalAlpha = .5;
+    for (let i = 0; i < 26; i++) {
+      let bx = (i * 137 - cam * 0.3) % (W + 20);
+      if (bx < 0) bx += W + 20;
+      px(bx, (i * 53) % 70 + 6, 1, 1, "#8b949e");
+    }
+    // 원경 — 저 멀리 식장. 카메라보다 훨씬 천천히 흘러 거리감을 만든다.
+    ctx.globalAlpha = .28;
+    const far = ((-cam * 0.08) % 240 + 240) % 240;
+    for (let k = -1; k < 2; k++) {
+      const ox = far + k * 240;
+      px(ox + 18, 108, 26, 52, C.gr); px(ox + 62, 96, 20, 64, C.gr);
+      px(ox + 96, 116, 30, 44, C.gr); px(ox + 150, 104, 22, 56, C.gr);
+      px(ox + 196, 120, 26, 40, C.gr);
+      px(ox + 118, 84, 8, 32, C.gr);           // 첨탑
+      px(ox + 120, 74, 4, 10, C.gr);
+      px(ox + 118, 78, 8, 2, C.gr);
+    }
+    ctx.globalAlpha = 1;
+    const t0 = Math.floor(cam / T), t1 = t0 + VW + 1;
+    for (let tx = t0; tx <= t1; tx++) {
+      if (tx < 0 || tx >= LW || inGap(tx)) continue;
+      const sx = tx * T - cam;
+      px(sx, GY * T, T, T * 2, C.gr);
+      px(sx, GY * T, T, 3, C.gt);
+      px(sx + 3, GY * T + 6, 2, 2, C.dot); px(sx + 9, GY * T + 11, 2, 2, C.dot);
+    }
+    for (const [bx, by, bw] of BLOCKS) {
+      if (bx * T - cam > W || (bx + bw) * T - cam < 0) continue;
+      for (let i = 0; i < bw; i++) {
+        const sx = (bx + i) * T - cam;
+        px(sx, by * T, T, (GY - by) * T, C.gr);
+        px(sx, by * T, T, 3, C.gt);
+      }
+    }
+    for (const h of hearts) {
+      if (h.got) continue;
+      const sx = h.x - cam;
+      if (sx > -10 && sx < W + 10) drawHeart(sx, h.y);
+    }
+    for (const f of foes) {
+      const sx = f.x - cam;
+      if (sx > -20 && sx < W + 20) drawFoe(f, sx);
+    }
+    const gx = GOAL * T - cam;
+    if (gx > -40 && gx < W + 40) {
+      px(gx - 6, GY * T - 36, 26, 3, C.gt);
+      px(gx - 6, GY * T - 36, 3, 36, C.gt); px(gx + 17, GY * T - 36, 3, 36, C.gt);
+      drawBride(gx, GY * T - 15);
+    }
+    for (const q of powers) {
+      if (q.got) continue;
+      const sx = q.x - cam;
+      if (sx > -14 && sx < W + 14) drawPower(sx, q.y);
+    }
+    for (const r of rings) {
+      if (r.got) continue;
+      const sx = r.x - cam;
+      if (sx > -12 && sx < W + 12) drawRing(sx, r.y);
+    }
+    if (!dead || Math.floor(tick / 4) % 2) drawGroom(p.x - cam, p.y);
+
+    for (const q of parts) {
+      const sx = q.x - cam;
+      if (sx < -4 || sx > W + 4) continue;
+      ctx.globalAlpha = Math.max(0, Math.min(1, q.life / 22));
+      px(sx, q.y, 2, 2, q.col);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.font = "bold 9px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    for (const q of pops) {
+      const sx = q.x - cam;
+      if (sx < -20 || sx > W + 20) continue;
+      ctx.globalAlpha = Math.max(0, Math.min(1, q.life / 26));
+      ctx.fillStyle = q.col;
+      ctx.fillText(q.txt, sx, q.y);
+    }
+    ctx.globalAlpha = 1;
+
+    // 시작 카운트다운
+    if (ready > 0) {
+      const secs = Math.ceil(ready / 60);
+      const txt = readyMax > 90 ? (secs > 1 ? String(secs - 1) : "GO!") : "GO!";
+      ctx.fillStyle = "rgba(1,4,9,.55)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = C.gt;
+      ctx.font = "bold 26px ui-monospace, monospace";
+      ctx.fillText(txt, W / 2, H / 2 + 6);
+      if (readyMax > 90) {
+        ctx.font = "bold 9px ui-monospace, monospace";
+        ctx.fillStyle = "#8b949e";
+        ctx.fillText(STAGES[stage].name, W / 2, H / 2 - 24);
+      }
+    }
+    ctx.textAlign = "left";
+
+    const got = curHearts();
+    const m = mult();
+    const head = `STAGE ${stage + 1}/${STAGES.length} <span class="o-dim">${STAGES[stage].name}</span>`;
+    hud.innerHTML = allDone
+      ? `🎉 전 스테이지 클리어! <b>${banked}점</b>`
+        + `${ringsGot === STAGES.length ? ` · <span class="o-ylw">💍 반지 전부!</span>` : ringsGot ? ` · 💍 ${ringsGot}/${STAGES.length}` : ""}`
+        + `${deaths ? ` · 넘어진 횟수 ${deaths}` : " · 무사고!"} — 다시: <b>run</b>`
+      : won ? `✅ STAGE ${stage + 1} 클리어! <b>+${CLEAR_BONUS + (stageDied ? 0 : NOHIT_BONUS)}</b>`
+              + `${stageDied ? "" : ` <span class="o-grn">무사고!</span>`} · 다음 스테이지로…`
+      : dead ? `💥 앗! 다시 출발합니다… <span class="o-dim">이 스테이지 점수와 배수는 초기화</span>`
+      : `${head}　♥ ${got}/${hearts.length}　` +
+        (m > 1 ? `<span class="o-ylw">×${m}</span>　` : `<span class="o-dim">×1</span>　`) +
+        (rings.length ? (rings[0].got ? `<span class="o-ylw">💍</span>　` : `<span class="o-dim">💍</span>　`) : "") +
+        (star > 0 ? `<span class="o-ylw">💐 무적 ${Math.ceil(star / 60)}s</span>　` : "") +
+        `${Math.min(100, Math.round(p.x / (GOAL * T) * 100))}%　` +
+        `<b>${totalScore()}점</b>` + (best ? ` <span class="o-dim">최고 ${best}</span>` : "");
+  }
+
+  /* 전화가 오거나 다른 앱으로 넘어가면 멈춘다 — 돌아왔을 때 죽어 있으면 억울하다 */
+  let paused = false;
+  const onVis = () => {
+    paused = document.hidden;
+    if (!paused) { last = performance.now(); acc = 0; }
+  };
+  document.addEventListener("visibilitychange", onVis);
+
+  let raf = 0, acc = 0, last = performance.now();
+  function loop(now) {
+    const dt = Math.min(now - last, 60); last = now;
+    if (!paused) {
+      acc += dt;
+      while (acc >= 16.7) { step(); acc -= 16.7; }
+      draw();
+    }
+    raf = requestAnimationFrame(loop);
+  }
+  raf = requestAnimationFrame(loop);
+  gameBgm(true);
+  input.blur();
+
+  // ---------- 조작: 원버튼 ----------
+  const press = (e) => {
+    const q = e.target.closest && e.target.closest('button[data-k="q"]');
+    if (q) { e.preventDefault(); stop(true); return; }
+    e.preventDefault();
+    holding = true;
+    jump();
+  };
+  const release = () => { holding = false; };
+  modal.addEventListener("pointerdown", press);
+  document.addEventListener("pointerup", release);
+  document.addEventListener("pointercancel", release);
+
+  const kd = (e) => {
+    const act = document.activeElement;
+    // 입력창에 뭔가 치는 중이 아니면 Q로 종료 (명령 입력 직후 포커스가 남아 있어도 동작)
+    const typing = act && act.tagName === "INPUT" && act.value !== "";
+    if (!typing && (e.key === "q" || e.key === "Q")) { e.preventDefault(); stop(true); return; }
+    // 명령어를 입력하는 중이면 스페이스는 글자로 넘겨준다 (입력창이 비어 있으면 점프)
+    if (typing) return;
+    if (e.key === " " || e.key === "ArrowUp" || e.key === "Spacebar") {
+      e.preventDefault(); e.stopPropagation();
+      holding = true; jump();
+    }
+  };
+  const ku = (e) => {
+    if (e.key === " " || e.key === "ArrowUp" || e.key === "Spacebar") holding = false;
+  };
+  document.addEventListener("keydown", kd, true);
+  document.addEventListener("keyup", ku, true);
+
+  /* 기록이 있으면 랭킹 등록 폼을 한 번만 띄운다 */
+  let rankShown = false;
+  function offerRank(score) {
+    if (rankShown || score < 1) return;
+    rankShown = true;
+    if (EASY) {
+      appendBlock(L(`쉬움 모드 기록 <b>${score}점</b> <span class="o-dim">— 랭킹에는 올라가지 않습니다.</span>`, "o-ylw")
+        + L(`<span class="o-cyn">run</span> 으로 정식 도전!`, "o-dim"), true);
+      scrollBottom();
+      return;
+    }
+    const box = appendBlock(L(`기록 <b>${score}점</b> — 스테이지 ${cleared}개 클리어`
+      + `${stomps ? ` · 버그 ${stomps}마리` : ""}${deaths ? ` · 넘어짐 ${deaths}회` : ""}`, "o-grn"), true);
+    showRankForm(box, score);
+    scrollBottom();
+  }
+
+  function stop(byUser) {
+    if (!alive()) return;   // 이미 다음 판이 시작됐다면 이 판의 뒷정리는 끝난 것
+    runGen++;               // 이 판에 걸린 타이머를 전부 무효화
+    cancelAnimationFrame(raf);
+    gameBgm(false);
+    document.removeEventListener("keydown", kd, true);
+    document.removeEventListener("keyup", ku, true);
+    document.removeEventListener("pointerup", release);
+    document.removeEventListener("pointercancel", release);
+    document.removeEventListener("visibilitychange", onVis);
+    modal.remove();
+    document.body.style.overflow = prevOverflow;
+    runStop = null;
+    if (byUser) {
+      const sc = totalScore();
+      logEl.insertAdjacentHTML("beforeend",
+        L(`게임 종료 — ${sc}점 (스테이지 ${cleared}개 클리어)`, "o-dim"));
+      offerRank(sc);
+    }
+  }
+  runStop = stop;
+  return null;
+}
+
+
+/* ===================================================================
+   명령어 실행
+=================================================================== */
+const COMMANDS = {
+  help: outHelp,
+  info: outInfo, invitation: outInfo,
+  dday: outDday, date: outDday, "d-day": outDday,
+  gallery: outGallery, photos: outGallery,
+  location: outLocation, map: outLocation,
+  account: outAccount, accounts: outAccount,
+  contact: outContact,
+  music: outMusic,
+  share: outShare,
+  whoami: outWhoami,
+  ls: outLs, dir: outLs,
+  love: outLove,
+  vim: outVim, vi: outVim,
+  exit: outExit, logout: outExit,
+  "./dday.sh": outDday,
+  matrix: outMatrix, neo: outMatrix,
+  run: outRun, mario: outRun, jump: outRun,
+  rank: outRank, ranking: outRank, top: outRank,
+};
+/* Tab 자동완성 후보 — 인자까지 포함한 전체 명령 문자열 */
+const COMPLETIONS = [...new Set(Object.keys(COMMANDS).concat([
+  "clear", "cat", "cd ..", "sudo marry", "git log", "npm test",
+  "run easy", "theme amber", "theme green", "theme default",
+  "music list", "music next", "music 1", "music 2", "music 3",
+]))].sort();
+
+const CAT_FILES = {
+  "invitation.txt": outInfo,
+  "dday.sh": outDday,
+  "location.md": outLocation,
+  "account.json": outAccount,
+  "contact.vcf": outContact,
+};
+
+const hist = [];
+let histIdx = 0;
+
+function execute(raw) {
+  const line = raw.trim();
+  if (!line) return;
+  // 게임 중에 다른 명령을 입력하면 게임을 종료하고 BGM도 원래 곡으로 되돌린다
+  if (runStop) runStop(true);
+  hist.push(line);
+  histIdx = hist.length;
+
+  const echoEl = appendEcho(line);
+  const parts = line.split(/\s+/);
+  const name = parts[0].toLowerCase();
+  let html = null;
+
+  if (name === "clear" || name === "cls") {
+    screenEl.innerHTML = "";
+    appendBlock(L(`화면을 지웠습니다. <span class="o-dim">help 를 입력하면 명령어 목록이 나와요.</span>`));
+    return;
+  }
+  if (name === "cd") {
+    if (parts[1] === "..") {
+      html = L(`다른 초대장 목록으로 이동합니다…`, "o-cyn");
+      setTimeout(() => { location.href = "../"; }, 700);
+    } else {
+      html = L(`cd: 갈 수 있는 곳: <span class="o-cyn">cd ..</span> (초대장 목록)`, "o-dim");
+    }
+  } else if (name === "sudo") {
+    html = parts[1] === "marry"
+      ? outSudoMarry()
+      : L(`sudo: 힌트 — <span class="o-cyn">sudo marry</span> 를 입력해 보세요.`, "o-dim");
+  } else if (name === "npm") {
+    if (parts[1] === "test") { runNpmTest(); html = null; }
+    else html = L(`npm: 이건 어때요 — <span class="o-cyn">npm test</span> (두 사람 궁합 테스트)`, "o-dim");
+  } else if (name === "theme") {
+    const v = (parts[1] || "").toLowerCase();
+    if (["amber", "green", "default", "off"].includes(v)) {
+      document.body.classList.remove("crt-amber", "crt-green");
+      if (v === "amber" || v === "green") document.body.classList.add("crt-" + v);
+      try { localStorage.setItem("devTheme", v); } catch {}
+      html = v === "amber" ? L(`🟠 앰버 CRT 모드 — 1980년대 모니터에 오신 것을 환영합니다`, "o-ylw")
+        : v === "green" ? L(`🟢 그린 CRT 모드 — 형광 인광의 감성`, "o-grn")
+        : L(`기본 테마로 돌아왔습니다.`);
+      html += applyGreenBgm(v === "green");
+    } else {
+      html = L(`사용법: <span class="o-cyn">theme amber</span> · <span class="o-cyn">theme green</span> · <span class="o-cyn">theme default</span>`, "o-dim");
+    }
+  } else if (name === "git") {
+    html = outGitLog();
+  } else if (name === "rm") {
+    html = outRm();
+  } else if (name === "cat") {
+    const f = parts[1];
+    if (f && CAT_FILES[f]) html = CAT_FILES[f]();
+    else if (f === "gallery" || f === "gallery/") html = L(`cat: gallery/: 디렉터리입니다. <span class="o-cyn">gallery</span> 명령어를 사용하세요.`, "o-dim");
+    else html = L(`cat: ${esc(f || "")}: No such file or directory`, "o-red") + L(`ls 로 파일 목록을 볼 수 있어요.`, "o-dim");
+  } else if (COMMANDS[name]) {
+    html = COMMANDS[name](parts.slice(1));
+  } else {
+    html = L(`bash: ${esc(name)}: command not found`, "o-red")
+      + L(`help 를 입력하면 명령어 목록이 나와요.`, "o-dim");
+  }
+
+  if (html != null) appendBlock(html);
+  startCountdowns();
+  scrollToEl(echoEl);
+}
+
+/* ---------- 카운트다운 (dday 출력마다 살아있는 숫자) ---------- */
+let cdTimer = null;
+function startCountdowns() {
+  const mains = screenEl.querySelectorAll("[data-cd]");
+  if (!mains.length) return;
+  const tick = () => {
+    const diff = d - new Date();
+    const t = Math.abs(diff);
+    const days = Math.floor(t / 864e5);
+    const hh = pad(Math.floor(t / 36e5) % 24), mm = pad(Math.floor(t / 6e4) % 60), ss = pad(Math.floor(t / 1e3) % 60);
+    const main = diff >= 0
+      ? `D-<b>${days}</b> · 남은 시간 <b>${days}일 ${hh}:${mm}:${ss}</b>`
+      : `결혼식 +<b>${days}</b>일 — 함께해 주셔서 감사합니다`;
+    const sub = diff >= 0
+      ? `${CONFIG.groom.name.slice(1)} ♥ ${CONFIG.bride.name.slice(1)}의 결혼식이 ${days}일 남았습니다.`
+      : ``;
+    screenEl.querySelectorAll("[data-cd]").forEach((el) => { el.innerHTML = main; });
+    screenEl.querySelectorAll("[data-cd-sub]").forEach((el) => { el.textContent = sub; });
+  };
+  tick();
+  if (!cdTimer) cdTimer = setInterval(tick, 1000);
+}
+
+/* ===================================================================
+   입력 / 칩 / 자동완성 / 히스토리
+=================================================================== */
+const CHIP_LIST = [
+  ["❓", "help"], ["📖", "info"], ["📅", "dday"], ["📷", "gallery"],
+  ["📍", "location"], ["💌", "account"], ["📞", "contact"], ["♪", "music"], ["🏃", "run"], ["🏆", "rank"], ["🔗", "share"],
+];
+/* 칩 = 모바일용 자동완성.
+   입력이 비어 있으면 기본 메뉴, 뭔가 입력하면 일치하는 명령을 추천으로 보여준다.
+   (모바일에는 Tab 키가 없어서 칩이 그 역할을 대신한다) */
+function renderChips(q) {
+  const cur = (q || "").trim().toLowerCase();
+  let items = null;
+  if (cur) {
+    const m = COMPLETIONS.filter((c) => c.startsWith(cur) && c !== cur).slice(0, 8);
+    if (m.length) items = m.map((c) => [`⇥ ${c}`, c]);
+  }
+  if (!items) items = CHIP_LIST.map(([e, c]) => [`${e} ${c}`, c]);
+  const box = $("chips");
+  const html = items.map(([label, cmd]) =>
+    `<button class="chip" data-cmd="${esc(cmd)}">${esc(label)}</button>`).join("");
+  if (box.dataset.html !== html) { box.dataset.html = html; box.innerHTML = html; box.scrollLeft = 0; }
+}
+renderChips("");
+
+let typingChip = false;
+async function typeAndRun(cmd) {
+  if (typingChip) return;
+  typingChip = true;
+  input.value = "";
+  if (!reduceMotion) {
+    for (const ch of cmd) {
+      input.value += ch;
+      await sleep(28);
+    }
+    await sleep(120);
+  } else {
+    input.value = cmd;
+  }
+  input.value = "";
+  renderChips("");
+  execute(cmd);
+  typingChip = false;
+}
+$("chips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  const cmd = chip.dataset.cmd;
+  if (chip.textContent.startsWith("⇥")) {   // 추천 칩은 곧바로 실행
+    input.value = "";
+    renderChips("");
+    execute(cmd);
+  } else typeAndRun(cmd);
+});
+
+/* 타이핑할 때마다 추천 갱신 */
+input.addEventListener("input", () => renderChips(input.value));
+
+input.addEventListener("keydown", (e) => {
+  if (booting) { skipBoot = true; return; }
+  if (typingChip) { e.preventDefault(); return; }
+  if (e.key === "Enter") {
+    const v = input.value;
+    input.value = "";
+    renderChips("");
+    execute(v);
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    if (histIdx > 0) { histIdx--; input.value = hist[histIdx] || ""; }
+  } else if (e.key === "ArrowDown") {
+    e.preventDefault();
+    if (histIdx < hist.length) { histIdx++; input.value = hist[histIdx] || ""; }
+  } else if (e.key === "Tab") {
+    e.preventDefault();
+    const val = input.value.replace(/^\s+/, "");
+    if (!val) return;
+    const catM = val.match(/^(cat\s+)(\S*)$/i);
+    let pool, prefix, cur;
+    if (catM) {
+      pool = Object.keys(CAT_FILES).concat("gallery/");
+      prefix = catM[1]; cur = catM[2].toLowerCase();
+    } else {
+      // 입력한 문장 전체로 대조 — "theme g" → "theme green" 처럼 인자도 완성된다
+      pool = COMPLETIONS;
+      prefix = ""; cur = val.toLowerCase();
+    }
+    const matches = pool.filter((c) => c.startsWith(cur)).sort();
+    if (!matches.length) return;
+    if (matches.length === 1) { input.value = prefix + matches[0] + " "; renderChips(input.value); return; }
+    // bash처럼: 공통 접두사까지 채우고 후보 목록 출력
+    let common = matches[0];
+    for (const c of matches) while (!c.startsWith(common)) common = common.slice(0, -1);
+    input.value = prefix + common;
+    renderChips(input.value);
+    appendBlock(L(matches.map(esc).join("&nbsp;&nbsp;"), "o-dim"), true);
+    scrollBottom();
+  }
+});
+
+/* 데스크톱: 터미널 아무 곳이나 클릭하면 입력창 포커스 */
+if (matchMedia("(hover: hover)").matches) {
+  document.querySelector(".term").addEventListener("click", (e) => {
+    if (e.target.closest("button, a, input, img, iframe")) return;
+    if (String(getSelection())) return;
+    input.focus({ preventScroll: true });
+  });
+}
+
+/* ---------- 복사 버튼 ---------- */
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".cp");
+  if (btn) copyText(btn.dataset.copy, "계좌번호가 복사되었습니다");
+});
+
+/* 스크롤할 수 있는 영역 밖에서의 터치 이동은 막는다.
+   일부 인앱 웹뷰는 overflow:hidden 을 무시하고 페이지를 통째로 끌어당긴다. */
+document.addEventListener("touchmove", (e) => {
+  if (e.touches.length > 1) return;                  // 확대/축소는 그대로 둔다
+  const t = e.target;
+  if (t && t.closest && t.closest("#screen, .chips")) return;   // 실제 스크롤 영역만 허용
+  e.preventDefault();
+}, { passive: false });
+
+/* CRT 테마 복원 */
+try {
+  const th = localStorage.getItem("devTheme");
+  if (th === "amber" || th === "green") document.body.classList.add("crt-" + th);
+  if (th === "green") greenOn = true;   // 저장된 테마가 그린이면 전용 트랙으로 시작
+} catch {}
+
+/* ===================================================================
+   배경 음악
+=================================================================== */
+const audio = $("bgm");
+const bgmBtn = $("bgmBtn");
+audio.src = greenOn ? GREEN_TRACK.file : TRACKS[trackIdx].file;
+audio.volume = 0.5;
+let bgmWanted = true;
+const syncBgm = () => bgmBtn.classList.toggle("off", audio.paused);
+function toggleBgm(on) {
+  if (on) { bgmWanted = true; audio.play().then(syncBgm).catch(() => {}); }
+  else { bgmWanted = false; audio.pause(); }
+  syncBgm();
+}
+bgmBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleBgm(audio.paused); });
+audio.addEventListener("play", syncBgm);
+audio.addEventListener("pause", syncBgm);
+/* 그린 CRT 모드 ↔ 전용 락 트랙 전환.
+   재생 중이었다면 이어서 재생하고, 꺼져 있었다면 강제로 켜지 않는다. */
+function applyGreenBgm(on) {
+  if (on === greenOn) return "";
+  greenOn = on;
+  const playing = !audio.paused;
+  audio.src = on ? GREEN_TRACK.file : TRACKS[trackIdx].file;
+  if (playing) { bgmWanted = true; audio.play().then(syncBgm).catch(() => {}); }
+  syncBgm();
+  if (on) {
+    return L(`♪ BGM → <span class="o-grn">${GREEN_TRACK.name}</span>`
+      + (playing ? " 재생" : ` <span class="o-dim">— ♪ 버튼을 누르면 재생됩니다</span>`), "o-dim");
+  }
+  return L(`♪ BGM → ${TRACKS[trackIdx].name} 으로 복귀`, "o-dim");
+}
+
+/* 게임 시작/종료 시 BGM 전환. 음악이 꺼져 있으면 강제로 켜지 않는다. */
+function gameBgm(on) {
+  if (on) {
+    if (gameBgmPrev !== null) return;
+    gameBgmPrev = audio.getAttribute("src");
+    if (audio.paused) return;                     // 꺼져 있으면 그대로 둔다
+    audio.src = GAME_TRACK.file;
+    audio.play().then(syncBgm).catch(() => {});
+  } else {
+    if (gameBgmPrev === null) return;
+    const prev = gameBgmPrev; gameBgmPrev = null;
+    if (audio.getAttribute("src") !== GAME_TRACK.file) return;
+    const playing = !audio.paused;
+    audio.src = prev;
+    if (playing) audio.play().then(syncBgm).catch(() => {});
+  }
+  syncBgm();
+}
+
+const kick = () => { if (bgmWanted) audio.play().then(syncBgm).catch(() => {}); };
+window.addEventListener("touchend", kick, { once: true });
+window.addEventListener("click", kick, { once: true });
+kick();
+
+/* ===================================================================
+   라이트박스
+=================================================================== */
+(() => {
+  const box = $("lightbox");
+  const lbImg = $("lbImg");
+  const count = $("lbCount");
+  const srcs = Array.from({ length: CONFIG.photoCount }, (_, i) => `../photos/gallery/p${pad(i + 1)}.webp`);
+  let cur = 0;
+  const show = (i) => {
+    cur = (i + srcs.length) % srcs.length;
+    lbImg.src = srcs[cur];
+    count.textContent = `${cur + 1} / ${srcs.length}`;
+  };
+  screenEl.addEventListener("click", (e) => {
+    const im = e.target.closest(".g-grid img");
+    if (!im) return;
+    show(+im.dataset.i);
+    box.classList.add("open");
+    document.body.style.overflow = "hidden";
+  });
+  const close = () => { box.classList.remove("open"); document.body.style.overflow = ""; };
+  $("lbClose").addEventListener("click", close);
+  $("lbPrev").addEventListener("click", (e) => { e.stopPropagation(); show(cur - 1); });
+  $("lbNext").addEventListener("click", (e) => { e.stopPropagation(); show(cur + 1); });
+  box.addEventListener("click", (e) => { if (e.target === box || e.target === lbImg) close(); });
+  document.addEventListener("keydown", (e) => {
+    if (!box.classList.contains("open")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") show(cur - 1);
+    if (e.key === "ArrowRight") show(cur + 1);
+  });
+  let sx = 0;
+  box.addEventListener("touchstart", (e) => { sx = e.changedTouches[0].clientX; }, { passive: true });
+  box.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 45) show(cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+})();
+
+/* ===================================================================
+   부팅 시퀀스
+=================================================================== */
+const ASCII = [
+  "__      _____ ___  ___  ___ _  _  ___ ",
+  "\\ \\    / / __|   \\|   \\|_ _| \\| |/ __|",
+  " \\ \\/\\/ /| _|| |) | |) || || .` | (_ |",
+  "  \\_/\\_/ |___|___/|___/|___|_|\\_|\\___|",
+].join("\n");
+
+let booting = true;
+let skipBoot = false;
+document.addEventListener("pointerdown", () => { if (booting) skipBoot = true; }, { passive: true });
+
+async function typeCmd(text) {
+  const el = appendEcho("");
+  const b = el.querySelector("b");
+  if (reduceMotion || skipBoot) { b.textContent = text; return; }
+  b.insertAdjacentHTML("afterend", `<span class="cursor"></span>`);
+  for (const ch of text) {
+    b.textContent += ch;
+    scrollBottom();
+    await sleep(42);
+    if (skipBoot) { b.textContent = text; break; }
+  }
+  el.querySelector(".cursor")?.remove();
+}
+async function bootOut(lines, perLine = 90) {
+  for (const html of lines) {
+    appendBlock(html, true);
+    scrollBottom();
+    if (!reduceMotion && !skipBoot) await sleep(perLine);
+  }
+}
+async function bootPause(ms) { if (!reduceMotion && !skipBoot) await sleep(ms); }
+
+(async () => {
+  await bootPause(350);
+  await typeCmd("ssh guest@our-wedding.dev");
+  await bootPause(200);
+  await bootOut([
+    L(`Connecting to our-wedding.dev… <span class="o-grn">connected.</span>`, "o-dim"),
+    L(`<pre class="ascii">${ASCII}</pre>`),
+    L(`Welcome to <span class="o-grn">WeddingOS v1.0 LTS</span> <span class="o-dim">(kernel 2026.10.17)</span>`),
+    GAP,
+    L(` * 신랑&nbsp;&nbsp;: ${CONFIG.groom.name}`),
+    L(` * 신부&nbsp;&nbsp;: ${CONFIG.bride.name}`),
+    L(` * 예식일: ${dateKo}`),
+    L(` * 장소&nbsp;&nbsp;: ${CONFIG.venue.name}`),
+  ]);
+  await bootPause(500);
+  await typeCmd("npm run invitation");
+  await bootPause(250);
+  await bootOut([
+    L(`&gt; wedding@1.0.0 invitation`, "o-dim"),
+    L(`&gt; love --forever`, "o-dim"),
+    GAP,
+    L(`<span class="o-grn">✔</span> 두 사람의 마음 컴파일 완료`),
+    L(`<span class="o-grn">✔</span> 평생의 약속 빌드 성공 <span class="o-dim">(0 errors, 0 warnings)</span>`),
+    L(`<span class="o-grn">✔</span> 초대장 배포 완료`),
+    GAP,
+    L(`# BGM: Canon in D 8bit 외 2곡 (3번은 자작곡) — music list`, "o-dim"),
+    L(`# tip: theme green 을 켜면 BGM도 락 버전으로 바뀝니다`, "o-dim"),
+  ], 140);
+  await bootPause(400);
+  await typeCmd("help");
+  appendBlock(outHelp(), skipBoot || reduceMotion);
+  scrollBottom();
+  booting = false;
+  $("chips").classList.add("on");
+})();
+</script>
+</body>
+</html>
